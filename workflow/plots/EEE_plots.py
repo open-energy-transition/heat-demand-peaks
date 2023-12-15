@@ -8,8 +8,6 @@ import os
 import sys
 sys.path.append("../pypsa-eur")
 import pypsa
-os.chdir("C:\\Users\\Yerbol\\Documents\\Python\\PyPSA\\PyPSA-Eur\\pypsa-eur")
-import pypsa
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import numpy as np
@@ -23,6 +21,15 @@ import warnings
 warnings.filterwarnings("ignore")
 logger = logging.getLogger(__name__)
 plt.style.use("ggplot")
+
+# get the current working directory
+current_path = os.getcwd()
+# path to pypsa-eur
+pypsa_path = "workflow/pypsa-eur"
+# absolute path to pypsa-eur
+new_path = os.path.join(current_path, pypsa_path)
+# change path to pypsa-eur
+os.chdir(new_path)
 
 # %%
 """
@@ -302,12 +309,12 @@ preferred_order = pd.Index(
 
 # %%
 FILE = "elec_s_48_lcopt__Co2L0-2H-T-H-B_2030.nc"
-DIR = "results/rigid5/postnetworks"
+DIR = "results/rigid/postnetworks"
 n_rigid = pypsa.Network(os.path.join(DIR, FILE))
 
 # %%
 FILE = "elec_s_48_lcopt__Co2L0-2H-T-H-B_2030.nc"
-DIR = "results/flexible2/postnetworks"
+DIR = "results/flexible/postnetworks"
 n_flex = pypsa.Network(os.path.join(DIR, FILE))
 
 # %%
@@ -318,6 +325,12 @@ n_igas_tes = pypsa.Network(os.path.join(DIR, FILE))
 # %%
 network = {"rigid":n_rigid, "igas+tes":n_igas_tes, "flexible":n_flex}
 
+# change directory back to original
+os.chdir(current_path)
+# relative path to folder where to store plots
+PATH_PLOTS = "workflow/plots/results/"
+# create folder to store images
+os.makedirs(PATH_PLOTS, exist_ok=True)
 # %%
 """
 # 2. Total System Cost estimation (Fig. 5)
@@ -411,7 +424,7 @@ def plot_costs(cost_df):
     ax.spines['left'].set_color('black')
     ax.spines['bottom'].set_color('black')
     ax.grid(axis='y', linestyle='--', linewidth=0.5, color='gray')
-    plt.savefig('../notebooks/costs.png', dpi=600, bbox_inches = 'tight')
+    plt.savefig(PATH_PLOTS+'costs.png', dpi=600, bbox_inches = 'tight')
     
     
 plot_costs(cost_df)
@@ -549,7 +562,7 @@ axs[0,2].legend(
 )
 axs[0, 0].set_ylabel("capacity [GW]")
 axs[1, 0].set_ylabel("generation [TWh]")
-plt.savefig('../notebooks/capacities.png', dpi=600, bbox_inches = 'tight')
+plt.savefig(PATH_PLOTS+'capacities.png', dpi=600, bbox_inches = 'tight')
 
 
 # %%
@@ -746,7 +759,7 @@ for i in items + ["water tanks charger", "DAC"]:
 handles.append(line1)
 lgd = axs[4,1].legend(handles=handles, loc="upper center", bbox_to_anchor=(0.5, -0.5), ncol=5, facecolor="white")
 ylabel = axs[2,0].set_ylabel("Energy [GWh]")
-plt.savefig('../notebooks/gen_profiles.png', dpi=600, bbox_inches = 'tight')
+plt.savefig(PATH_PLOTS+'gen_profiles.png', dpi=600, bbox_inches = 'tight')
 
 
     
@@ -765,7 +778,7 @@ plt.savefig('../notebooks/gen_profiles.png', dpi=600, bbox_inches = 'tight')
 
 # %%
 # set a custom path to `resources` folder
-resources_path = "./resources/rigid5"
+resources_path = "workflow/pypsa-eur/resources/flexible"
 # onshore and offshore shapes
 onshore_cl_fl = os.path.join(resources_path, "regions_onshore_elec_s_48.geojson")
 # read onshore shapes
@@ -777,10 +790,10 @@ onshore_cl_df = gpd.read_file(onshore_cl_fl)
 """
 
 # %%
-heat_demand = n_rigid.loads_t.p_set.multiply(n.snapshot_weightings.generators,
+heat_demand = n_flex.loads_t.p_set.multiply(n.snapshot_weightings.generators,
                                              axis=0).filter(like="heat").groupby(n.buses.location, 
                                                                                  axis=1).sum().sum().iloc[1:].to_frame()
-heat_demand.columns = ["heat demand"]
+heat_demand.columns = ["heat_demand"]
 heat_demand.reset_index(inplace=True)
 heat_demand.rename(columns={"location":"name"}, inplace=True)
 heat_demand.head()
@@ -799,8 +812,8 @@ fig, ax = plt.subplots(1, 1, figsize=(15, 10))
 # plt.rc('font', **font)
 
 # %%
-column_name = "heat demand"
-fig_name = f"../notebooks/{column_name}.png"
+column_name = "heat_demand"
+
 data_gdf.plot(
     column=column_name, 
     legend=True,
@@ -812,7 +825,7 @@ data_gdf.plot(
 )
 plt.title(column_name)
 plt.axis("off")
-plt.savefig('../notebooks/heat_demand.png', dpi=600, bbox_inches = 'tight')
+plt.savefig(PATH_PLOTS+'heat_demand.png', dpi=600, bbox_inches = 'tight')
 
 # %%
 """
@@ -872,7 +885,7 @@ axs[1].set_xticks(date_rng)
 a = axs[1].set_xticklabels(labels=date_rng.strftime('%B'))
 ylabel = axs[1].set_ylabel("EUR/MWh (avg of countries)")
 axs[1].set_title("Electricity price during year")
-plt.savefig('../notebooks/merginal_costs.png', dpi=600, bbox_inches = 'tight')
+plt.savefig(PATH_PLOTS+'marginal_costs.png', dpi=600, bbox_inches = 'tight')
 
 # %%
 
