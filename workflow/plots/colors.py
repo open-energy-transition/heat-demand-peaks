@@ -34,6 +34,7 @@ tech_colors = {
 "OCGT-heat": '#e0986c',
 "gas boiler": '#db6a25',
 "gas boilers": '#db6a25',
+"gas storage": '#0FD4E5',
 "gas boiler marginal": '#db6a25',
 "residential rural gas boiler": '#d4722e',
 "residential urban decentral gas boiler": '#cb7a36',
