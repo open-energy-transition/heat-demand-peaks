@@ -72,14 +72,19 @@ def rename_techs(label):
 
     rename = {
         "Solar": "solar PV",
+        "solar": "solar PV",
         "Sabatier": "methanation",
         "helmeth" : "methanation",
         "Offshore Wind (AC)": "offshore wind",
         "Offshore Wind (DC)": "offshore wind",
         "Onshore Wind": "onshore wind",
+        "offwind-ac": "offshore wind",  
+        "offwind-dc": "offshore wind",
         "Run of River": "hydroelectricity",
+        "Run of river": "hydroelectricity",
         "Reservoir & Dam": "hydroelectricity",
         "Pumped Hydro Storage": "hydroelectricity",
+        "PHS": "hydroelectricity",
         "NH3": "ammonia",
         "co2 Store": "DAC",
         "co2 stored": "CO2 sequestration",
@@ -205,14 +210,19 @@ def rename_techs2(label):
 
     rename = {
         "Solar": "solar PV",
+        "solar": "solar PV",
         "Sabatier": "methanation",
         "helmeth" : "methanation",
         "Offshore Wind (AC)": "offshore wind",
         "Offshore Wind (DC)": "offshore wind",
         "Onshore Wind": "onshore wind",
+        "offwind-ac": "offshore wind",  
+        "offwind-dc": "offshore wind",
         "Run of River": "hydroelectricity",
+        "Run of river": "hydroelectricity",
         "Reservoir & Dam": "hydroelectricity",
         "Pumped Hydro Storage": "hydroelectricity",
+        "PHS": "hydroelectricity",
         "NH3": "ammonia",
         "co2 Store": "DAC",
         "co2 stored": "CO2 sequestration",
@@ -357,7 +367,7 @@ full_costs_igas_tes = costs_igas_tes.sum(axis=1).droplevel(0).to_frame()
 full_costs_igas_tes.columns = ["igas+tes"]
 
 # %%
-cost_df = full_costs_flex.join(full_costs_igas_tes).join(full_costs_rigid).fillna(0)
+cost_df = full_costs_flex.join(full_costs_igas_tes, how="outer").join(full_costs_rigid, how="outer").fillna(0)
 cost_df
 
 # %%
