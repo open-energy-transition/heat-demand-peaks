@@ -448,6 +448,7 @@ sector:
   hydrogen_fuel_cell: true
   hydrogen_turbine: false
   SMR: true
+  SMR_cc: true
   regional_co2_sequestration_potential:
     enable: false
     attribute: 'conservative estimate Mt'
@@ -457,6 +458,7 @@ sector:
     years_of_storage: 25
   co2_sequestration_potential: 200
   co2_sequestration_cost: 10
+  co2_sequestration_lifetime: 50
   co2_spatial: false
   co2network: false
   cc_fraction: 0.9
@@ -608,8 +610,8 @@ solving:
     horizon: 365
 
   solver:
-    name: cplex
-    options: cplex-default
+    name: highs
+    options: highs-default
 
   solver_options:
     highs-default:
