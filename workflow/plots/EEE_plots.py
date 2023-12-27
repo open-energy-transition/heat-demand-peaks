@@ -736,7 +736,7 @@ for name, n in network_small.items():
         
         
         # heat demand
-#         line2, = axs[j,i].plot(time, 12*heat_demand/1e3, '--', color='#000000', linewidth=2, label="Heat demand", zorder=11)
+        line2, = axs[j,i].plot(time, heat_demand/1e3, '--', color='#000000', linewidth=2, label="Heat demand", zorder=11)
         
         j += 1  # plot next graph
         
