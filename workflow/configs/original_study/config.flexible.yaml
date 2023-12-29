@@ -484,7 +484,7 @@ sector:
   gas_network_connectivity_upgrade: 1
   gas_distribution_grid: true
   gas_distribution_grid_cost_factor: 1.0
-  biomass_spatial: false
+  biomass_spatial: true
   biomass_transport: true #false
   conventional_generation:
     OCGT: gas
