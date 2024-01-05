@@ -448,6 +448,8 @@ sector:
   hydrogen_fuel_cell: true
   hydrogen_turbine: false
   SMR: true
+  regional_methanol_demand: false  #set to true if regional CO2 constraints needed
+  regional_oil_demand: false  #set to true if regional CO2 constraints needed    
   regional_co2_sequestration_potential:
     enable: false
     attribute: 'conservative estimate Mt'
@@ -469,11 +471,24 @@ sector:
   min_part_load_fischer_tropsch: 0.9
   min_part_load_methanolisation: 0.5
   use_fischer_tropsch_waste_heat: false #true
+  use_haber_bosch_waste_heat: false
+  use_methanolisation_waste_heat: false
+  use_methanation_waste_heat: false  
   use_fuel_cell_waste_heat: true
   use_electrolysis_waste_heat: false
   electricity_distribution_grid: true
   electricity_distribution_grid_cost_factor: 1.0
   electricity_grid_connection: true
+  transmission_efficiency:
+    DC:
+      efficiency_static: 0.98
+      efficiency_per_1000km: 0.977
+    H2 pipeline:
+      efficiency_per_1000km: 1 # 0.979
+      compression_per_1000km: 0.019
+    gas pipeline:
+      efficiency_per_1000km: 1 #0.977
+      compression_per_1000km: 0.01    
   H2_network: true
   gas_network: true #false
   H2_retrofit: false
