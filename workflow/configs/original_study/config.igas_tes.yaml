@@ -343,9 +343,9 @@ sector:
     potential: 0.6
     progress:
       2020: 0.0
-      2030: 0.3
-      2040: 0.6
-      2050: 1.0
+      2030: 0.0
+      2040: 0.0
+      2050: 0.0
     district_heating_loss: 0.15
   cluster_heat_buses: false
   bev_dsm_restriction_value: 0.75
