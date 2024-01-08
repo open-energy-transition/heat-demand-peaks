@@ -102,6 +102,8 @@ def rename_techs(label):
         "process emissions CC": "process emissions",
         "Battery Storage": "battery storage",
         'H2 Store': "H2 storage",
+        'Hydrogen Storage': "H2 storage",
+        'co2 sequestered': "CO2 sequestration",
         
     }
 
@@ -240,6 +242,8 @@ def rename_techs2(label):
         "process emissions CC": "process emissions",
         "Battery Storage": "battery storage",
         'H2 Store': "H2 storage",
+        'Hydrogen Storage': "H2 storage",
+        'co2 sequestered': "CO2 sequestration",
         
     }
 
