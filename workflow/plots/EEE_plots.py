@@ -23,11 +23,12 @@ logger = logging.getLogger(__name__)
 plt.style.use("ggplot")
 
 # get the current working directory
-current_path = os.getcwd()
+base_path = os.path.abspath(os.path.join(__file__ ,"../.."))
 # path to pypsa-eur
-pypsa_path = "workflow/pypsa-eur"
+pypsa_path = "pypsa-eur/"
 # absolute path to pypsa-eur
-new_path = os.path.join(current_path, pypsa_path)
+
+new_path = os.path.join(base_path, pypsa_path)
 # change path to pypsa-eur
 os.chdir(new_path)
 
@@ -321,18 +322,23 @@ preferred_order = pd.Index(
 # 1. Loading the networks
 """
 
+space_resolution = 37
+time_resolution = 3
+sectors = "H-T-B"
+planning = 2050
+
 # %%
-FILE = "elec_s_48_lcopt__Co2L0-2H-T-H-B_2030.nc"
+FILE = f"elec_s_{space_resolution}_lcopt__Co2L0-{time_resolution}H-{sectors}_{planning}.nc"
 DIR = "results/rigid/postnetworks"
 n_rigid = pypsa.Network(os.path.join(DIR, FILE))
 
 # %%
-FILE = "elec_s_48_lcopt__Co2L0-2H-T-H-B_2030.nc"
+FILE = f"elec_s_{space_resolution}_lcopt__Co2L0-{time_resolution}H-{sectors}_{planning}.nc"
 DIR = "results/flexible/postnetworks"
 n_flex = pypsa.Network(os.path.join(DIR, FILE))
 
 # %%
-FILE = "elec_s_48_lcopt__Co2L0-2H-T-H-B_2030.nc"
+FILE = f"elec_s_{space_resolution}_lcopt__Co2L0-{time_resolution}H-{sectors}_{planning}.nc"
 DIR = "results/igas_tes/postnetworks"
 n_igas_tes = pypsa.Network(os.path.join(DIR, FILE))
 
@@ -340,9 +346,9 @@ n_igas_tes = pypsa.Network(os.path.join(DIR, FILE))
 network = {"rigid":n_rigid, "igas+tes":n_igas_tes, "flexible":n_flex}
 
 # change directory back to original
-os.chdir(current_path)
+os.chdir(base_path)
 # relative path to folder where to store plots
-PATH_PLOTS = "workflow/plots/results/"
+PATH_PLOTS = "plots/results/"
 # create folder to store images
 os.makedirs(PATH_PLOTS, exist_ok=True)
 # %%
@@ -455,11 +461,11 @@ plot_costs(cost_df)
 
 # %%
 common_rural_techs = ["solar thermal", "ground heat pump", "resistive heater", 
-                      "gas boiler", "water tanks discharger" ]#, "biomass boiler" ]
+                      "water tanks discharger", "gas boiler", "biomass boiler"]
 common_urban_techs = ["solar thermal", "air heat pump", "resistive heater", 
-                      "gas boiler", "water tanks discharger"] #, "biomass boiler" ]
+                      "water tanks discharger", "gas boiler", "biomass boiler"]
 urban_central_techs = ["solar thermal", "air heat pump", "resistive heater", 
-                       "gas boiler", "gas CHP", "gas CHP CC", 
+                       "gas boiler", "gas CHP", "gas CHP CC",
                        "solid biomass CHP","solid biomass CHP CC", "water tanks discharger"]
 
 # %%
@@ -521,11 +527,12 @@ for nice_name, tech_name in zones.items():
     list_tech = [techs[x] for x in cur_zones]  # list of technology lists
     cur_techs = [t for sublist in list_tech for t in sublist]  # list of technologies
     
-    cf = cap_full.loc[cur_techs,:] / 1e3
+    subset_techs = list(set(cur_techs).intersection(cap_full.index))
+    cf = cap_full.loc[subset_techs,:] / 1e3
     cf = cf.groupby(cf.index.map(rename_techs2)).sum()
     logger.info(f"Total installed capacity of {cf.sum().astype(int).values} GW")
     
-    gf = gen_full.loc[cur_techs, :] / 1e6
+    gf = gen_full.loc[subset_techs, :] / 1e6
     gf = gf.groupby(gf.index.map(rename_techs2)).sum()
     logger.info(f"Total Generation of {gf.sum().astype(int).values} TWh")
     
@@ -792,9 +799,9 @@ plt.savefig(PATH_PLOTS+'gen_profiles.png', dpi=600, bbox_inches = 'tight')
 
 # %%
 # set a custom path to `resources` folder
-resources_path = "workflow/pypsa-eur/resources/flexible"
+resources_path = f"pypsa-eur/resources/flexible/regions_onshore_elec_s_{space_resolution}.geojson"
 # onshore and offshore shapes
-onshore_cl_fl = os.path.join(resources_path, "regions_onshore_elec_s_48.geojson")
+onshore_cl_fl = os.path.join(base_path, resources_path)
 # read onshore shapes
 onshore_cl_df = gpd.read_file(onshore_cl_fl)
 
