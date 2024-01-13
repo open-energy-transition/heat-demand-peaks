@@ -323,7 +323,7 @@ preferred_order = pd.Index(
 """
 
 space_resolution = 37
-time_resolution = 100
+time_resolution = 3
 sectors = "H-T-B"
 planning = 2050
 
@@ -465,8 +465,8 @@ common_rural_techs = ["solar thermal", "ground heat pump", "resistive heater",
 common_urban_techs = ["solar thermal", "air heat pump", "resistive heater", 
                       "water tanks discharger", "gas boiler", "biomass boiler"]
 urban_central_techs = ["solar thermal", "air heat pump", "resistive heater", 
-                       "gas CHP", "solid biomass CHP", "water tanks discharger",
-                       "gas boiler"]
+                       "gas boiler", "gas CHP", "gas CHP CC",
+                       "solid biomass CHP","solid biomass CHP CC", "water tanks discharger"]
 
 # %%
 techs = {"residential rural":["residential rural "+ x for x in common_rural_techs],
