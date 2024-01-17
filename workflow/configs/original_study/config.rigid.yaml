@@ -65,8 +65,8 @@ enable:
   retrieve_cost_data: true
   build_cutout: false
   retrieve_cutout: false
-  build_natura_raster: true #false
-  retrieve_natura_raster: #true #false
+  build_natura_raster: false #false
+  retrieve_natura_raster: false #true #false
   custom_busmap: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
@@ -170,7 +170,6 @@ renewable:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
     capacity_per_sqkm: 2
-    correction_factor: 0.8855
     corine: [44, 255]
     natura: true
     ship_threshold: 400
@@ -185,7 +184,6 @@ renewable:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
     capacity_per_sqkm: 2
-    correction_factor: 0.8855
     corine: [44, 255]
     natura: true
     ship_threshold: 400
@@ -289,7 +287,7 @@ pypsa_eur:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#energy
 energy:
-  energy_totals_year: 2011
+  energy_totals_year: 2013
   base_emissions_year: 1990
   eurostat_report_year: 2016
   emissions: CO2
@@ -433,6 +431,7 @@ sector:
     decentral: 3
     central: 180
   boilers: false
+  resistive_heaters: true
   oil_boilers: false
   biomass_boiler: false #true
   chp: true
@@ -462,6 +461,7 @@ sector:
     years_of_storage: 25
   co2_sequestration_potential: 200
   co2_sequestration_cost: 10
+  co2_sequestration_lifetime: 50
   co2_spatial: false
   co2network: false
   cc_fraction: 0.9
@@ -499,7 +499,7 @@ sector:
   gas_network_connectivity_upgrade: 1
   gas_distribution_grid: true
   gas_distribution_grid_cost_factor: 1.0
-  biomass_spatial: false
+  biomass_spatial: true
   biomass_transport: true #false
   conventional_generation:
     OCGT: gas
@@ -626,8 +626,8 @@ solving:
     horizon: 365
 
   solver:
-    name: cplex
-    options: cplex-default
+    name: gurobi
+    options: gurobi-default
 
   solver_options:
     highs-default:

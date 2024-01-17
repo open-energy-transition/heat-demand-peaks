@@ -170,7 +170,6 @@ renewable:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
     capacity_per_sqkm: 2
-    correction_factor: 0.8855
     corine: [44, 255]
     natura: true
     ship_threshold: 400
@@ -185,7 +184,6 @@ renewable:
       method: wind
       turbine: NREL_ReferenceTurbine_5MW_offshore
     capacity_per_sqkm: 2
-    correction_factor: 0.8855
     corine: [44, 255]
     natura: true
     ship_threshold: 400
@@ -289,7 +287,7 @@ pypsa_eur:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#energy
 energy:
-  energy_totals_year: 2011
+  energy_totals_year: 2013
   base_emissions_year: 1990
   eurostat_report_year: 2016
   emissions: CO2
