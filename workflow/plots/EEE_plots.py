@@ -170,7 +170,7 @@ preferred_order = pd.Index(
         "gas boiler",
         "biomass boiler",
         "building retrofitting",
-        
+
         "co2",
         "CO2 sequestration",
         "process emissions"
@@ -245,7 +245,6 @@ def rename_techs2(label):
         'H2 Store': "H2 storage",
         'Hydrogen Storage': "H2 storage",
         'co2 sequestered': "CO2 sequestration",
-        
     }
 
     for ptr in prefix_to_remove:
@@ -269,6 +268,7 @@ def rename_techs2(label):
 preferred_order = pd.Index(
     [
         "solid biomass",
+        "solid biomass transport",
         "biogas",
         "gas for industry",
         "methanol",
@@ -289,6 +289,7 @@ preferred_order = pd.Index(
         "SMR",
         "methanolisation",
         
+        "TES",
         "battery storage",
         "gas storage",
         "H2 storage",
@@ -302,7 +303,6 @@ preferred_order = pd.Index(
         "solar thermal",
         "solar rooftop",
         
-        "building retrofitting",
         "solid biomass CHP",
         "gas CHP",
         "biomass boiler",
@@ -313,7 +313,9 @@ preferred_order = pd.Index(
         
         "co2",
         "CO2 sequestration",
-        "process emissions"
+        "process emissions",
+
+        "building retrofitting"
      ]
 )
 
@@ -322,23 +324,22 @@ preferred_order = pd.Index(
 # 1. Loading the networks
 """
 
-space_resolution = 37
-time_resolution = 3
-sectors = "H-T-B"
+space_resolution = 48
+sector_opts = "12H-Co2L0-H-T-B"
 planning = 2050
 
 # %%
-FILE = f"elec_s_{space_resolution}_lcopt__Co2L0-{time_resolution}H-{sectors}_{planning}.nc"
+FILE = f"elec_s_{space_resolution}_lvopt__{sector_opts}_{planning}.nc"
 DIR = "results/rigid/postnetworks"
 n_rigid = pypsa.Network(os.path.join(DIR, FILE))
 
 # %%
-FILE = f"elec_s_{space_resolution}_lcopt__Co2L0-{time_resolution}H-{sectors}_{planning}.nc"
+FILE = f"elec_s_{space_resolution}_lvopt__{sector_opts}_{planning}.nc"
 DIR = "results/flexible/postnetworks"
 n_flex = pypsa.Network(os.path.join(DIR, FILE))
 
 # %%
-FILE = f"elec_s_{space_resolution}_lcopt__Co2L0-{time_resolution}H-{sectors}_{planning}.nc"
+FILE = f"elec_s_{space_resolution}_lvopt__{sector_opts}_{planning}.nc"
 DIR = "results/igas_tes/postnetworks"
 n_igas_tes = pypsa.Network(os.path.join(DIR, FILE))
 
