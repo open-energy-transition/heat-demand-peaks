@@ -20,7 +20,7 @@ remote:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
-  name: "igas_tes"
+  name: "retro_tes"
   disable_progressbar: false
   shared_resources: false
   shared_cutouts: true
