@@ -435,7 +435,7 @@ sector:
   oil_boilers: false
   biomass_boiler: false #true
   chp: true
-  chp_cc: false
+  chp_cc: true #false
   micro_chp: true #false
   solar_thermal: true
   solar_cf_correction: 0.788457  # =  >>> 1/1.2683
@@ -449,7 +449,7 @@ sector:
   hydrogen_fuel_cell: true
   hydrogen_turbine: false
   SMR: true
-  SMR_cc: false
+  SMR_cc: true #false
   regional_methanol_demand: false  #set to true if regional CO2 constraints needed
   regional_oil_demand: false  #set to true if regional CO2 constraints needed    
   regional_co2_sequestration_potential:
