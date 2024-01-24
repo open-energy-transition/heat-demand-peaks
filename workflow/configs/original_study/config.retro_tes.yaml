@@ -20,7 +20,7 @@ remote:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
-  name: "igas_tes"
+  name: "retro_tes"
   disable_progressbar: false
   shared_resources: false
   shared_cutouts: true
@@ -420,7 +420,7 @@ sector:
     2045: 0.21
     2050: 0.29
   retrofitting:
-    retro_endogen: false
+    retro_endogen: true #false
     cost_factor: 1.0
     interest_rate: 0.04
     annualise_cost: true
@@ -430,7 +430,7 @@ sector:
   tes_tau:
     decentral: 3
     central: 180
-  boilers: true #false
+  boilers: false #true
   resistive_heaters: true
   oil_boilers: false
   biomass_boiler: false #true

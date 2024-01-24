@@ -20,7 +20,7 @@ remote:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
-  name: "igas_tes"
+  name: "retro_tes"
   disable_progressbar: false
   shared_resources: false
   shared_cutouts: true
@@ -420,7 +420,7 @@ sector:
     2045: 0.21
     2050: 0.29
   retrofitting:
-    retro_endogen: false
+    retro_endogen: true #false
     cost_factor: 1.0
     interest_rate: 0.04
     annualise_cost: true
@@ -430,12 +430,12 @@ sector:
   tes_tau:
     decentral: 3
     central: 180
-  boilers: true #false
+  boilers: false #true
   resistive_heaters: true
   oil_boilers: false
   biomass_boiler: false #true
   chp: true
-  chp_cc: false
+  chp_cc: true #false
   micro_chp: true #false
   solar_thermal: true
   solar_cf_correction: 0.788457  # =  >>> 1/1.2683
@@ -449,7 +449,7 @@ sector:
   hydrogen_fuel_cell: true
   hydrogen_turbine: false
   SMR: true
-  SMR_cc: false
+  SMR_cc: true #false
   regional_methanol_demand: false  #set to true if regional CO2 constraints needed
   regional_oil_demand: false  #set to true if regional CO2 constraints needed    
   regional_co2_sequestration_potential:
@@ -459,7 +459,7 @@ sector:
     min_size: 3
     max_size: 25
     years_of_storage: 25
-  co2_sequestration_potential: 0
+  co2_sequestration_potential: 200
   co2_sequestration_cost: 10
   co2_sequestration_lifetime: 50
   co2_spatial: false

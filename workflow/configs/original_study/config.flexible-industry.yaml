@@ -20,7 +20,7 @@ remote:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
-  name: "igas_tes"
+  name: "flexible"
   disable_progressbar: false
   shared_resources: false
   shared_cutouts: true
@@ -65,7 +65,7 @@ enable:
   retrieve_cost_data: true
   build_cutout: false
   retrieve_cutout: false
-  build_natura_raster: false #false
+  build_natura_raster: false
   retrieve_natura_raster: false
   custom_busmap: false
 
@@ -420,7 +420,7 @@ sector:
     2045: 0.21
     2050: 0.29
   retrofitting:
-    retro_endogen: false
+    retro_endogen: true #false
     cost_factor: 1.0
     interest_rate: 0.04
     annualise_cost: true
@@ -435,7 +435,7 @@ sector:
   oil_boilers: false
   biomass_boiler: false #true
   chp: true
-  chp_cc: false
+  chp_cc: true #false
   micro_chp: true #false
   solar_thermal: true
   solar_cf_correction: 0.788457  # =  >>> 1/1.2683
@@ -449,9 +449,9 @@ sector:
   hydrogen_fuel_cell: true
   hydrogen_turbine: false
   SMR: true
-  SMR_cc: false
+  SMR_cc: true #false
   regional_methanol_demand: false  #set to true if regional CO2 constraints needed
-  regional_oil_demand: false  #set to true if regional CO2 constraints needed    
+  regional_oil_demand: false  #set to true if regional CO2 constraints needed  
   regional_co2_sequestration_potential:
     enable: false
     attribute: 'conservative estimate Mt'
@@ -459,7 +459,7 @@ sector:
     min_size: 3
     max_size: 25
     years_of_storage: 25
-  co2_sequestration_potential: 0
+  co2_sequestration_potential: 200
   co2_sequestration_cost: 10
   co2_sequestration_lifetime: 50
   co2_spatial: false
@@ -491,16 +491,16 @@ sector:
       compression_per_1000km: 0.019
     gas pipeline:
       efficiency_per_1000km: 1 #0.977
-      compression_per_1000km: 0.01      
+      compression_per_1000km: 0.01    
   H2_network: true
-  gas_network: false #true
+  gas_network: false #true 
   H2_retrofit: false
   H2_retrofit_capacity_per_CH4: 0.6
   gas_network_connectivity_upgrade: 1
   gas_distribution_grid: true
   gas_distribution_grid_cost_factor: 1.0
   biomass_spatial: true
-  biomass_transport: true
+  biomass_transport: true #false
   conventional_generation:
     OCGT: gas
   biomass_to_liquid: false
