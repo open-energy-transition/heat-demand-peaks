@@ -426,7 +426,6 @@ sector:
     annualise_cost: true
     tax_weighting: false
     construction_index: true
-    moderate: true
   tes: true #false
   tes_tau:
     decentral: 3
