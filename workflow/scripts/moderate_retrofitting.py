@@ -29,7 +29,7 @@ os.chdir(new_path)
 """
 
 # %%
-FILE = "elec_s_48_lvopt__Co2L0-1H-T-H-B_2030.nc"
+FILE = "elec_s_48_lvopt__Co2L0-1H-T-H-B-I_2030.nc"
 #FILE = "chpCC_elec_s_48_lcopt__Co2L0-2H-T-H-B_2030.nc"
 DIR = "results/flexible/prenetworks"
 n = pypsa.Network(os.path.join(DIR, FILE))
