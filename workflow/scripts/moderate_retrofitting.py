@@ -19,6 +19,7 @@ base_path = os.path.abspath(os.path.join(__file__ ,"../.."))
 # path to pypsa-eur
 pypsa_path = "pypsa-eur/"
 # absolute path to pypsa-eur
+
 new_path = os.path.join(base_path, pypsa_path)
 # change path to pypsa-eur
 os.chdir(new_path)
@@ -26,6 +27,21 @@ os.chdir(new_path)
 # %%
 """
 # 1. Import network
+"""
+
+# %%
+"""
+### 1a. Import solved flexible network
+"""
+
+# %%
+FILE_flex = "elec_s_48_lvopt__Co2L0-1H-T-H-B-I_2030.nc"
+DIR_flex = "results/flexible/postnetworks"
+n_flex = pypsa.Network(os.path.join(DIR_flex, FILE_flex))
+
+# %%
+"""
+### 1b. Import unsolved flexible network
 """
 
 # %%
@@ -40,9 +56,9 @@ n = pypsa.Network(os.path.join(DIR, FILE))
 """
 
 # %%
-# import data for moderate retrofitting
-filename = "../data/flexible_retro_half.csv"
-retro_data = pd.read_csv(os.path.join(os.getcwd(), filename), index_col=0)
+# get optimal retrofitting from the solved network
+retro_opt = n_flex.generators.query("carrier in 'retrofitting'")[["p_nom_opt"]]
+retro_data = retro_opt / 2
 
 # %%
 # set p_nom as half of p_nom_opt of flexible scenario
