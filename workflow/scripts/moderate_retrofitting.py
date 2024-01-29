@@ -35,9 +35,15 @@ os.chdir(new_path)
 """
 
 # %%
-FILE_flex = "elec_s_48_lvopt__Co2L0-1H-T-H-B-I_2030.nc"
+simpl = ""
+opts = ""
+clusters = "48"
+ll = "vopt"
+sector_opts = "Co2L0-1H-T-H-B-I"
+planning_horizons = "2030"
+FILE = f"elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc"
 DIR_flex = "results/flexible/postnetworks"
-n_flex = pypsa.Network(os.path.join(DIR_flex, FILE_flex))
+n_flex = pypsa.Network(os.path.join(DIR_flex, FILE))
 
 # %%
 """
@@ -45,8 +51,6 @@ n_flex = pypsa.Network(os.path.join(DIR_flex, FILE_flex))
 """
 
 # %%
-FILE = "elec_s_48_lvopt__Co2L0-1H-T-H-B-I_2030.nc"
-#FILE = "chpCC_elec_s_48_lcopt__Co2L0-2H-T-H-B_2030.nc"
 DIR = "results/flexible/prenetworks"
 n = pypsa.Network(os.path.join(DIR, FILE))
 
