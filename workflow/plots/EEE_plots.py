@@ -37,76 +37,79 @@ os.chdir(new_path)
 # 1. Define functions
 """
 
+dont_plot = ["gas storage"]
+
+prefix_to_remove = [
+    "residential ",
+    "services ",
+    "urban ",
+    "rural ",
+    "central ",
+    "decentral ",
+]
+
+rename_if_contains = [
+    "solid biomass CHP",
+    "gas CHP",
+    "gas boiler",
+    "biogas",
+    "solar thermal",
+    "air heat pump",
+    "ground heat pump",
+    "resistive heater",
+    "Fischer-Tropsch",
+]
+
+rename_if_contains_dict = {
+    "water tanks": "TES",
+    "retrofitting": "building retrofitting",
+    # "H2 Electrolysis": "hydrogen storage",
+    # "H2 Fuel Cell": "hydrogen storage",
+    # "H2 pipeline": "hydrogen storage",
+    "battery": "battery storage",
+    # "CC": "CC"
+}
+
+rename = {
+    "Solar": "solar PV",
+    "solar": "solar PV",
+    "Sabatier": "methanation",
+    "helmeth" : "methanation",
+    "Offshore Wind (AC)": "offshore wind",
+    "Offshore Wind (DC)": "offshore wind",
+    "Onshore Wind": "onshore wind",
+    "offwind-ac": "offshore wind",
+    "offwind-dc": "offshore wind",
+    "Run of River": "hydroelectricity",
+    "Run of river": "hydroelectricity",
+    "Reservoir & Dam": "hydroelectricity",
+    "Pumped Hydro Storage": "hydroelectricity",
+    "PHS": "hydroelectricity",
+    "NH3": "ammonia",
+    "co2 Store": "DAC",
+    "co2 stored": "CO2 sequestration",
+    "AC": "transmission lines",
+    "DC": "transmission lines",
+    "B2B": "transmission lines",
+    "solid biomass for industry": "solid biomass",
+    "solid biomass for industry CC": "solid biomass",
+    "electricity distribution grid": "distribution lines",
+    "Open-Cycle Gas":"OCGT",
+    "gas": "gas storage",
+    'gas pipeline new': 'gas pipeline',
+    "gas for industry CC": "gas for industry",
+    "SMR CC": "SMR",
+    "process emissions CC": "process emissions",
+    "Battery Storage": "battery storage",
+    'H2 Store': "H2 storage",
+    'Hydrogen Storage': "H2 storage",
+    'co2 sequestered': "CO2 sequestration",
+    "solid biomass transport": "solid biomass"
+}
+
 # %%
 # renaming function
 def rename_techs(label):
-    prefix_to_remove = [
-        "residential ",
-        "services ",
-        "urban ",
-        "rural ",
-        "central ",
-        "decentral ",
-    ]
-
-    rename_if_contains = [
-        "solid biomass CHP",
-        "gas CHP",
-        "gas boiler",
-        "biogas",
-        "solar thermal",
-        "air heat pump",
-        "ground heat pump",
-        "resistive heater",
-        "Fischer-Tropsch",
-    ]
-
-    rename_if_contains_dict = {
-        "water tanks": "TES",
-        "retrofitting": "building retrofitting",
-        # "H2 Electrolysis": "hydrogen storage",
-        # "H2 Fuel Cell": "hydrogen storage",
-        # "H2 pipeline": "hydrogen storage",
-        "battery": "battery storage",
-        # "CC": "CC"
-    }
-
-    rename = {
-        "Solar": "solar PV",
-        "solar": "solar PV",
-        "Sabatier": "methanation",
-        "helmeth" : "methanation",
-        "Offshore Wind (AC)": "offshore wind",
-        "Offshore Wind (DC)": "offshore wind",
-        "Onshore Wind": "onshore wind",
-        "offwind-ac": "offshore wind",  
-        "offwind-dc": "offshore wind",
-        "Run of River": "hydroelectricity",
-        "Run of river": "hydroelectricity",
-        "Reservoir & Dam": "hydroelectricity",
-        "Pumped Hydro Storage": "hydroelectricity",
-        "PHS": "hydroelectricity",
-        "NH3": "ammonia",
-        "co2 Store": "DAC",
-        "co2 stored": "CO2 sequestration",
-        "AC": "transmission lines",
-        "DC": "transmission lines",
-        "B2B": "transmission lines",
-        "solid biomass for industry": "solid biomass",
-        "solid biomass for industry CC": "solid biomass",
-        "electricity distribution grid": "distribution lines",
-        "Open-Cycle Gas":"OCGT",
-        "gas": "gas storage",
-        'gas pipeline new': 'gas pipeline',
-        "gas for industry CC": "gas for industry",
-        "SMR CC": "SMR",
-        "process emissions CC": "process emissions",
-        "Battery Storage": "battery storage",
-        'H2 Store': "H2 storage",
-        'Hydrogen Storage': "H2 storage",
-        'co2 sequestered': "CO2 sequestration",
-        
-    }
 
     for ptr in prefix_to_remove:
         if label[: len(ptr)] == ptr:
@@ -133,6 +136,7 @@ preferred_order = pd.Index(
         "gas for industry",
         "methanol",
         "oil",
+        "coal",
         
         "transmission lines",
         "distribution lines",
@@ -161,6 +165,10 @@ preferred_order = pd.Index(
         "solar PV",
         "solar thermal",
         "solar rooftop",
+
+        "co2",
+        "CO2 sequestration",
+        "process emissions",
 
         "gas CHP",
         "solid biomass CHP",
@@ -170,82 +178,12 @@ preferred_order = pd.Index(
         "gas boiler",
         "biomass boiler",
         "building retrofitting",
-
-        "co2",
-        "CO2 sequestration",
-        "process emissions"
      ]
 )
 
 # %%
 # renaming function
 def rename_techs2(label):
-    prefix_to_remove = [
-        "residential ",
-        "services ",
-        "urban ",
-        "rural ",
-        "central ",
-        "decentral ",
-    ]
-
-    rename_if_contains = [
-        "solid biomass CHP",
-        "gas CHP",
-        "gas boiler",
-        "biogas",
-        "solar thermal",
-        "air heat pump",
-        "ground heat pump",
-        "resistive heater",
-        "Fischer-Tropsch",
-    ]
-
-    rename_if_contains_dict = {
-        "water tanks": "water tanks discharger",
-        "retrofitting": "building retrofitting",
-        # "H2 Electrolysis": "hydrogen storage",
-        # "H2 Fuel Cell": "hydrogen storage",
-        # "H2 pipeline": "hydrogen storage",
-        "battery": "battery storage",
-        # "CC": "CC"
-    }
-
-    rename = {
-        "Solar": "solar PV",
-        "solar": "solar PV",
-        "Sabatier": "methanation",
-        "helmeth" : "methanation",
-        "Offshore Wind (AC)": "offshore wind",
-        "Offshore Wind (DC)": "offshore wind",
-        "Onshore Wind": "onshore wind",
-        "offwind-ac": "offshore wind",  
-        "offwind-dc": "offshore wind",
-        "Run of River": "hydroelectricity",
-        "Run of river": "hydroelectricity",
-        "Reservoir & Dam": "hydroelectricity",
-        "Pumped Hydro Storage": "hydroelectricity",
-        "PHS": "hydroelectricity",
-        "NH3": "ammonia",
-        "co2 Store": "DAC",
-        "co2 stored": "CO2 sequestration",
-        "AC": "transmission lines",
-        "DC": "transmission lines",
-        "B2B": "transmission lines",
-        "solid biomass for industry": "solid biomass",
-        "solid biomass for industry CC": "solid biomass",
-        "electricity distribution grid": "distribution lines",
-        "Open-Cycle Gas":"OCGT",
-        "gas": "gas storage",
-        'gas pipeline new': 'gas pipeline',
-        "gas for industry CC": "gas for industry",
-        "SMR CC": "SMR",
-        "process emissions CC": "process emissions",
-        "Battery Storage": "battery storage",
-        'H2 Store': "H2 storage",
-        'Hydrogen Storage': "H2 storage",
-        'co2 sequestered': "CO2 sequestration",
-    }
 
     for ptr in prefix_to_remove:
         if label[: len(ptr)] == ptr:
@@ -264,87 +202,38 @@ def rename_techs2(label):
             label = new
     return label
 
-
-preferred_order = pd.Index(
-    [
-        "solid biomass",
-        "solid biomass transport",
-        "biogas",
-        "gas for industry",
-        "methanol",
-        "oil",
-        
-        "transmission lines",
-        "distribution lines",
-        "gas pipeline",
-        "H2 pipeline",
-        
-        "H2 Electrolysis",
-        "H2 Fuel Cell",
-        "DAC",
-        "Fischer-Tropsch",
-        "methanation",
-        "BEV charger",
-        "V2G",
-        "SMR",
-        "methanolisation",
-        
-        "TES",
-        "battery storage",
-        "gas storage",
-        "H2 storage",
-        "water tanks discharger",
-        
-        "hydroelectricity",
-        "OCGT",
-        "onshore wind",
-        "offshore wind",
-        "solar PV",
-        "solar thermal",
-        "solar rooftop",
-        
-        "solid biomass CHP",
-        "gas CHP",
-        "biomass boiler",
-        "gas boiler",
-        "resistive heater",
-        "air heat pump",
-        "ground heat pump",
-        
-        "co2",
-        "CO2 sequestration",
-        "process emissions",
-
-        "building retrofitting"
-     ]
-)
-
 # %%
 """
 # 1. Loading the networks
 """
 
+lineex = "v1.0"
 space_resolution = 48
-sector_opts = "12H-Co2L0-H-T-B"
-planning = 2050
+sector_opts = "Co2L0-1H-T-H-B-I"
+planning = 2030
 
 # %%
-FILE = f"elec_s_{space_resolution}_lvopt__{sector_opts}_{planning}.nc"
-DIR = "results/rigid/postnetworks"
+FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}_rigid.nc"
+DIR = "results/lv1_rigid_i/networks"
 n_rigid = pypsa.Network(os.path.join(DIR, FILE))
 
 # %%
-FILE = f"elec_s_{space_resolution}_lvopt__{sector_opts}_{planning}.nc"
-DIR = "results/flexible/postnetworks"
+FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}_flexible.nc"
+DIR = "results/lv1_flex_i/networks"
 n_flex = pypsa.Network(os.path.join(DIR, FILE))
 
 # %%
-FILE = f"elec_s_{space_resolution}_lvopt__{sector_opts}_{planning}.nc"
-DIR = "results/igas_tes/postnetworks"
+FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}_retro_tes.nc"
+DIR = "results/lv1_nogas_i/networks"
 n_igas_tes = pypsa.Network(os.path.join(DIR, FILE))
 
 # %%
-network = {"rigid":n_rigid, "igas+tes":n_igas_tes, "flexible":n_flex}
+FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}_flexible-moderate.nc"
+DIR = "results/lv1_mod_i/networks"
+n_mod = pypsa.Network(os.path.join(DIR, FILE))
+
+# %%
+network = {"rigid":n_rigid, "igas+tes":n_igas_tes, "flexible":n_flex, "mod":n_mod}
 
 # change directory back to original
 os.chdir(base_path)
@@ -365,20 +254,25 @@ os.makedirs(PATH_PLOTS, exist_ok=True)
 # %%
 costs_rigid = n_rigid.statistics()[["Capital Expenditure", "Operational Expenditure"]].dropna()
 full_costs_rigid = costs_rigid.sum(axis=1).droplevel(0).to_frame()
-full_costs_rigid.columns = ["rigid"]
+full_costs_rigid.columns = ["Supplied Heating"]
 
 # %%
 costs_flex = n_flex.statistics()[["Capital Expenditure", "Operational Expenditure"]].dropna()
 full_costs_flex = costs_flex.sum(axis=1).droplevel(0).to_frame()
-full_costs_flex.columns = ["flexible"]
+full_costs_flex.columns = ["Efficient Heating"]
 
 # %%
 costs_igas_tes = n_igas_tes.statistics()[["Capital Expenditure", "Operational Expenditure"]].dropna()
 full_costs_igas_tes = costs_igas_tes.sum(axis=1).droplevel(0).to_frame()
-full_costs_igas_tes.columns = ["igas+tes"]
+full_costs_igas_tes.columns = ["Efficient Green Heating"]
 
 # %%
-cost_df = full_costs_flex.join(full_costs_igas_tes, how="outer").join(full_costs_rigid, how="outer").fillna(0)
+costs_moderate = n_mod.statistics()[["Capital Expenditure", "Operational Expenditure"]].dropna()
+full_costs_moderate = costs_moderate.sum(axis=1).droplevel(0).to_frame()
+full_costs_moderate.columns = ["Semi-efficient Heating"]
+
+# %%
+cost_df = full_costs_flex.join(full_costs_igas_tes, how="outer").join(full_costs_moderate, how="outer").join(full_costs_rigid, how="outer").fillna(0)
 cost_df
 
 # %%
@@ -410,6 +304,9 @@ def plot_costs(cost_df):
         df.index.difference(preferred_order)
     )
 
+    for remove_tech in dont_plot:
+        new_index = new_index.drop(remove_tech)
+
     new_columns = df.sum().sort_values().index  
 
 
@@ -429,7 +326,7 @@ def plot_costs(cost_df):
 
     costs_max = cost_df.sum().max() / 1e9
     ax.set_ylim([0, costs_max])
-    plt.xticks(rotation=0, fontsize=12)
+    plt.xticks(rotation=10, fontsize=12)
 
     ax.set_ylabel("System Cost [EUR billion per year]")
 
