@@ -72,7 +72,11 @@ n.generators.loc[retro_data.index, "p_nom_extendable"] = False
 
 # %%
 # save changed network
-output_filename = "results/flexible-moderate/prenetworks/" + FILE
+output_path = "results/flexible-moderate/prenetworks/"
+if not os.path.exists(output_path):
+    os.makedirs(output_path)
+    print(f"Folder created at: {output_path}")
+output_filename = output_path + FILE
 n.export_to_netcdf(output_filename)
 
 # %%
