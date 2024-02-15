@@ -366,18 +366,27 @@ sector:
   v2g: true
   land_transport_fuel_cell_share:
     2020: 0
-    2030: 0.15 #0.05
-    2040: 0.15 #0.1
-    2050: 0.15
+    2025: 0
+    2030: 0
+    2035: 0
+    2040: 0
+    2045: 0
+    2050: 0
   land_transport_electric_share:
     2020: 0
-    2030: 0.85 #0.25
-    2040: 0.85 #0.6
-    2050: 0.85
+    2025: 0.15
+    2030: 0.3
+    2035: 0.45
+    2040: 0.7
+    2045: 0.85
+    2050: 1
   land_transport_ice_share:
     2020: 1
-    2030: 0 #0.7
-    2040: 0 #0.3
+    2025: 0.85
+    2030: 0.7
+    2035: 0.55
+    2040: 0.3
+    2045: 0.15
     2050: 0
   transport_fuel_cell_efficiency: 0.5
   transport_internal_combustion_efficiency: 0.3
