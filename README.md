@@ -23,7 +23,7 @@ The study is developed as an extension to the PyPSA-Eur model in this repository
 
 Clone the repository including its submodules:
 
-`git clone --recurse-submodules git@github.com:open-energy-transition/heat-demand-peaks`
+`git clone --recurse-submodules https://github.com/open-energy-transition/heat-demand-peaks`
 
 Install the necessary dependencies using `conda` or `mamba`:
 
