@@ -4,3 +4,9 @@
 [submodule "workflow/technology-data"]
 	path = workflow/technology-data
 	url = https://github.com/PyPSA/technology-data
+[submodule "submodules/pypsa-eur"]
+	path = submodules/pypsa-eur
+	url = https://github.com/PyPSA/pypsa-eur
+[submodule "submodules/technology-data"]
+	path = submodules/technology-data
+	url = https://github.com/PyPSA/technology-data
