@@ -18,7 +18,7 @@ scenario:
 sector:
   district_heating:
     progress:
-      2030: 0.0
+      2030: 0.3
   retrofitting:
     retro_endogen: true 
   tes: true
@@ -34,6 +34,12 @@ sector:
   use_electrolysis_waste_heat: false
   biomass_spatial: true
   biomass_transport: true
+  land_transport_fuel_cell_share:
+    2030: 0.05
+  land_transport_electric_share:
+    2030: 0.25
+  land_transport_ice_share:
+    2030: 0.7
 
 costs:
   year: 2025
