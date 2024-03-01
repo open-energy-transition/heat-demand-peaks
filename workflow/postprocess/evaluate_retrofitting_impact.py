@@ -261,31 +261,58 @@ building_stock_clean = building_stock_clean[~building_stock_clean.bage.isna()]
 building_stock_clean.country_code = building_stock_clean.country_code.str.upper()
 
 # country-specific data -------------------------------------------------------
-country_in_focus = "PL"
 
-national_thermal_quality_df = build_national_stock_stats(
-    buildings_df=building_stock_clean,
-    country=country_in_focus,
-    thermal_df=thermal_quality_df,
+shell_retro_df = pd.DataFrame(
+    {
+        "country_code": building_stock_clean.country_code.unique(),
+        "shell_retro_rate": -99999
+    }
 )
 
-overall_building_stock_df2 = prepare_retro_df(
-    national_buildings_df=national_thermal_quality_df, 
-    retrofitted_sectors=["AB", "MFH", "SFH"]
+country_in_focus = "BE"
+
+#for cnt in shell_retro_df.country_code[[0]]:
+#for cnt in ["BE"]:
+for cnt in shell_retro_df.country_code:
+
+    national_thermal_quality_df = build_national_stock_stats(
+        buildings_df=building_stock_clean,
+        country=cnt,
+        thermal_df=thermal_quality_df,
+    )
+    
+    overall_building_stock_df2 = prepare_retro_df(
+        national_buildings_df=national_thermal_quality_df, 
+        # retrofitted_sectors=["AB", "MFH", "SFH"]        # v1
+        #retrofitted_sectors=["SFH", "MFH", "AB"]         # v2
+        retrofitted_sectors=["Education", "Health", "AB", "MFH"] # v3
+        )
+    
+    demand_decrease_overall = (
+        heat_savings.loc[
+            heat_savings.country == cnt, 
+            ["ambit_retro_rel_dE_ann", "moderate_retro_rel_dE_ann"]
+        ].sum()
+        .sum()
+    )
+    
+    shell_renovation_rate = eval_shell_renovation_rate(
+        national_buildings_df=overall_building_stock_df2,
+        demand_decrease=demand_decrease_overall
     )
 
-demand_decrease_overall = (
-    heat_savings.loc[
-        heat_savings.country == country_in_focus, 
-        ["ambit_retro_rel_dE_ann", "moderate_retro_rel_dE_ann"]
-    ].sum()
-    .sum()
-)
+    print("country_in_focus")
+    print(cnt)
+    print("demand_decrease_overall")
+    print(demand_decrease_overall)
+    print("shell_renovation_rate")
+    print(shell_renovation_rate)
 
-shell_renovation_rate = eval_shell_renovation_rate(
-    national_buildings_df=overall_building_stock_df2,
-    demand_decrease=demand_decrease_overall
-)
+    i_cnt = shell_retro_df.index[shell_retro_df.country_code == cnt].item()
+    shell_retro_df.at[i_cnt, "shell_retro_rate"] = shell_renovation_rate
+
+
+shell_retro_df.to_csv("shell_retro_df_v3.csv")
 
 print("country_in_focus")
 print(country_in_focus)
