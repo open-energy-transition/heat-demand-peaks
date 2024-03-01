@@ -6,7 +6,7 @@
 # %%
 import os
 import sys
-sys.path.append("../pypsa-eur")
+sys.path.append("../submodules/pypsa-eur")
 import pypsa
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 plt.style.use("ggplot")
 
 # get the current working directory
-base_path = os.path.abspath(os.path.join(__file__ ,"../.."))
+base_path = os.path.abspath(os.path.join(__file__ ,"../../submodules"))
 # path to pypsa-eur
 pypsa_path = "pypsa-eur/"
 # absolute path to pypsa-eur
@@ -214,22 +214,22 @@ planning = 2030
 
 # %%
 FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}_rigid.nc"
-DIR = "results/lv1_rigid_i/networks"
+DIR = "results/rigid/postnetworks"
 n_rigid = pypsa.Network(os.path.join(DIR, FILE))
 
 # %%
 FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}_flexible.nc"
-DIR = "results/lv1_flex_i/networks"
+DIR = "results/flexible/postnetworks"
 n_flex = pypsa.Network(os.path.join(DIR, FILE))
 
 # %%
 FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}_retro_tes.nc"
-DIR = "results/lv1_nogas_i/networks"
+DIR = "results/retro_tes/postnetworks"
 n_igas_tes = pypsa.Network(os.path.join(DIR, FILE))
 
 # %%
 FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}_flexible-moderate.nc"
-DIR = "results/lv1_mod_i/networks"
+DIR = "results/flexible-moderate/postnetworks"
 n_mod = pypsa.Network(os.path.join(DIR, FILE))
 
 # %%
@@ -238,7 +238,7 @@ network = {"rigid":n_rigid, "igas+tes":n_igas_tes, "flexible":n_flex, "mod":n_mo
 # change directory back to original
 os.chdir(base_path)
 # relative path to folder where to store plots
-PATH_PLOTS = "plots/results/"
+PATH_PLOTS = "../plots/results/"
 # create folder to store images
 os.makedirs(PATH_PLOTS, exist_ok=True)
 # %%
