@@ -155,7 +155,11 @@ def prepare_retro_df(
     )
     return national_buildings_df2
 
-def eval_shell_renovation_rate(national_buildings_df, demand_decrease):
+def eval_shell_renovation_rate(
+        national_buildings_df,
+        demand_decrease,
+        tol=0.05
+    ):
     national_buildings_df["demand_share_cumsum"] = (
         national_buildings_df.demand_share.cumsum(axis=0)
     )
@@ -177,7 +181,7 @@ def eval_shell_renovation_rate(national_buildings_df, demand_decrease):
     remained_demand_share_to_cover = (
        demand_decrease_overall - demand_share_bulk_covered_by_retro
     )
-    if remained_demand_share_to_cover:
+    if remained_demand_share_to_cover > tol:
     
         k_retro_share_cohort = (
             national_buildings_df.loc[national_buildings_df[["retrofitted"]].idxmin()]["demand_share"] /
