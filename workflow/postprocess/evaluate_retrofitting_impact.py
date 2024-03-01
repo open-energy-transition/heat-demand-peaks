@@ -314,9 +314,12 @@ for cnt in shell_retro_df.country_code:
 
 shell_retro_df.to_csv("shell_retro_df_v3.csv")
 
-print("country_in_focus")
-print(country_in_focus)
-print("demand_decrease_overall")
-print(demand_decrease_overall)
-print("shell_renovation_rate")
-print(shell_renovation_rate)
+print("mean shell retrofitting rate")
+print(shell_retro_df["shell_retro_rate"].mean())
+
+# print("country_in_focus")
+# print(country_in_focus)
+# print("demand_decrease_overall")
+# print(demand_decrease_overall)
+# print("shell_renovation_rate")
+# print(shell_renovation_rate)
