@@ -174,8 +174,8 @@ if __name__ == "__main__":
     # load networks
     n_flex, n_flex_mod, n_retro_tes, n_rigid = load_networks(lineex, space_resolution, sector_opts, planning)
     networks = {"Efficient Heating": n_flex, 
-                "Semi-Efficient Heating": n_flex_mod, 
                 "Efficient Green Heating": n_retro_tes, 
+                "Semi-Efficient Heating": n_flex_mod, 
                 "Non-efficient Heating": n_rigid}
 
     # move to base directory
