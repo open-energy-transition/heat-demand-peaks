@@ -54,6 +54,7 @@ def extract_relative_dE_ann(retro_scheme, n, country):
 
     return(dE_retro_ambit_ann/Q_heat_ann)
 
+# TODO Address data loss for the missed countries codes
 def build_national_stock_stats(
     country,
     thermal_df,
@@ -120,7 +121,8 @@ def prepare_retro_df(
     ):
     bg = ['Before 1945', '1945 - 1969', '1970 - 1979', '1980 - 1989',
         '1990 - 1999', '2000 - 2010', 'Post 2010']
-
+    # TODO 1 "value_mln_buildings" column may be not available
+    # TODO 2 The heat losses values should account for a mixture of ambitious and moderate schemes
     national_buildings_df["demand_weight"] = national_buildings_df.apply(
     # heat_transfer is still [W/K], no need to multiply on A_envelope
         lambda row: row["new_U_0.07"]*row["value_mln_buildings"],
