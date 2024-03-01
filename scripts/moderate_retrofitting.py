@@ -6,7 +6,7 @@
 # %%
 import os
 import sys
-sys.path.append("../pypsa-eur")
+sys.path.append("../submodules/pypsa-eur")
 import pypsa
 import pandas as pd
 import logging
@@ -15,7 +15,7 @@ warnings.filterwarnings("ignore")
 logger = logging.getLogger(__name__)
 
 # get the current working directory
-base_path = os.path.abspath(os.path.join(__file__ ,"../.."))
+base_path = os.path.abspath(os.path.join(__file__ ,"../../submodules"))
 # path to pypsa-eur
 pypsa_path = "pypsa-eur/"
 # absolute path to pypsa-eur
@@ -38,9 +38,9 @@ os.chdir(new_path)
 simpl = ""
 opts = ""
 clusters = "48"
-ll = "vopt"
-sector_opts = "Co2L0-1H-T-H-B-I"
-planning_horizons = "2030"
+ll = "v1.5"
+sector_opts = "Co2L0.0-1H-T-H-B-I"
+planning_horizons = "2050"
 FILE = f"elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc"
 DIR_flex = "results/flexible/postnetworks"
 n_flex = pypsa.Network(os.path.join(DIR_flex, FILE))

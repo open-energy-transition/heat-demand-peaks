@@ -1,0 +1,51 @@
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: CC0-1.0
+
+run:
+  name: "rigid"
+
+scenario:
+  ll:
+  - v1.5
+  clusters:
+  - 48
+  sector_opts:
+  - Co2L0.0-1H-T-H-B-I
+  planning_horizons:
+  - 2050
+
+sector:
+  district_heating:
+    progress:
+      2050: 1.0
+  retrofitting:
+    retro_endogen: false # true 
+  tes: false # true
+  boilers: false #true
+  biomass_boiler: false
+  micro_chp: true
+  regional_coal_demand: true
+  use_fischer_tropsch_waste_heat: false
+  use_haber_bosch_waste_heat: false
+  use_methanolisation_waste_heat: false
+  use_methanation_waste_heat: false
+  use_fuel_cell_waste_heat: true
+  use_electrolysis_waste_heat: false
+  biomass_spatial: true
+  biomass_transport: true
+  land_transport_fuel_cell_share:
+    2050: 0.15
+  land_transport_electric_share:
+    2050: 0.85
+  land_transport_ice_share:
+    2050: 0
+
+costs:
+  year: 2045
+
+solving:
+  solver_options:
+    gurobi-default:
+      threads: 8
+      BarConvTol: 1.e-4
