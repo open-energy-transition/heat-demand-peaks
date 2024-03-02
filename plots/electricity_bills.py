@@ -139,27 +139,67 @@ def electricity_bills(network, households):
     return elec_bills_household
 
 
-def plot_electricity_bills(total_elec_bills):
-    # sort countries by flexible bills' cost
-    sorted_bills_household = total_elec_bills.sort_values(by="Efficient Heating", axis=1)
+def plot_electricity_cost(df_prices, name):
+    # Check if name is one of the allowed values
+    allowed_names = ["bills", "prices"]
+    if name not in allowed_names:
+        raise ValueError("name must be one of {}".format(allowed_names))
+
+    # sort countries by flexible's electricity cost
+    sorted_df_prices = df_prices.sort_values(by="Efficient Heating", axis=1)
 
     # color codes for legend
     color_codes = {"Efficient Heating":"purple", "Efficient Green Heating":"limegreen", "Semi-Efficient Heating":"royalblue", "Non-efficient Heating":"#f4b609"}
 
     # plot as bar plot
     fig, ax = plt.subplots(figsize=(12,4))
-    sorted_bills_household.T.plot.bar(ax=ax, width=0.7, color=color_codes)
+    sorted_df_prices.T.plot.bar(ax=ax, width=0.7, color=color_codes)
     # define plot parameters
     ax.set_facecolor("white")
     ax.legend(loc="upper left", facecolor="white")
     ylabel = ax.set_ylabel("EUR/household")
     xlabel = ax.set_xlabel("countries")
-    ax.set_title("Electricity price per country")
     ax.spines['left'].set_color('black')
     ax.spines['bottom'].set_color('black')
     ax.grid(axis='y', linestyle='--', linewidth=0.5, color='gray')
+    if name == "bills":
+        ax.set_title("Electricity bills")
+    elif name == "prices":
+        ax.set_title("Electricity price per country")
     # save figure
-    plt.savefig(PATH_PLOTS+"bill_per_household.png", bbox_inches='tight', dpi=600)
+    if name == "bills":
+        plt.savefig(PATH_PLOTS+"bill_per_household.png", bbox_inches='tight', dpi=600)
+    elif name == "prices":
+        plt.savefig(PATH_PLOTS+"prices_per_MWh.png", bbox_inches='tight', dpi=600)
+
+
+def electricity_prices(network, households):
+    n = network.copy()
+    
+    # rename AL1 0 load to AL1 0 low voltage
+    n.loads_t.p_set =  n.loads_t.p_set.rename(columns=n.loads.bus.to_dict())
+    load_cols = n.loads_t.p_set.columns
+    
+    # sum total electricity price per country in EUR using loads and marginal prices ar buses
+    prices = n.loads_t.p_set.multiply(n.snapshot_weightings.stores, axis=0).multiply(n.buses_t.marginal_price[load_cols]).sum()
+    
+    # rename indexes to 2-letter country code
+    prices.index = [x[:2] for x in prices.index]
+    
+    # group by country
+    prices = prices.groupby(level=0).sum()
+      
+    # total load
+    total_load = n.loads_t.p_set.multiply(n.snapshot_weightings.stores, axis=0).sum()
+    total_load.index = [x[:2] for x in total_load.index]
+    total_load_country = total_load.groupby(level=0).sum()
+    
+    # electricity bill per MWh [EUR/MWh]
+    elec_bills_MWh = prices / total_load_country
+    
+    return elec_bills_MWh
+
+
 
 if __name__ == "__main__":
     # network parameters
@@ -184,18 +224,25 @@ if __name__ == "__main__":
     # load country-wise households
     households = get_households()
     
-    # calculate electricity bills per household for each network
+    # calculate electricity bills per household for each network and electricity prices
     total_elec_bills = pd.DataFrame()
+    total_elec_prices = pd.DataFrame()
     for name, network in networks.items():
         # get electricity bills
         elec_bills_household = electricity_bills(network, households)
+        # get electricity prices
+        elec_bills_MWh = electricity_prices(network, households)
         # rename series name to scenario name
         elec_bills_household.name = name
+        elec_bills_MWh.name = name
         # concatenate current results
         total_elec_bills = pd.concat([total_elec_bills, elec_bills_household.to_frame().T], axis=0)
+        total_elec_prices = pd.concat([total_elec_prices, elec_bills_MWh.to_frame().T], axis=0)
 
     # plot and store electricity bills
-    plot_electricity_bills(total_elec_bills)
+    plot_electricity_cost(total_elec_bills, "bills")
+    # plot and store electricity prices
+    plot_electricity_cost(total_elec_prices, "prices")
 
 
         
