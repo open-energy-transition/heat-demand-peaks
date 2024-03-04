@@ -23,7 +23,7 @@ def change_path_to_pypsa_eur():
 
 
 def load_networks(lineex, space_resolution, sector_opts, planning):
-    FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}_flexible.nc"
+    FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}.nc"
     DIR = "results/flexible/postnetworks"
     n_flex = pypsa.Network(os.path.join(DIR, FILE))
 
