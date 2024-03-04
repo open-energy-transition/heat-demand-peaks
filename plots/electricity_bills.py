@@ -244,12 +244,3 @@ if __name__ == "__main__":
     # plot and store electricity prices
     plot_electricity_cost(total_elec_prices, "prices")
 
-
-        
-
-
-
-
-
-
-
