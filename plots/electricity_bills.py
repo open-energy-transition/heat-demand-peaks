@@ -49,7 +49,7 @@ def change_path_to_base():
 
 
 def get_households():
-    household_data = pd.read_excel("plots/Households.xlsx",skiprows=1,usecols="B:D")
+    household_data = pd.read_csv("plots/Households.csv")
     households = household_data.set_index("Country")[ "Households (thousands)"]
     households.index.name=""
     return households
