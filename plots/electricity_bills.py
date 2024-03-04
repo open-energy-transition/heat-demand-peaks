@@ -31,7 +31,7 @@ def load_networks(lineex, space_resolution, sector_opts, planning):
     DIR = "results/retro_tes/postnetworks"
     n_retro_tes = pypsa.Network(os.path.join(DIR, FILE))
 
-    FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}_flexible-moderate.nc"
+    FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}.nc"
     DIR = "results/flexible-moderate/postnetworks"
     n_flex_mod = pypsa.Network(os.path.join(DIR, FILE))
 
