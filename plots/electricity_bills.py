@@ -56,7 +56,7 @@ def get_households():
 
 
 def electricity_bills(network, households):
-    n = network.copy()
+    n = network
     
     rh_techs_elec = ['residential rural ground heat pump',
                      'residential rural resistive heater', 
@@ -174,7 +174,7 @@ def plot_electricity_cost(df_prices, name):
 
 
 def electricity_prices(network, households):
-    n = network.copy()
+    n = network
     
     # rename AL1 0 load to AL1 0 low voltage
     n.loads_t.p_set =  n.loads_t.p_set.rename(columns=n.loads.bus.to_dict())
