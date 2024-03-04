@@ -166,7 +166,7 @@ def plot_electricity_cost(df_prices, name):
         ylabel = ax.set_ylabel("EUR/household")
         plt.savefig(PATH_PLOTS+"bill_per_household.png", bbox_inches='tight', dpi=600)
     elif name == "prices":
-        ax.set_title("Electricity price per country")
+        ax.set_title("Energy price per country")
         ylabel = ax.set_ylabel("EUR/MWh")
         plt.savefig(PATH_PLOTS+"prices_per_MWh.png", bbox_inches='tight', dpi=600)
 
@@ -174,19 +174,28 @@ def plot_electricity_cost(df_prices, name):
 def electricity_prices(network, households):
     n = network
     
-    # low voltage buses
-    lv_buses = n.buses.query("carrier == 'low voltage'").index
+    # rename AL1 0 load to AL1 0 low voltage
+    n.loads_t.p_set =  n.loads_t.p_set.rename(columns=n.loads.bus.to_dict())
+    load_cols = n.loads_t.p_set.columns
     
     # sum total electricity price per country in EUR using loads and marginal prices ar buses
-    prices = n.buses_t.marginal_price[lv_buses]
+    prices = n.loads_t.p_set.multiply(n.snapshot_weightings.stores, axis=0).multiply(n.buses_t.marginal_price[load_cols]).sum()
     
-    # rename columns to 2-letter country code
-    prices.columns = [x[:2] for x in prices.columns]
+    # rename indexes to 2-letter country code
+    prices.index = [x[:2] for x in prices.index]
     
     # group by country
-    elec_price_MWh = prices.groupby(level=0, axis=1).sum().mean()
+    prices = prices.groupby(level=0).sum()
+
+    # total load
+    total_load = n.loads_t.p_set.multiply(n.snapshot_weightings.stores, axis=0).sum()
+    total_load.index = [x[:2] for x in total_load.index]
+    total_load_country = total_load.groupby(level=0).sum()
+
+    # electricity bill per MWh [EUR/MWh]
+    energy_price_MWh = prices / total_load_country
     
-    return elec_price_MWh
+    return energy_price_MWh
 
 
 
