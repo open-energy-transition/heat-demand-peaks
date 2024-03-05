@@ -19,7 +19,7 @@ sector:
   district_heating:
     progress:
       2030: 0.3
-  cluster_heat_buses: false
+  cluster_heat_buses: f
   retrofitting:
     retro_endogen: true 
   tes: true
@@ -46,6 +46,8 @@ costs:
   year: 2025
 
 solving:
+  options:
+    assign_all_duals: true
   solver_options:
     gurobi-default:
       threads: 8

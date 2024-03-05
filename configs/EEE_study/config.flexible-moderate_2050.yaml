@@ -46,6 +46,8 @@ costs:
   year: 2045
 
 solving:
+  options:
+    assign_all_duals: true
   solver_options:
     gurobi-default:
       threads: 8
