@@ -61,7 +61,10 @@ def electricity_bills(network, households):
     rh_techs_elec = ['residential rural ground heat pump',
                      'residential rural resistive heater', 
                      'residential urban decentral air heat pump',
-                     'residential urban decentral resistive heater']
+                     'residential urban decentral resistive heater',
+                     'urban central resistive heater',
+                     'urban central air heat pump',
+                     'residential rural air heat pump']
     rh_techs_gas = ['residential rural gas boiler', 'residential urban decentral gas boiler', 'urban central gas boiler']
     rh_techs_mCHP = ['residential rural micro gas CHP', 'residential urban decentral micro gas CHP']
     
