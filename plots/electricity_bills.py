@@ -118,7 +118,7 @@ def electricity_bills(network, households):
         rh_gas_mapping = n.links.loc[rh_gas_links, "bus0"].to_dict()
         rh_gas_consume = n.links_t.p0[rh_gas_links]
         rh_gas_consume = rh_gas_consume.rename(columns=rh_gas_mapping)
-        rh_gas_consume = rh_gas_consume.groupby(level=0, axis=1).sum()
+        rh_gas_consume = rh_gas_consume.T.groupby(level=0).sum().T
     else:
         rh_gas_consume = pd.DataFrame()
     
