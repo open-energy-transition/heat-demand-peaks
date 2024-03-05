@@ -110,7 +110,7 @@ def electricity_bills(network, households):
     rh_mCHP_gas_mapping = n.links.loc[rh_mCHP_links, "bus0"].to_dict()
     rh_mCHP_consume = n.links_t.p0[rh_mCHP_links]
     rh_mCHP_consume = rh_mCHP_consume.rename(columns=rh_mCHP_gas_mapping)
-    rh_mCHP_consume = rh_mCHP_consume.groupby(level=0, axis=1).sum()
+    rh_mCHP_consume = rh_mCHP_consume.T.groupby(level=0).sum().T
     
     # gas consumption of gas boilers in EU_gas bus in links
     rh_gas_links = n.links.query("carrier in @rh_techs_gas").index
