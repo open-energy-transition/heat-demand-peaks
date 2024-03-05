@@ -83,7 +83,7 @@ def electricity_bills(network, households):
     rh_techs_mapping = n.links.loc[rh_elec_links, "bus0"].to_dict()
     rh_techs_consume = n.links_t.p0[rh_elec_links]
     rh_techs_consume = rh_techs_consume.rename(columns=rh_techs_mapping)
-    rh_techs_consume = rh_techs_consume.groupby(level=0, axis=1).sum()
+    rh_techs_consume = rh_techs_consume.T.groupby(level=0).sum().T
     
     # electricity consumption of land transport EV in low_voltage bus in links
     ev_charge_links = n.links.query("carrier in @ev_tech_charge").index
