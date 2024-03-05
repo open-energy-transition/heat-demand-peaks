@@ -104,7 +104,7 @@ def electricity_bills(network, households):
     rh_mCHP_lv_mapping = n.links.loc[rh_mCHP_links, "bus1"].to_dict()
     rh_mCHP_prosume = n.links_t.p1[rh_mCHP_links]
     rh_mCHP_prosume = rh_mCHP_prosume.rename(columns=rh_mCHP_lv_mapping)
-    rh_mCHP_prosume = rh_mCHP_prosume.groupby(level=0, axis=1).sum()
+    rh_mCHP_prosume = rh_mCHP_prosume.T.groupby(level=0).sum().T
     
     # gas consumption of micro CHP in EU_gas bus in links
     rh_mCHP_gas_mapping = n.links.loc[rh_mCHP_links, "bus0"].to_dict()
