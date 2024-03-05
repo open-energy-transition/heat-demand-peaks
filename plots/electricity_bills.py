@@ -97,7 +97,7 @@ def electricity_bills(network, households):
     ev_discharge_mapping = n.links.loc[ev_discharge_links, "bus1"].to_dict()
     ev_tech_prosume = n.links_t.p1[ev_discharge_links]
     ev_tech_prosume = ev_tech_prosume.rename(columns=ev_discharge_mapping)
-    ev_tech_prosume = ev_tech_prosume.groupby(level=0, axis=1).sum()
+    ev_tech_prosume = ev_tech_prosume.T.groupby(level=0).sum().T
     
     # electricity prosumption of micro CHP to low_voltage bus in links
     rh_mCHP_links = n.links.query("carrier in @rh_techs_mCHP").index
