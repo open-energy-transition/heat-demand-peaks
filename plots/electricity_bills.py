@@ -90,7 +90,7 @@ def electricity_bills(network, households):
     ev_charge_mapping = n.links.loc[ev_charge_links, "bus0"].to_dict()
     ev_tech_consume = n.links_t.p0[ev_charge_links]
     ev_tech_consume = ev_tech_consume.rename(columns=ev_charge_mapping)
-    ev_tech_consume = ev_tech_consume.groupby(level=0, axis=1).sum()
+    ev_tech_consume = ev_tech_consume.T.groupby(level=0).sum().T
     
     # electricity prosumption of land transport EV to low_voltage bus in links
     ev_discharge_links = n.links.query("carrier in @ev_tech_discharge").index
