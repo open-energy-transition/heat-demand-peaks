@@ -19,11 +19,14 @@ scenario:
 lines:
   s_max_pu: 0.5
 
+energy:
+  energy_totals_year: 2013
+
 sector:
   district_heating:
     progress:
       2030: 0.3
-  cluster_heat_buses: f
+  cluster_heat_buses: false
   retrofitting:
     retro_endogen: true 
   tes: true
