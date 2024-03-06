@@ -19,10 +19,14 @@ scenario:
 lines:
   s_max_pu: 0.5
 
+electricity:
+  custom_powerplants: true
+
 energy:
   energy_totals_year: 2013
 
 sector:
+  agriculture: false
   district_heating:
     progress:
       2030: 0.3
