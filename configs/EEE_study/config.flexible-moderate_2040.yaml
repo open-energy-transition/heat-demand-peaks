@@ -25,6 +25,9 @@ electricity:
 energy:
   energy_totals_year: 2013
 
+biomass:
+  year: 2040
+
 sector:
   agriculture: false
   district_heating:
