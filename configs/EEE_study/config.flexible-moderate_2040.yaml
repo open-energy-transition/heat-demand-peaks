@@ -19,6 +19,9 @@ scenario:
 lines:
   s_max_pu: 0.5
 
+energy:
+  energy_totals_year: 2013
+
 sector:
   district_heating:
     progress:
