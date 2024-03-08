@@ -131,6 +131,7 @@ def rename_techs(label):
 
 preferred_order = pd.Index(
     [
+        "nuclear",
         "solid biomass",
         "biogas",
         "gas for industry",
@@ -207,28 +208,28 @@ def rename_techs2(label):
 # 1. Loading the networks
 """
 
-lineex = "v1.0"
+lineex = "v1.15"
 space_resolution = 48
-sector_opts = "Co2L0-1H-T-H-B-I"
+sector_opts = "Co2L0.45-100H-T-H-B-I"
 planning = 2030
 
 # %%
-FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}_rigid.nc"
+FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}.nc"
 DIR = "results/rigid/postnetworks"
 n_rigid = pypsa.Network(os.path.join(DIR, FILE))
 
 # %%
-FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}_flexible.nc"
+FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}.nc"
 DIR = "results/flexible/postnetworks"
 n_flex = pypsa.Network(os.path.join(DIR, FILE))
 
 # %%
-FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}_retro_tes.nc"
+FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}.nc"
 DIR = "results/retro_tes/postnetworks"
 n_igas_tes = pypsa.Network(os.path.join(DIR, FILE))
 
 # %%
-FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}_flexible-moderate.nc"
+FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}.nc"
 DIR = "results/flexible-moderate/postnetworks"
 n_mod = pypsa.Network(os.path.join(DIR, FILE))
 
@@ -273,7 +274,7 @@ full_costs_moderate.columns = ["Semi-efficient Heating"]
 
 # %%
 cost_df = full_costs_flex.join(full_costs_igas_tes, how="outer").join(full_costs_moderate, how="outer").join(full_costs_rigid, how="outer").fillna(0)
-cost_df
+cost_df = cost_df.drop("oil", axis=0)
 
 # %%
 """
