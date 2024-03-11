@@ -155,11 +155,11 @@ def plot_electricity_cost(df_prices, name):
     color_codes = {"Efficient Heating":"purple", "Efficient Green Heating":"limegreen", "Semi-Efficient Heating":"royalblue", "Non-efficient Heating":"#f4b609"}
 
     # plot as bar plot
-    fig, ax = plt.subplots(figsize=(12,4))
+    fig, ax = plt.subplots(figsize=(7,3))
     sorted_df_prices.T.plot.bar(ax=ax, width=0.7, color=color_codes)
     # define plot parameters
     ax.set_facecolor("white")
-    ax.legend(loc="upper left", facecolor="white")
+    ax.legend(loc="upper left", facecolor="white", fontsize='x-small')
     xlabel = ax.set_xlabel("countries")
     ax.spines['left'].set_color('black')
     ax.spines['bottom'].set_color('black')
@@ -197,6 +197,9 @@ def electricity_prices(network, households):
 
     # electricity bill per MWh [EUR/MWh]
     energy_price_MWh = prices / total_load_country
+
+    # drop EU
+    energy_price_MWh.drop("EU", axis=0, inplace=True)
     
     return energy_price_MWh
 
@@ -204,9 +207,9 @@ def electricity_prices(network, households):
 
 if __name__ == "__main__":
     # network parameters
-    lineex = "v1.0"
+    lineex = "v1.15"
     space_resolution = 48
-    sector_opts = "Co2L0-1H-T-H-B-I"
+    sector_opts = "Co2L0.45-100H-T-H-B-I"
     planning = 2030
 
     # move to submodules/pypsa-eur
