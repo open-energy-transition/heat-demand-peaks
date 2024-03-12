@@ -167,11 +167,11 @@ def plot_electricity_cost(df_prices, name):
     if name == "bills":
         ax.set_title("Electricity bills")
         ylabel = ax.set_ylabel("EUR/household")
-        plt.savefig(PATH_PLOTS+"bill_per_household.png", bbox_inches='tight', dpi=600)
+        plt.savefig(PATH_PLOTS+f"plot_bill_per_household_{space_resolution}_{planning}.png", bbox_inches='tight', dpi=600)
     elif name == "prices":
         ax.set_title("Energy price per country")
         ylabel = ax.set_ylabel("EUR/MWh")
-        plt.savefig(PATH_PLOTS+"prices_per_MWh.png", bbox_inches='tight', dpi=600)
+        plt.savefig(PATH_PLOTS+f"plot_prices_per_MWh_{space_resolution}_{planning}.png", bbox_inches='tight', dpi=600)
 
 
 def electricity_prices(network, households):
@@ -207,10 +207,12 @@ def electricity_prices(network, households):
 
 if __name__ == "__main__":
     # network parameters
-    lineex = "v1.15"
+    co2l_limits = {2030:0.45, 2040:0.1, 2050:0.0}
+    line_limits = {2030:"v1.15", 2040:"v1.3", 2050:"v1.5"}
     space_resolution = 48
-    sector_opts = "Co2L0.45-100H-T-H-B-I"
     planning = 2030
+    lineex = line_limits[planning]
+    sector_opts = f"Co2L{co2l_limits[planning]}-100H-T-H-B-I"
 
     # move to submodules/pypsa-eur
     change_path_to_pypsa_eur()
