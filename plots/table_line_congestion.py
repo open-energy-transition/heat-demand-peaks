@@ -1,0 +1,79 @@
+import os
+import sys
+sys.path.append("../submodules/pypsa-eur")
+import pypsa
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import warnings
+warnings.filterwarnings("ignore")
+
+# get the base working directory
+BASE_PATH = os.path.abspath(os.path.join(__file__ ,"../.."))
+# relative path to folder where to store plots
+PATH_PLOTS = "plots/results/"
+
+
+def change_path_to_pypsa_eur():
+    # path to pypsa-eur
+    pypsa_path = "submodules/pypsa-eur/"
+    # absolute path to pypsa-eur
+    new_path = os.path.join(BASE_PATH, pypsa_path)
+    # change path to pypsa-eur
+    os.chdir(new_path)
+
+
+def load_network(lineex, space_resolution, sector_opts, planning, scenario):
+    FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}.nc"
+    DIR = f"results/{scenario}/postnetworks"
+    n = pypsa.Network(os.path.join(DIR, FILE))
+    return n
+
+
+def change_path_to_base():
+    os.chdir(BASE_PATH)
+    # create folder to store images
+    os.makedirs(PATH_PLOTS, exist_ok=True)
+
+
+if __name__ == "__main__":
+    # move to submodules/pypsa-eur
+    change_path_to_pypsa_eur()
+    # network parameters
+    co2l_limits = {2030:0.45, 2040:0.1, 2050:0.0}
+    line_limits = {2030:"v1.15", 2040:"v1.3", 2050:"v1.5"}
+    space_resolution = 48
+
+    # define scenario namings
+    scenarios = {"flexible": "Optimal Renovation and Heating", 
+                 "retro_tes": "Optimal Renovation and Green Heating", 
+                 "flexible-moderate": "Limited Renovation and Optimal Heating", 
+                 "rigid": "No Renovation and Optimal Heating"}
+
+    # define dataframe to store grid congestion
+    df_congestion = pd.DataFrame()
+
+    # line congestion estimation
+    for planning in [2030, 2040, 2050]:
+        lineex = line_limits[planning]
+        sector_opts = f"Co2L{co2l_limits[planning]}-1H-T-H-B-I"
+
+        for scenario, nice_name in scenarios.items():
+            # load networks
+            n = load_network(lineex, space_resolution, sector_opts, planning, scenario)
+
+            # estimate upper and lower limits of congestion of grid
+            upper = n.lines_t.mu_upper.multiply(n.snapshot_weightings.stores, axis=0).mean().multiply(n.lines.length).mean()
+            lower = n.lines_t.mu_lower.multiply(n.snapshot_weightings.stores, axis=0).mean().multiply(n.lines.length).mean()
+            congestion = (upper + lower) / 2
+            df_congestion.loc[nice_name, planning] = round((congestion / 1e6), 2)
+
+    # add name for columns
+    df_congestion.index.name = "Scenario [m. €/MW]"
+
+    # move to base directory
+    change_path_to_base()
+
+    # save the heat pumps data in Excel format
+    df_congestion.to_excel(PATH_PLOTS+f"table_grid_congestion_{space_resolution}.xlsx")
+
