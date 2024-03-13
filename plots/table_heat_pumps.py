@@ -53,10 +53,11 @@ def define_heat_pump_dataframe():
 
     # Define column levels
     col_level_0 = [2030]*5 + [2040]*4 + [2050]*4
-    col_level_1 = ["Efficient Heating", "Efficient Green Heating", "Semi-Efficient Heating",
-                   "Non-efficient Heating", "EU action plan (Announced Pledges Scenario) [2]"] + \
-                   ["Efficient Heating", "Efficient Green Heating", "Semi-Efficient Heating",
-                   "Non-efficient Heating"]*2
+    col_level_1 = ["Optimal Renovation and Heating", "Optimal Renovation and Green Heating", 
+                   "Limited Renovation and Optimal Heating", "No Renovation and Optimal Heating", 
+                   "EU action plan (Announced Pledges Scenario) [2]"] + \
+                   ["Optimal Renovation and Heating", "Optimal Renovation and Green Heating", 
+                   "Limited Renovation and Optimal Heating", "No Renovation and Optimal Heating"]*2
 
     # Create a MultiColumns
     multi_cols = pd.MultiIndex.from_arrays([col_level_0, col_level_1], names=['Year', 'Scenario'])
@@ -82,10 +83,10 @@ if __name__ == "__main__":
     MIN_CAPACITY = 830 # https://www.energysage.com/electricity/house-watts/how-many-watts-does-an-air-source-heat-pump-use/
 
     # define scenario namings
-    scenarios = {"flexible": "Efficient Heating", 
-                 "retro_tes": "Efficient Green Heating", 
-                 "flexible-moderate": "Semi-Efficient Heating", 
-                 "rigid": "Non-efficient Heating"}
+    scenarios = {"flexible": "Optimal Renovation and Heating", 
+                 "retro_tes": "Optimal Renovation and Green Heating", 
+                 "flexible-moderate": "Limited Renovation and Optimal Heating", 
+                 "rigid": "No Renovation and Optimal Heating"}
 
     # define heat pumps dataframe
     df_heat_pumps = define_heat_pump_dataframe()
