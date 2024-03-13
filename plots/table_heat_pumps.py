@@ -93,7 +93,7 @@ if __name__ == "__main__":
     # heat pumps estimation
     for planning in [2030, 2040, 2050]:
         lineex = line_limits[planning]
-        sector_opts = f"Co2L{co2l_limits[planning]}-100H-T-H-B-I"
+        sector_opts = f"Co2L{co2l_limits[planning]}-1H-T-H-B-I"
 
         for scenario, nice_name in scenarios.items():
             # load networks
