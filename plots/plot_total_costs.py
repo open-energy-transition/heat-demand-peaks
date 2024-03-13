@@ -192,7 +192,7 @@ line_limits = {2030:"v1.15", 2040:"v1.3", 2050:"v1.5"}
 space_resolution = 48
 planning = 2030
 lineex = line_limits[planning]
-sector_opts = f"Co2L{co2l_limits[planning]}-100H-T-H-B-I"
+sector_opts = f"Co2L{co2l_limits[planning]}-1H-T-H-B-I"
 
 
 

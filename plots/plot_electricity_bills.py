@@ -212,7 +212,7 @@ if __name__ == "__main__":
     space_resolution = 48
     planning = 2030
     lineex = line_limits[planning]
-    sector_opts = f"Co2L{co2l_limits[planning]}-100H-T-H-B-I"
+    sector_opts = f"Co2L{co2l_limits[planning]}-1H-T-H-B-I"
 
     # move to submodules/pypsa-eur
     change_path_to_pypsa_eur()
