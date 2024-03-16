@@ -17,15 +17,25 @@ import cartopy.crs as ccrs
 import logging
 import colors as c
 import warnings
+from _helpers import mock_snakemake, update_config_from_wildcards
 
 warnings.filterwarnings("ignore")
 logger = logging.getLogger(__name__)
 plt.style.use("ggplot")
 
+if "snakemake" not in globals():
+    snakemake = mock_snakemake(
+        "plot_total_costs", 
+        space_resolution="48",
+        planning="2030",
+    )
+# update config based on wildcards
+config = update_config_from_wildcards(snakemake.config, snakemake.wildcards)
+
 # get the current working directory
-base_path = os.path.abspath(os.path.join(__file__ ,"../../submodules"))
+base_path = os.path.abspath(os.path.join(__file__ ,"../.."))
 # path to pypsa-eur
-pypsa_path = "pypsa-eur/"
+pypsa_path = "submodules/pypsa-eur/"
 # absolute path to pypsa-eur
 
 new_path = os.path.join(base_path, pypsa_path)
@@ -186,13 +196,14 @@ preferred_order = pd.Index(
 """
 # 1. Loading the networks
 """
-
-co2l_limits = {2030:0.45, 2040:0.1, 2050:0.0}
-line_limits = {2030:"v1.15", 2040:"v1.3", 2050:"v1.5"}
-space_resolution = 48
-planning = 2030
+# network parameters
+co2l_limits = {"2030":"0.45", "2040":"0.1", "2050":"0.0"}
+line_limits = {"2030":"v1.15", "2040":"v1.3", "2050":"v1.5"}
+space_resolution = config["plotting"]["space_resolution"]
+planning = config["plotting"]["planning"]
+time_resolution = config["plotting"]["time_resolution"]
 lineex = line_limits[planning]
-sector_opts = f"Co2L{co2l_limits[planning]}-1H-T-H-B-I"
+sector_opts = f"Co2L{co2l_limits[planning]}-{time_resolution}-T-H-B-I"
 
 
 
@@ -223,7 +234,7 @@ network = {"rigid":n_rigid, "igas+tes":n_igas_tes, "flexible":n_flex, "mod":n_mo
 # change directory back to original
 os.chdir(base_path)
 # relative path to folder where to store plots
-PATH_PLOTS = "../plots/results/"
+PATH_PLOTS = "plots/results/"
 # create folder to store images
 os.makedirs(PATH_PLOTS, exist_ok=True)
 # %%
@@ -327,7 +338,7 @@ def plot_costs(cost_df):
     ax.spines['left'].set_color('black')
     ax.spines['bottom'].set_color('black')
     ax.grid(axis='y', linestyle='--', linewidth=0.5, color='gray')
-    plt.savefig(PATH_PLOTS+f'plot_total_costs_{space_resolution}_{planning}.png', dpi=600, bbox_inches = 'tight')
+    plt.savefig(snakemake.output.figure, dpi=600, bbox_inches = 'tight')
     
     
 plot_costs(cost_df)
