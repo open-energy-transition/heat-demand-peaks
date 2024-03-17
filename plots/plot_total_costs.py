@@ -12,13 +12,11 @@ import logging
 import colors as c
 import warnings
 warnings.filterwarnings("ignore")
-from _helpers import mock_snakemake, update_config_from_wildcards
+from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
+                     change_path_to_pypsa_eur, change_path_to_base
+
 logger = logging.getLogger(__name__)
 
-# get the current working directory
-BASE_PATH = os.path.abspath(os.path.join(__file__ ,"../.."))
-# relative path to folder where to store plots
-PATH_PLOTS = "plots/results/"
 
 DONT_PLOT = ["gas storage"]
 
@@ -142,32 +140,6 @@ PREFERRED_ORDER = pd.Index(
         "building retrofitting",
      ]
 )
-
-
-def change_path_to_pypsa_eur():
-    # path to pypsa-eur
-    pypsa_path = "submodules/pypsa-eur/"
-    # absolute path to pypsa-eur
-    new_path = os.path.join(BASE_PATH, pypsa_path)
-    # change path to pypsa-eur
-    os.chdir(new_path)
-
-
-def change_path_to_base():
-    os.chdir(BASE_PATH)
-    # create folder to store images
-    os.makedirs(PATH_PLOTS, exist_ok=True)
-
-
-def load_network(lineex, space_resolution, sector_opts, planning, scenario):
-    FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}.nc"
-    DIR = f"results/{scenario}/postnetworks"
-    try:
-        n = pypsa.Network(os.path.join(DIR, FILE))
-    except FileNotFoundError as e:
-        print(f"Error: {e}")
-        return None
-    return n
 
 
 def rename_techs(label):

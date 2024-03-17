@@ -1,19 +1,11 @@
 import os
 from pathlib import Path
-import textwrap
-import warnings
 import pypsa
-from pypsa.descriptors import Dict
-from pypsa.components import components, component_attrs
-import pandas as pd
-from snakemake.utils import update_config
-import yaml
-import numpy as np
-import logging
 
-logger = logging.getLogger(__name__)
-
-root = Path(__file__).parent.parent.parent.resolve()
+# get the base working directory
+BASE_PATH = os.path.abspath(os.path.join(__file__ ,"../.."))
+# relative path to folder where to store plots
+PATH_PLOTS = "plots/results/"
 
 
 def mock_snakemake(rulename, **wildcards):
@@ -95,3 +87,27 @@ def update_config_from_wildcards(config, w):
     return config
 
 
+def load_network(lineex, space_resolution, sector_opts, planning, scenario):
+    FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}.nc"
+    DIR = f"results/{scenario}/postnetworks"
+    try:
+        n = pypsa.Network(os.path.join(DIR, FILE))
+    except FileNotFoundError as e:
+        print(f"Error: {e}")
+        return None
+    return n
+
+
+def change_path_to_pypsa_eur():
+    # path to pypsa-eur
+    pypsa_path = "submodules/pypsa-eur/"
+    # absolute path to pypsa-eur
+    new_path = os.path.join(BASE_PATH, pypsa_path)
+    # change path to pypsa-eur
+    os.chdir(new_path)
+
+
+def change_path_to_base():
+    os.chdir(BASE_PATH)
+    # create folder to store images
+    os.makedirs(PATH_PLOTS, exist_ok=True)
