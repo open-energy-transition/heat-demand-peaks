@@ -1,9 +1,3 @@
-# %%
-"""
-# 0. Importing libraries
-"""
-
-# %%
 import os
 import sys
 sys.path.append("../submodules/pypsa-eur")
@@ -17,39 +11,18 @@ import cartopy.crs as ccrs
 import logging
 import colors as c
 import warnings
-from _helpers import mock_snakemake, update_config_from_wildcards
-
 warnings.filterwarnings("ignore")
+from _helpers import mock_snakemake, update_config_from_wildcards
 logger = logging.getLogger(__name__)
-plt.style.use("ggplot")
-
-if "snakemake" not in globals():
-    snakemake = mock_snakemake(
-        "plot_total_costs", 
-        space_resolution="48",
-        planning="2030",
-    )
-# update config based on wildcards
-config = update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
 # get the current working directory
-base_path = os.path.abspath(os.path.join(__file__ ,"../.."))
-# path to pypsa-eur
-pypsa_path = "submodules/pypsa-eur/"
-# absolute path to pypsa-eur
+BASE_PATH = os.path.abspath(os.path.join(__file__ ,"../.."))
+# relative path to folder where to store plots
+PATH_PLOTS = "plots/results/"
 
-new_path = os.path.join(base_path, pypsa_path)
-# change path to pypsa-eur
-os.chdir(new_path)
+DONT_PLOT = ["gas storage"]
 
-# %%
-"""
-# 1. Define functions
-"""
-
-dont_plot = ["gas storage"]
-
-prefix_to_remove = [
+PREFIX_TO_REMOVE = [
     "residential ",
     "services ",
     "urban ",
@@ -58,7 +31,7 @@ prefix_to_remove = [
     "decentral ",
 ]
 
-rename_if_contains = [
+RENAME_IF_CONTAINS = [
     "solid biomass CHP",
     "gas CHP",
     "gas boiler",
@@ -70,7 +43,7 @@ rename_if_contains = [
     "Fischer-Tropsch",
 ]
 
-rename_if_contains_dict = {
+RENAME_IF_CONTAINS_DICT = {
     "water tanks": "TES",
     "retrofitting": "building retrofitting",
     # "H2 Electrolysis": "hydrogen storage",
@@ -80,7 +53,7 @@ rename_if_contains_dict = {
     # "CC": "CC"
 }
 
-rename = {
+RENAME = {
     "Solar": "solar PV",
     "solar": "solar PV",
     "Sabatier": "methanation",
@@ -117,29 +90,7 @@ rename = {
     "solid biomass transport": "solid biomass"
 }
 
-# %%
-# renaming function
-def rename_techs(label):
-
-    for ptr in prefix_to_remove:
-        if label[: len(ptr)] == ptr:
-            label = label[len(ptr) :]
-
-    for rif in rename_if_contains:
-        if rif in label:
-            label = rif
-
-    for old, new in rename_if_contains_dict.items():
-        if old in label:
-            label = new
-
-    for old, new in rename.items():
-        if old == label:
-            label = new
-    return label
-
-
-preferred_order = pd.Index(
+PREFERRED_ORDER = pd.Index(
     [
         "nuclear",
         "solid biomass",
@@ -192,91 +143,60 @@ preferred_order = pd.Index(
      ]
 )
 
-# %%
-"""
-# 1. Loading the networks
-"""
-# network parameters
-co2l_limits = {"2030":"0.45", "2040":"0.1", "2050":"0.0"}
-line_limits = {"2030":"v1.15", "2040":"v1.3", "2050":"v1.5"}
-space_resolution = config["plotting"]["space_resolution"]
-planning = config["plotting"]["planning"]
-time_resolution = config["plotting"]["time_resolution"]
-lineex = line_limits[planning]
-sector_opts = f"Co2L{co2l_limits[planning]}-{time_resolution}-T-H-B-I"
+
+def change_path_to_pypsa_eur():
+    # path to pypsa-eur
+    pypsa_path = "submodules/pypsa-eur/"
+    # absolute path to pypsa-eur
+    new_path = os.path.join(BASE_PATH, pypsa_path)
+    # change path to pypsa-eur
+    os.chdir(new_path)
 
 
+def change_path_to_base():
+    os.chdir(BASE_PATH)
+    # create folder to store images
+    os.makedirs(PATH_PLOTS, exist_ok=True)
 
 
-# %%
-FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}.nc"
-DIR = "results/rigid/postnetworks"
-n_rigid = pypsa.Network(os.path.join(DIR, FILE))
+def load_network(lineex, space_resolution, sector_opts, planning, scenario):
+    FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}.nc"
+    DIR = f"results/{scenario}/postnetworks"
+    try:
+        n = pypsa.Network(os.path.join(DIR, FILE))
+    except FileNotFoundError as e:
+        print(f"Error: {e}")
+        return None
+    return n
 
-# %%
-FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}.nc"
-DIR = "results/flexible/postnetworks"
-n_flex = pypsa.Network(os.path.join(DIR, FILE))
 
-# %%
-FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}.nc"
-DIR = "results/retro_tes/postnetworks"
-n_igas_tes = pypsa.Network(os.path.join(DIR, FILE))
+def rename_techs(label):
 
-# %%
-FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}.nc"
-DIR = "results/flexible-moderate/postnetworks"
-n_mod = pypsa.Network(os.path.join(DIR, FILE))
+    for ptr in PREFIX_TO_REMOVE:
+        if label[: len(ptr)] == ptr:
+            label = label[len(ptr) :]
 
-# %%
-network = {"rigid":n_rigid, "igas+tes":n_igas_tes, "flexible":n_flex, "mod":n_mod}
+    for rif in RENAME_IF_CONTAINS:
+        if rif in label:
+            label = rif
 
-# change directory back to original
-os.chdir(base_path)
-# relative path to folder where to store plots
-PATH_PLOTS = "plots/results/"
-# create folder to store images
-os.makedirs(PATH_PLOTS, exist_ok=True)
-# %%
-"""
-# 2. Total System Cost estimation (Fig. 5)
-"""
+    for old, new in RENAME_IF_CONTAINS_DICT.items():
+        if old in label:
+            label = new
 
-# %%
-"""
-## 2A. Cost estimation
-"""
+    for old, new in RENAME.items():
+        if old == label:
+            label = new
+    return label
 
-# %%
-costs_rigid = n_rigid.statistics()[["Capital Expenditure", "Operational Expenditure"]].dropna()
-full_costs_rigid = costs_rigid.sum(axis=1).droplevel(0).to_frame()
-full_costs_rigid.columns = ["Supplied Heating"]
 
-# %%
-costs_flex = n_flex.statistics()[["Capital Expenditure", "Operational Expenditure"]].dropna()
-full_costs_flex = costs_flex.sum(axis=1).droplevel(0).to_frame()
-full_costs_flex.columns = ["Efficient Heating"]
+def compute_costs(n, nice_name):
+    costs = n.statistics()[["Capital Expenditure", "Operational Expenditure"]].dropna()
+    full_costs = costs.sum(axis=1).droplevel(0).to_frame()
+    full_costs.columns = [nice_name]
+    return full_costs
 
-# %%
-costs_igas_tes = n_igas_tes.statistics()[["Capital Expenditure", "Operational Expenditure"]].dropna()
-full_costs_igas_tes = costs_igas_tes.sum(axis=1).droplevel(0).to_frame()
-full_costs_igas_tes.columns = ["Efficient Green Heating"]
 
-# %%
-costs_moderate = n_mod.statistics()[["Capital Expenditure", "Operational Expenditure"]].dropna()
-full_costs_moderate = costs_moderate.sum(axis=1).droplevel(0).to_frame()
-full_costs_moderate.columns = ["Semi-efficient Heating"]
-
-# %%
-cost_df = full_costs_flex.join(full_costs_igas_tes, how="outer").join(full_costs_moderate, how="outer").join(full_costs_rigid, how="outer").fillna(0)
-cost_df = cost_df.drop("oil", axis=0)
-
-# %%
-"""
-## 2B. Plot 
-"""
-
-# %%
 def plot_costs(cost_df):
     df = cost_df.groupby(cost_df.index).sum()
 
@@ -296,11 +216,11 @@ def plot_costs(cost_df):
 
     logger.info(f"Total system cost of {round(df.sum())} EUR billion per year")
 
-    new_index = preferred_order.intersection(df.index).append(
-        df.index.difference(preferred_order)
+    new_index = PREFERRED_ORDER.intersection(df.index).append(
+        df.index.difference(PREFERRED_ORDER)
     )
 
-    for remove_tech in dont_plot:
+    for remove_tech in DONT_PLOT:
         new_index = new_index.drop(remove_tech)
 
     new_columns = df.sum().sort_values().index  
@@ -313,6 +233,7 @@ def plot_costs(cost_df):
         ax=ax,
         stacked=True,
         color=[c.tech_colors[i] for i in new_index],
+        zorder=1,
     )
 
     handles, labels = ax.get_legend_handles_labels()
@@ -328,17 +249,73 @@ def plot_costs(cost_df):
 
     ax.set_xlabel("")
 
-    ax.grid(axis="x")
+    # Turn off both horizontal and vertical grid lines
+    ax.grid(False, which='both')
 
     ax.legend(
         handles, labels, ncol=1, loc="upper left", bbox_to_anchor=[1, 1], frameon=False
     )
     
     ax.set_facecolor('white')
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
     ax.spines['left'].set_color('black')
     ax.spines['bottom'].set_color('black')
-    ax.grid(axis='y', linestyle='--', linewidth=0.5, color='gray')
+    ax.grid(axis='y', linestyle='--', linewidth=0.5, color='gray', zorder=0)
     plt.savefig(snakemake.output.figure, dpi=600, bbox_inches = 'tight')
     
-    
-plot_costs(cost_df)
+
+if __name__ == "__main__":
+    if "snakemake" not in globals():
+        snakemake = mock_snakemake(
+            "plot_total_costs", 
+            space_resolution="48",
+            planning="2030",
+        )
+    # update config based on wildcards
+    config = update_config_from_wildcards(snakemake.config, snakemake.wildcards)
+
+
+    # move to submodules/pypsa-eur
+    change_path_to_pypsa_eur()
+
+    # network parameters
+    co2l_limits = {"2030":"0.45", "2040":"0.1", "2050":"0.0"}
+    line_limits = {"2030":"v1.15", "2040":"v1.3", "2050":"v1.5"}
+    space_resolution = config["plotting"]["space_resolution"]
+    planning = config["plotting"]["planning"]
+    time_resolution = config["plotting"]["time_resolution"]
+    lineex = line_limits[planning]
+    sector_opts = f"Co2L{co2l_limits[planning]}-{time_resolution}-T-H-B-I"
+
+    # define scenario namings
+    scenarios = {"flexible": "Efficient Heating", 
+                 "retro_tes": "Efficient Green Heating", 
+                 "flexible-moderate": "Semi-Efficient Heating", 
+                 "rigid": "Non-efficient Heating"}
+
+    # load networks
+    networks = {}
+    cost_df = pd.DataFrame()
+    for scenario, nice_name in scenarios.items():
+        n = load_network(lineex, space_resolution, sector_opts, planning, scenario)
+
+        if n is None:
+            # Skip further computation for this scenario if network is not loaded
+            print(f"Network is not found for scenario '{scenario}', planning year '{planning}', and time resolution of '{time_resolution}'. Skipping...")
+            continue
+
+        # calculate costs for scenario
+        full_costs = compute_costs(n, nice_name)
+        cost_df = cost_df.join(full_costs, how="outer").fillna(0)
+
+    # drop oil from plot
+    if "oil" in cost_df.index:
+        cost_df = cost_df.drop("oil", axis=0)
+
+    # move to base directory
+    change_path_to_base()
+
+    # plot costs
+    if not cost_df.empty:
+        plot_costs(cost_df)
