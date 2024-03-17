@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import warnings
 warnings.filterwarnings("ignore")
+from _helpers import mock_snakemake, update_config_from_wildcards
 
 # get the base working directory
 BASE_PATH = os.path.abspath(os.path.join(__file__ ,"../.."))
@@ -37,12 +38,22 @@ def change_path_to_base():
 
 
 if __name__ == "__main__":
+    if "snakemake" not in globals():
+        snakemake = mock_snakemake(
+            "get_line_congestion", 
+            space_resolution="48",
+        )
+    # update config based on wildcards
+    config = update_config_from_wildcards(snakemake.config, snakemake.wildcards)
+
+
     # move to submodules/pypsa-eur
     change_path_to_pypsa_eur()
     # network parameters
-    co2l_limits = {2030:0.45, 2040:0.1, 2050:0.0}
-    line_limits = {2030:"v1.15", 2040:"v1.3", 2050:"v1.5"}
-    space_resolution = 48
+    co2l_limits = {"2030":"0.45", "2040":"0.1", "2050":"0.0"}
+    line_limits = {"2030":"v1.15", "2040":"v1.3", "2050":"v1.5"}
+    space_resolution = config["plotting"]["space_resolution"]
+    time_resolution = config["plotting"]["time_resolution"]
 
     # define scenario namings
     scenarios = {"flexible": "Optimal Renovation and Heating", 
@@ -54,9 +65,9 @@ if __name__ == "__main__":
     df_congestion = pd.DataFrame()
 
     # line congestion estimation
-    for planning in [2030, 2040, 2050]:
+    for planning in ["2030", "2040", "2050"]:
         lineex = line_limits[planning]
-        sector_opts = f"Co2L{co2l_limits[planning]}-1H-T-H-B-I"
+        sector_opts = f"Co2L{co2l_limits[planning]}-{time_resolution}-T-H-B-I"
 
         for scenario, nice_name in scenarios.items():
             # load networks
@@ -75,5 +86,5 @@ if __name__ == "__main__":
     change_path_to_base()
 
     # save the heat pumps data in Excel format
-    df_congestion.to_excel(PATH_PLOTS+f"table_grid_congestion_{space_resolution}.xlsx")
+    df_congestion.to_excel(snakemake.output.table)
 

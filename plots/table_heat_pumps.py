@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import warnings
 warnings.filterwarnings("ignore")
+from _helpers import mock_snakemake, update_config_from_wildcards
 
 # get the base working directory
 BASE_PATH = os.path.abspath(os.path.join(__file__ ,"../.."))
@@ -52,7 +53,7 @@ def define_heat_pump_dataframe():
     multi_index = pd.MultiIndex.from_arrays([index_level_0, index_level_1])
 
     # Define column levels
-    col_level_0 = [2030]*5 + [2040]*4 + [2050]*4
+    col_level_0 = ["2030"]*5 + ["2040"]*4 + ["2050"]*4
     col_level_1 = ["Optimal Renovation and Heating", "Optimal Renovation and Green Heating", 
                    "Limited Renovation and Optimal Heating", "No Renovation and Optimal Heating", 
                    "EU action plan (Announced Pledges Scenario) [2]"] + \
@@ -69,12 +70,22 @@ def define_heat_pump_dataframe():
 
 
 if __name__ == "__main__":
+    if "snakemake" not in globals():
+        snakemake = mock_snakemake(
+            "get_heat_pump", 
+            space_resolution="48",
+        )
+    # update config based on wildcards
+    config = update_config_from_wildcards(snakemake.config, snakemake.wildcards)
+
+
     # move to submodules/pypsa-eur
     change_path_to_pypsa_eur()
     # network parameters
-    co2l_limits = {2030:0.45, 2040:0.1, 2050:0.0}
-    line_limits = {2030:"v1.15", 2040:"v1.3", 2050:"v1.5"}
-    space_resolution = 48
+    co2l_limits = {"2030":"0.45", "2040":"0.1", "2050":"0.0"}
+    line_limits = {"2030":"v1.15", "2040":"v1.3", "2050":"v1.5"}
+    space_resolution = config["plotting"]["space_resolution"]
+    time_resolution = config["plotting"]["time_resolution"]
 
     # heat pump techs
     heat_pumps = {"air heat pump": "Air-sourced", "ground heat pump": "Ground"}
@@ -92,9 +103,9 @@ if __name__ == "__main__":
     df_heat_pumps = define_heat_pump_dataframe()
 
     # heat pumps estimation
-    for planning in [2030, 2040, 2050]:
+    for planning in ["2030", "2040", "2050"]:
         lineex = line_limits[planning]
-        sector_opts = f"Co2L{co2l_limits[planning]}-1H-T-H-B-I"
+        sector_opts = f"Co2L{co2l_limits[planning]}-{time_resolution}-T-H-B-I"
 
         for scenario, nice_name in scenarios.items():
             # load networks
@@ -114,14 +125,14 @@ if __name__ == "__main__":
             df_heat_pumps.loc[('Approximate number of heat pumps [millions]', 'Minimum (6900 W) [1]'), (planning, nice_name)] = round(min_amount, 2)
 
     # set heat plan amount based on EU action plan
-    df_heat_pumps.loc[('Approximate number of heat pumps [millions]', 'Maximum (830 W) [1]'), (2030, "EU action plan (Announced Pledges Scenario) [2]")] = 45
-    df_heat_pumps.loc[('Approximate number of heat pumps [millions]', 'Minimum (6900 W) [1]'), (2030, "EU action plan (Announced Pledges Scenario) [2]")] = 45
+    df_heat_pumps.loc[('Approximate number of heat pumps [millions]', 'Maximum (830 W) [1]'), ("2030", "EU action plan (Announced Pledges Scenario) [2]")] = 45
+    df_heat_pumps.loc[('Approximate number of heat pumps [millions]', 'Minimum (6900 W) [1]'), ("2030", "EU action plan (Announced Pledges Scenario) [2]")] = 45
         
     # move to base directory
     change_path_to_base()
 
     # save the heat pumps data in Excel format
-    df_heat_pumps.to_excel(PATH_PLOTS+f"table_heat_pumps_{space_resolution}.xlsx")
+    df_heat_pumps.to_excel(snakemake.output.table)
 
     # save the heat pumps data in CSV format
     # df_heat_pumps.to_csv(PATH_PLOTS+"table_heat_pumps.csv")
