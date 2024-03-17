@@ -27,7 +27,11 @@ def change_path_to_pypsa_eur():
 def load_network(lineex, space_resolution, sector_opts, planning, scenario):
     FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}.nc"
     DIR = f"results/{scenario}/postnetworks"
-    n = pypsa.Network(os.path.join(DIR, FILE))
+    try:
+        n = pypsa.Network(os.path.join(DIR, FILE))
+    except FileNotFoundError as e:
+        print(f"Error: {e}")
+        return None
     return n
 
 
@@ -62,7 +66,7 @@ if __name__ == "__main__":
                  "rigid": "No Renovation and Optimal Heating"}
 
     # define dataframe to store grid congestion
-    df_congestion = pd.DataFrame()
+    df_congestion = pd.DataFrame(index=list(scenarios.values()), columns=["2030", "2040", "2050"])
 
     # line congestion estimation
     for planning in ["2030", "2040", "2050"]:
@@ -72,6 +76,11 @@ if __name__ == "__main__":
         for scenario, nice_name in scenarios.items():
             # load networks
             n = load_network(lineex, space_resolution, sector_opts, planning, scenario)
+
+            if n is None:
+                # Skip further computation for this scenario if network is not loaded
+                print(f"Network is not found for scenario '{scenario}', planning year '{planning}', and time resolution of '{time_resolution}'. Skipping...")
+                continue
 
             # estimate upper and lower limits of congestion of grid
             upper = n.lines_t.mu_upper.multiply(n.snapshot_weightings.stores, axis=0).mean().multiply(n.lines.length).mean()

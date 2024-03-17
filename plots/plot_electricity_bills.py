@@ -24,24 +24,15 @@ def change_path_to_pypsa_eur():
     os.chdir(new_path)
 
 
-def load_networks(lineex, space_resolution, sector_opts, planning):
+def load_network(lineex, space_resolution, sector_opts, planning, scenario):
     FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}.nc"
-    DIR = "results/flexible/postnetworks"
-    n_flex = pypsa.Network(os.path.join(DIR, FILE))
-
-    FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}.nc"
-    DIR = "results/retro_tes/postnetworks"
-    n_retro_tes = pypsa.Network(os.path.join(DIR, FILE))
-
-    FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}.nc"
-    DIR = "results/flexible-moderate/postnetworks"
-    n_flex_mod = pypsa.Network(os.path.join(DIR, FILE))
-
-    FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}.nc"
-    DIR = "results/rigid/postnetworks"
-    n_rigid = pypsa.Network(os.path.join(DIR, FILE))
-
-    return n_flex, n_flex_mod, n_retro_tes, n_rigid
+    DIR = f"results/{scenario}/postnetworks"
+    try:
+        n = pypsa.Network(os.path.join(DIR, FILE))
+    except FileNotFoundError as e:
+        print(f"Error: {e}")
+        return None
+    return n
 
 
 def change_path_to_base():
@@ -151,7 +142,7 @@ def plot_electricity_cost(df_prices, name):
         raise ValueError("name must be one of {}".format(allowed_names))
 
     # sort countries by flexible's electricity cost
-    sorted_df_prices = df_prices.sort_values(by="Efficient Heating", axis=1)
+    sorted_df_prices = df_prices.sort_values(by=df_prices.index[0], axis=1)
 
     # color codes for legend
     color_codes = {"Efficient Heating":"purple", "Efficient Green Heating":"limegreen", "Semi-Efficient Heating":"royalblue", "Non-efficient Heating":"#f4b609"}
@@ -230,12 +221,17 @@ if __name__ == "__main__":
     # move to submodules/pypsa-eur
     change_path_to_pypsa_eur()
 
+    # define scenario namings
+    scenarios = {"flexible": "Efficient Heating", 
+                 "retro_tes": "Efficient Green Heating", 
+                 "flexible-moderate": "Semi-Efficient Heating", 
+                 "rigid": "Non-efficient Heating"}
+
     # load networks
-    n_flex, n_flex_mod, n_retro_tes, n_rigid = load_networks(lineex, space_resolution, sector_opts, planning)
-    networks = {"Efficient Heating": n_flex, 
-                "Efficient Green Heating": n_retro_tes, 
-                "Semi-Efficient Heating": n_flex_mod, 
-                "Non-efficient Heating": n_rigid}
+    networks = {}
+    for scenario, nice_name in scenarios.items():
+        n = load_network(lineex, space_resolution, sector_opts, planning, scenario)
+        networks[nice_name] = n
 
     # move to base directory
     change_path_to_base()
@@ -247,6 +243,10 @@ if __name__ == "__main__":
     total_elec_bills = pd.DataFrame()
     total_elec_prices = pd.DataFrame()
     for name, network in networks.items():
+        if network is None:
+            # Skip further computation for this scenario if network is not loaded
+            print(f"Network is not found for scenario '{scenario}', planning year '{planning}', and time resolution of '{time_resolution}'. Skipping...")
+            continue
         # get electricity bills
         elec_bills_household = electricity_bills(network, households)
         # get electricity prices
@@ -259,7 +259,10 @@ if __name__ == "__main__":
         total_elec_prices = pd.concat([total_elec_prices, elec_bills_MWh.to_frame().T], axis=0)
 
     # plot and store electricity bills
-    plot_electricity_cost(total_elec_bills, "bills")
+    if not total_elec_bills.empty:
+        plot_electricity_cost(total_elec_bills, "bills")
+    
     # plot and store electricity prices
-    plot_electricity_cost(total_elec_prices, "prices")
+    if not total_elec_prices.empty:
+        plot_electricity_cost(total_elec_prices, "prices")
 
