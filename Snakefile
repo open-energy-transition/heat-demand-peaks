@@ -9,6 +9,10 @@ wildcard_constraints:
     planning="[0-9]{4}",
 
 
+localrules:
+    all,
+
+
 rule plot_total_cost:
     params:
         space_resolution=config["plotting"]["space_resolution"],
@@ -90,6 +94,35 @@ rule get_line_congestion:
 
 rule get_line_congestions:
     input:
+        expand(
+            RESULTS
+            + "table_line_congestion_{space_resolution}.xlsx",
+            **config["plotting"],
+        ),
+
+
+rule plot_all:
+    input:
+        expand(
+            RESULTS
+            + "plot_total_costs_{space_resolution}_{planning}.png",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "plot_bill_per_household_{space_resolution}_{planning}.png",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "plot_prices_per_MWh_{space_resolution}_{planning}.png",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "table_heat_pumps_{space_resolution}.xlsx",
+            **config["plotting"],
+        ),
         expand(
             RESULTS
             + "table_line_congestion_{space_resolution}.xlsx",
