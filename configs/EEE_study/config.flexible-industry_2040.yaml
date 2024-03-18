@@ -20,7 +20,8 @@ lines:
   s_max_pu: 0.5
 
 electricity:
-  custom_powerplants: true
+  powerplants_filter: DateOut >= 2040 and not Fueltype == 'Nuclear'
+  custom_powerplants: DateIn <= 2040 and DateOut >= 2040
 
 energy:
   energy_totals_year: 2013
