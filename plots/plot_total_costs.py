@@ -198,7 +198,7 @@ def plot_costs(cost_df):
     new_columns = df.sum().sort_values().index  
 
 
-    fig, ax = plt.subplots(figsize=(6, 8))
+    fig, ax = plt.subplots(figsize=(7, 8))
 
     df.loc[new_index].T.plot(
         kind="bar",
@@ -215,7 +215,7 @@ def plot_costs(cost_df):
 
     costs_max = cost_df.sum().max() / 1e9
     ax.set_ylim([0, costs_max])
-    plt.xticks(rotation=10, fontsize=12)
+    plt.xticks(rotation=0, fontsize=10)
 
     ax.set_ylabel("System Cost [EUR billion per year]")
 
@@ -261,10 +261,10 @@ if __name__ == "__main__":
     sector_opts = f"Co2L{co2l_limits[planning]}-{time_resolution}-T-H-B-I"
 
     # define scenario namings
-    scenarios = {"flexible": "Efficient Heating", 
-                 "retro_tes": "Efficient Green Heating", 
-                 "flexible-moderate": "Semi-Efficient Heating", 
-                 "rigid": "Non-efficient Heating"}
+    scenarios = {"flexible": "Optimal \nRenovation &\nHeating", 
+                 "retro_tes": "Optimal \nRenovation &\nGreen Heating", 
+                 "flexible-moderate": "Limited \nRenovation &\nOptimal Heating", 
+                 "rigid": "No \nRenovation &\nOptimal Heating"}
 
     # load networks
     networks = {}

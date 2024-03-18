@@ -115,7 +115,10 @@ def plot_electricity_cost(df_prices, name):
     sorted_df_prices = df_prices.sort_values(by=df_prices.index[0], axis=1)
 
     # color codes for legend
-    color_codes = {"Efficient Heating":"purple", "Efficient Green Heating":"limegreen", "Semi-Efficient Heating":"royalblue", "Non-efficient Heating":"#f4b609"}
+    color_codes = {"Optimal Renovation and Heating":"purple", 
+                   "Optimal Renovation and Green Heating":"limegreen", 
+                   "Limited Renovation and Optimal Heating":"royalblue", 
+                   "No Renovation and Optimal Heating":"#f4b609"}
 
     # plot as bar plot
     fig, ax = plt.subplots(figsize=(7,3))
@@ -127,6 +130,10 @@ def plot_electricity_cost(df_prices, name):
     ax.spines['left'].set_color('black')
     ax.spines['bottom'].set_color('black')
     ax.grid(axis='y', linestyle='--', linewidth=0.5, color='gray')
+
+    max_price = sorted_df_prices.max().max()
+    ax.set_ylim(0, max_price * 1.2) 
+
     if name == "bills":
         ax.set_title("Electricity bills")
         ylabel = ax.set_ylabel("EUR/household")
@@ -192,10 +199,10 @@ if __name__ == "__main__":
     change_path_to_pypsa_eur()
 
     # define scenario namings
-    scenarios = {"flexible": "Efficient Heating", 
-                 "retro_tes": "Efficient Green Heating", 
-                 "flexible-moderate": "Semi-Efficient Heating", 
-                 "rigid": "Non-efficient Heating"}
+    scenarios = {"flexible": "Optimal Renovation and Heating", 
+                 "retro_tes": "Optimal Renovation and Green Heating", 
+                 "flexible-moderate": "Limited Renovation and Optimal Heating", 
+                 "rigid": "No Renovation and Optimal Heating"}
 
     # load networks
     networks = {}
