@@ -47,7 +47,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         snakemake = mock_snakemake(
             "get_heat_pump", 
-            space_resolution="48",
+            clusters="48",
         )
     # update config based on wildcards
     config = update_config_from_wildcards(snakemake.config, snakemake.wildcards)
@@ -58,7 +58,7 @@ if __name__ == "__main__":
     # network parameters
     co2l_limits = {"2030":"0.45", "2040":"0.1", "2050":"0.0"}
     line_limits = {"2030":"v1.15", "2040":"v1.3", "2050":"v1.5"}
-    space_resolution = config["plotting"]["space_resolution"]
+    clusters = config["plotting"]["clusters"]
     time_resolution = config["plotting"]["time_resolution"]
 
     # heat pump techs
@@ -77,32 +77,32 @@ if __name__ == "__main__":
     df_heat_pumps = define_heat_pump_dataframe()
 
     # heat pumps estimation
-    for planning in ["2030", "2040", "2050"]:
-        lineex = line_limits[planning]
-        sector_opts = f"Co2L{co2l_limits[planning]}-{time_resolution}-T-H-B-I"
+    for planning_horizon in ["2030", "2040", "2050"]:
+        lineex = line_limits[planning_horizon]
+        sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-T-H-B-I"
 
         for scenario, nice_name in scenarios.items():
             # load networks
-            n = load_network(lineex, space_resolution, sector_opts, planning, scenario)
+            n = load_network(lineex, clusters, sector_opts, planning_horizon, scenario)
 
             if n is None:
                 # Skip further computation for this scenario if network is not loaded
-                print(f"Network is not found for scenario '{scenario}', planning year '{planning}', and time resolution of '{time_resolution}'. Skipping...")
+                print(f"Network is not found for scenario '{scenario}', planning year '{planning_horizon}', and time resolution of '{time_resolution}'. Skipping...")
                 continue
 
             # compute heat pump capacities
             for h, h_name in heat_pumps.items():
                 p_nom_opt = n.links.filter(like=h, axis=0).p_nom_opt.sum()
-                df_heat_pumps.loc[("Optimal Heat Pump Capacity [MW]", h_name), (planning, nice_name)] = p_nom_opt
+                df_heat_pumps.loc[("Optimal Heat Pump Capacity [MW]", h_name), (planning_horizon, nice_name)] = p_nom_opt
             # total heat pump capacity
             total_p_nom_opt = n.links.filter(like="heat pump", axis=0).p_nom_opt.sum()
-            df_heat_pumps.loc[("Optimal Heat Pump Capacity [MW]", "Total"), (planning, nice_name)] = total_p_nom_opt
+            df_heat_pumps.loc[("Optimal Heat Pump Capacity [MW]", "Total"), (planning_horizon, nice_name)] = total_p_nom_opt
             
             # estimate heat pump amount
             max_amount = total_p_nom_opt / MIN_CAPACITY
             min_amount = total_p_nom_opt / MAX_CAPACITY
-            df_heat_pumps.loc[('Approximate number of heat pumps [millions]', 'Maximum (830 W) [1]'), (planning, nice_name)] = round(max_amount, 2)
-            df_heat_pumps.loc[('Approximate number of heat pumps [millions]', 'Minimum (6900 W) [1]'), (planning, nice_name)] = round(min_amount, 2)
+            df_heat_pumps.loc[('Approximate number of heat pumps [millions]', 'Maximum (830 W) [1]'), (planning_horizon, nice_name)] = round(max_amount, 2)
+            df_heat_pumps.loc[('Approximate number of heat pumps [millions]', 'Minimum (6900 W) [1]'), (planning_horizon, nice_name)] = round(min_amount, 2)
 
     # set heat plan amount based on EU action plan
     df_heat_pumps.loc[('Approximate number of heat pumps [millions]', 'Maximum (830 W) [1]'), ("2030", "EU action plan (Announced Pledges Scenario) [2]")] = 45

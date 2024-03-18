@@ -3,6 +3,6 @@
 # SPDX-License-Identifier: CC0-1.0
 
 plotting:
-  space_resolution: 48
-  planning: [2030, 2040, 2050]
+  clusters: 48
+  planning_horizon: [2030, 2040, 2050]
   time_resolution: "100H"

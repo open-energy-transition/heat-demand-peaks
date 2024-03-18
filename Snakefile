@@ -5,8 +5,8 @@ RESULTS = "plots/results/"
 
 
 wildcard_constraints:
-    space_resolution="[0-9]+",
-    planning="[0-9]{4}",
+    clusters="[0-9]+",
+    planning_horizon="[0-9]{4}",
 
 
 localrules:
@@ -15,10 +15,10 @@ localrules:
 
 rule plot_total_cost:
     params:
-        space_resolution=config["plotting"]["space_resolution"],
-        planning=config["plotting"]["planning"],
+        clusters=config["plotting"]["clusters"],
+        planning_horizon=config["plotting"]["planning_horizon"],
     output:
-        figure=RESULTS+"plot_total_costs_{space_resolution}_{planning}.png",
+        figure=RESULTS+"plot_total_costs_{clusters}_{planning_horizon}.png",
     resources:
         mem_mb=20000,
     script:
@@ -29,18 +29,18 @@ rule plot_total_costs:
     input:
         expand(
             RESULTS
-            + "plot_total_costs_{space_resolution}_{planning}.png",
+            + "plot_total_costs_{clusters}_{planning_horizon}.png",
             **config["plotting"],
         ),
 
 
 rule plot_electricity_bill:
     params:
-        space_resolution=config["plotting"]["space_resolution"],
-        planning=config["plotting"]["planning"],
+        clusters=config["plotting"]["clusters"],
+        planning_horizon=config["plotting"]["planning_horizon"],
     output:
-        figure_bills=RESULTS+"plot_bill_per_household_{space_resolution}_{planning}.png",
-        figure_price=RESULTS+"plot_prices_per_MWh_{space_resolution}_{planning}.png",
+        figure_bills=RESULTS+"plot_bill_per_household_{clusters}_{planning_horizon}.png",
+        figure_price=RESULTS+"plot_prices_per_MWh_{clusters}_{planning_horizon}.png",
     resources:
         mem_mb=20000,
     script:
@@ -51,21 +51,21 @@ rule plot_electricity_bills:
     input:
         expand(
             RESULTS
-            + "plot_bill_per_household_{space_resolution}_{planning}.png",
+            + "plot_bill_per_household_{clusters}_{planning_horizon}.png",
             **config["plotting"],
         ),
         expand(
             RESULTS
-            + "plot_prices_per_MWh_{space_resolution}_{planning}.png",
+            + "plot_prices_per_MWh_{clusters}_{planning_horizon}.png",
             **config["plotting"],
         ),
 
 
 rule get_heat_pump:
     params:
-        space_resolution=config["plotting"]["space_resolution"],
+        clusters=config["plotting"]["clusters"],
     output:
-        table=RESULTS+"table_heat_pumps_{space_resolution}.xlsx",
+        table=RESULTS+"table_heat_pumps_{clusters}.xlsx",
     resources:
         mem_mb=20000,
     script:
@@ -76,16 +76,16 @@ rule get_heat_pumps:
     input:
         expand(
             RESULTS
-            + "table_heat_pumps_{space_resolution}.xlsx",
+            + "table_heat_pumps_{clusters}.xlsx",
             **config["plotting"],
         ),
 
 
 rule get_line_congestion:
     params:
-        space_resolution=config["plotting"]["space_resolution"],
+        clusters=config["plotting"]["clusters"],
     output:
-        table=RESULTS+"table_line_congestion_{space_resolution}.xlsx",
+        table=RESULTS+"table_line_congestion_{clusters}.xlsx",
     resources:
         mem_mb=20000,
     script:
@@ -96,7 +96,7 @@ rule get_line_congestions:
     input:
         expand(
             RESULTS
-            + "table_line_congestion_{space_resolution}.xlsx",
+            + "table_line_congestion_{clusters}.xlsx",
             **config["plotting"],
         ),
 
@@ -105,26 +105,26 @@ rule plot_all:
     input:
         expand(
             RESULTS
-            + "plot_total_costs_{space_resolution}_{planning}.png",
+            + "plot_total_costs_{clusters}_{planning_horizon}.png",
             **config["plotting"],
         ),
         expand(
             RESULTS
-            + "plot_bill_per_household_{space_resolution}_{planning}.png",
+            + "plot_bill_per_household_{clusters}_{planning_horizon}.png",
             **config["plotting"],
         ),
         expand(
             RESULTS
-            + "plot_prices_per_MWh_{space_resolution}_{planning}.png",
+            + "plot_prices_per_MWh_{clusters}_{planning_horizon}.png",
             **config["plotting"],
         ),
         expand(
             RESULTS
-            + "table_heat_pumps_{space_resolution}.xlsx",
+            + "table_heat_pumps_{clusters}.xlsx",
             **config["plotting"],
         ),
         expand(
             RESULTS
-            + "table_line_congestion_{space_resolution}.xlsx",
+            + "table_line_congestion_{clusters}.xlsx",
             **config["plotting"],
         ),

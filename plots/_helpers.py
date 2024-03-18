@@ -78,17 +78,17 @@ def mock_snakemake(rulename, **wildcards):
 
 
 def update_config_from_wildcards(config, w):
-    if w.get("planning"):
-        planning = w.planning
-        config["plotting"]["planning"] = planning
-    if w.get("space_resolution"):
-        space_resolution = w.space_resolution
-        config["plotting"]["space_resolution"] = space_resolution
+    if w.get("planning_horizon"):
+        planning_horizon = w.planning_horizon
+        config["plotting"]["planning_horizon"] = planning_horizon
+    if w.get("clusters"):
+        clusters = w.clusters
+        config["plotting"]["clusters"] = clusters
     return config
 
 
-def load_network(lineex, space_resolution, sector_opts, planning, scenario):
-    FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}.nc"
+def load_network(lineex, clusters, sector_opts, planning_horizon, scenario):
+    FILE = f"elec_s_{clusters}_l{lineex}__{sector_opts}_{planning_horizon}.nc"
     DIR = f"results/{scenario}/postnetworks"
     try:
         n = pypsa.Network(os.path.join(DIR, FILE))

@@ -180,8 +180,8 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         snakemake = mock_snakemake(
             "plot_electricity_bill", 
-            space_resolution="48",
-            planning="2030",
+            clusters="48",
+            planning_horizon="2030",
         )
     # update config based on wildcards
     config = update_config_from_wildcards(snakemake.config, snakemake.wildcards)
@@ -189,11 +189,11 @@ if __name__ == "__main__":
     # network parameters
     co2l_limits = {"2030":"0.45", "2040":"0.1", "2050":"0.0"}
     line_limits = {"2030":"v1.15", "2040":"v1.3", "2050":"v1.5"}
-    space_resolution = config["plotting"]["space_resolution"]
-    planning = config["plotting"]["planning"]
+    clusters = config["plotting"]["clusters"]
+    planning_horizon = config["plotting"]["planning_horizon"]
     time_resolution = config["plotting"]["time_resolution"]
-    lineex = line_limits[planning]
-    sector_opts = f"Co2L{co2l_limits[planning]}-{time_resolution}-T-H-B-I"
+    lineex = line_limits[planning_horizon]
+    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-T-H-B-I"
 
     # move to submodules/pypsa-eur
     change_path_to_pypsa_eur()
@@ -207,7 +207,7 @@ if __name__ == "__main__":
     # load networks
     networks = {}
     for scenario, nice_name in scenarios.items():
-        n = load_network(lineex, space_resolution, sector_opts, planning, scenario)
+        n = load_network(lineex, clusters, sector_opts, planning_horizon, scenario)
         networks[nice_name] = n
 
     # move to base directory
@@ -222,7 +222,7 @@ if __name__ == "__main__":
     for name, network in networks.items():
         if network is None:
             # Skip further computation for this scenario if network is not loaded
-            print(f"Network is not found for scenario '{scenario}', planning year '{planning}', and time resolution of '{time_resolution}'. Skipping...")
+            print(f"Network is not found for scenario '{scenario}', planning year '{planning_horizon}', and time resolution of '{time_resolution}'. Skipping...")
             continue
         # get electricity bills
         elec_bills_household = electricity_bills(network, households)
