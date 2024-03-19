@@ -112,4 +112,4 @@ if __name__ == "__main__":
     change_path_to_base()
 
     # save the heat pumps data in Excel format
-    df_heat_pumps.to_excel(snakemake.output.table)
+    df_heat_pumps.to_csv(snakemake.output.table)
