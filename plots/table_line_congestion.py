@@ -59,11 +59,11 @@ if __name__ == "__main__":
             df_congestion.loc[nice_name, planning_horizon] = round((congestion / 1e6), 2)
 
     # add name for columns
-    df_congestion.index.name = "Scenario [m. €/MW]"
+    df_congestion.index.name = "Scenario [m. Eur/MW]"
 
     # move to base directory
     change_path_to_base()
 
     # save the heat pumps data in Excel format
-    df_congestion.to_excel(snakemake.output.table)
+    df_congestion.to_csv(snakemake.output.table)
 

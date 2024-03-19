@@ -65,7 +65,7 @@ rule get_heat_pump:
     params:
         clusters=config["plotting"]["clusters"],
     output:
-        table=RESULTS+"table_heat_pumps_{clusters}.xlsx",
+        table=RESULTS+"table_heat_pumps_{clusters}.csv",
     resources:
         mem_mb=20000,
     script:
@@ -76,7 +76,7 @@ rule get_heat_pumps:
     input:
         expand(
             RESULTS
-            + "table_heat_pumps_{clusters}.xlsx",
+            + "table_heat_pumps_{clusters}.csv",
             **config["plotting"],
         ),
 
@@ -85,7 +85,7 @@ rule get_line_congestion:
     params:
         clusters=config["plotting"]["clusters"],
     output:
-        table=RESULTS+"table_line_congestion_{clusters}.xlsx",
+        table=RESULTS+"table_line_congestion_{clusters}.csv",
     resources:
         mem_mb=20000,
     script:
@@ -96,7 +96,7 @@ rule get_line_congestions:
     input:
         expand(
             RESULTS
-            + "table_line_congestion_{clusters}.xlsx",
+            + "table_line_congestion_{clusters}.csv",
             **config["plotting"],
         ),
 
@@ -120,11 +120,11 @@ rule plot_all:
         ),
         expand(
             RESULTS
-            + "table_heat_pumps_{clusters}.xlsx",
+            + "table_heat_pumps_{clusters}.csv",
             **config["plotting"],
         ),
         expand(
             RESULTS
-            + "table_line_congestion_{clusters}.xlsx",
+            + "table_line_congestion_{clusters}.csv",
             **config["plotting"],
         ),
