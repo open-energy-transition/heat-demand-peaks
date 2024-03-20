@@ -7,45 +7,8 @@ import numpy as np
 import pandas as pd
 import warnings
 warnings.filterwarnings("ignore")
-
-# get the base working directory
-BASE_PATH = os.path.abspath(os.path.join(__file__ ,"../.."))
-# relative path to folder where to store plots
-PATH_PLOTS = "plots/results/"
-
-def change_path_to_pypsa_eur():
-    # path to pypsa-eur
-    pypsa_path = "submodules/pypsa-eur/"
-    # absolute path to pypsa-eur
-    new_path = os.path.join(BASE_PATH, pypsa_path)
-    # change path to pypsa-eur
-    os.chdir(new_path)
-
-
-def load_networks(lineex, space_resolution, sector_opts, planning):
-    FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}.nc"
-    DIR = "results/flexible/postnetworks"
-    n_flex = pypsa.Network(os.path.join(DIR, FILE))
-
-    FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}.nc"
-    DIR = "results/retro_tes/postnetworks"
-    n_retro_tes = pypsa.Network(os.path.join(DIR, FILE))
-
-    FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}.nc"
-    DIR = "results/flexible-moderate/postnetworks"
-    n_flex_mod = pypsa.Network(os.path.join(DIR, FILE))
-
-    FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}.nc"
-    DIR = "results/rigid/postnetworks"
-    n_rigid = pypsa.Network(os.path.join(DIR, FILE))
-
-    return n_flex, n_flex_mod, n_retro_tes, n_rigid
-
-
-def change_path_to_base():
-    os.chdir(BASE_PATH)
-    # create folder to store images
-    os.makedirs(PATH_PLOTS, exist_ok=True)
+from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
+                     change_path_to_pypsa_eur, change_path_to_base
 
 
 def get_households():
@@ -149,10 +112,13 @@ def plot_electricity_cost(df_prices, name):
         raise ValueError("name must be one of {}".format(allowed_names))
 
     # sort countries by flexible's electricity cost
-    sorted_df_prices = df_prices.sort_values(by="Efficient Heating", axis=1)
+    sorted_df_prices = df_prices.sort_values(by=df_prices.index[0], axis=1)
 
     # color codes for legend
-    color_codes = {"Efficient Heating":"purple", "Efficient Green Heating":"limegreen", "Semi-Efficient Heating":"royalblue", "Non-efficient Heating":"#f4b609"}
+    color_codes = {"Optimal Renovation and Heating":"purple", 
+                   "Optimal Renovation and Green Heating":"limegreen", 
+                   "Limited Renovation and Optimal Heating":"royalblue", 
+                   "No Renovation and Optimal Heating":"#f4b609"}
 
     # plot as bar plot
     fig, ax = plt.subplots(figsize=(7,3))
@@ -164,14 +130,18 @@ def plot_electricity_cost(df_prices, name):
     ax.spines['left'].set_color('black')
     ax.spines['bottom'].set_color('black')
     ax.grid(axis='y', linestyle='--', linewidth=0.5, color='gray')
+
+    max_price = sorted_df_prices.max().max()
+    ax.set_ylim(0, max_price * 1.2) 
+
     if name == "bills":
         ax.set_title("Electricity bills")
         ylabel = ax.set_ylabel("EUR/household")
-        plt.savefig(PATH_PLOTS+"bill_per_household.png", bbox_inches='tight', dpi=600)
+        plt.savefig(snakemake.output.figure_bills, bbox_inches='tight', dpi=600)
     elif name == "prices":
         ax.set_title("Energy price per country")
         ylabel = ax.set_ylabel("EUR/MWh")
-        plt.savefig(PATH_PLOTS+"prices_per_MWh.png", bbox_inches='tight', dpi=600)
+        plt.savefig(snakemake.output.figure_price, bbox_inches='tight', dpi=600)
 
 
 def electricity_prices(network, households):
@@ -199,28 +169,46 @@ def electricity_prices(network, households):
     energy_price_MWh = prices / total_load_country
 
     # drop EU
-    energy_price_MWh.drop("EU", axis=0, inplace=True)
+    if "EU" in energy_price_MWh.index:
+        energy_price_MWh.drop("EU", axis=0, inplace=True)
     
     return energy_price_MWh
 
 
 
 if __name__ == "__main__":
+    if "snakemake" not in globals():
+        snakemake = mock_snakemake(
+            "plot_electricity_bill", 
+            clusters="48",
+            planning_horizon="2030",
+        )
+    # update config based on wildcards
+    config = update_config_from_wildcards(snakemake.config, snakemake.wildcards)
+
     # network parameters
-    lineex = "v1.15"
-    space_resolution = 48
-    sector_opts = "Co2L0.45-100H-T-H-B-I"
-    planning = 2030
+    co2l_limits = {"2030":"0.45", "2040":"0.1", "2050":"0.0"}
+    line_limits = {"2030":"v1.15", "2040":"v1.3", "2050":"v1.5"}
+    clusters = config["plotting"]["clusters"]
+    planning_horizon = config["plotting"]["planning_horizon"]
+    time_resolution = config["plotting"]["time_resolution"]
+    lineex = line_limits[planning_horizon]
+    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-T-H-B-I"
 
     # move to submodules/pypsa-eur
     change_path_to_pypsa_eur()
 
+    # define scenario namings
+    scenarios = {"flexible": "Optimal Renovation and Heating", 
+                 "retro_tes": "Optimal Renovation and Green Heating", 
+                 "flexible-moderate": "Limited Renovation and Optimal Heating", 
+                 "rigid": "No Renovation and Optimal Heating"}
+
     # load networks
-    n_flex, n_flex_mod, n_retro_tes, n_rigid = load_networks(lineex, space_resolution, sector_opts, planning)
-    networks = {"Efficient Heating": n_flex, 
-                "Efficient Green Heating": n_retro_tes, 
-                "Semi-Efficient Heating": n_flex_mod, 
-                "Non-efficient Heating": n_rigid}
+    networks = {}
+    for scenario, nice_name in scenarios.items():
+        n = load_network(lineex, clusters, sector_opts, planning_horizon, scenario)
+        networks[nice_name] = n
 
     # move to base directory
     change_path_to_base()
@@ -232,6 +220,10 @@ if __name__ == "__main__":
     total_elec_bills = pd.DataFrame()
     total_elec_prices = pd.DataFrame()
     for name, network in networks.items():
+        if network is None:
+            # Skip further computation for this scenario if network is not loaded
+            print(f"Network is not found for scenario '{scenario}', planning year '{planning_horizon}', and time resolution of '{time_resolution}'. Skipping...")
+            continue
         # get electricity bills
         elec_bills_household = electricity_bills(network, households)
         # get electricity prices
@@ -244,7 +236,10 @@ if __name__ == "__main__":
         total_elec_prices = pd.concat([total_elec_prices, elec_bills_MWh.to_frame().T], axis=0)
 
     # plot and store electricity bills
-    plot_electricity_cost(total_elec_bills, "bills")
+    if not total_elec_bills.empty:
+        plot_electricity_cost(total_elec_bills, "bills")
+    
     # plot and store electricity prices
-    plot_electricity_cost(total_elec_prices, "prices")
+    if not total_elec_prices.empty:
+        plot_electricity_cost(total_elec_prices, "prices")
 
