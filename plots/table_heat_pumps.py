@@ -64,8 +64,8 @@ if __name__ == "__main__":
     # heat pump techs
     heat_pumps = {"air heat pump": "Air-sourced", "ground heat pump": "Ground"}
     # heat pump min and max capacities in W
-    MAX_CAPACITY = 6900 # https://www.energysage.com/electricity/house-watts/how-many-watts-does-an-air-source-heat-pump-use/
-    MIN_CAPACITY = 830 # https://www.energysage.com/electricity/house-watts/how-many-watts-does-an-air-source-heat-pump-use/
+    max_capacity = config["heat_pumps"]["max_capacity"]
+    min_capacity = config["heat_pumps"]["min_capacity"]
 
     # define scenario namings
     scenarios = {"flexible": "Optimal Renovation and Heating", 
@@ -99,8 +99,8 @@ if __name__ == "__main__":
             df_heat_pumps.loc[("Optimal Heat Pump Capacity [MW]", "Total"), (planning_horizon, nice_name)] = total_p_nom_opt
             
             # estimate heat pump amount
-            max_amount = total_p_nom_opt / MIN_CAPACITY
-            min_amount = total_p_nom_opt / MAX_CAPACITY
+            max_amount = total_p_nom_opt / min_capacity
+            min_amount = total_p_nom_opt / max_capacity
             df_heat_pumps.loc[('Approximate number of heat pumps [millions]', 'Maximum (830 W) [1]'), (planning_horizon, nice_name)] = round(max_amount, 2)
             df_heat_pumps.loc[('Approximate number of heat pumps [millions]', 'Minimum (6900 W) [1]'), (planning_horizon, nice_name)] = round(min_amount, 2)
 
