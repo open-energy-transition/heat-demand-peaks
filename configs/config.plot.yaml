@@ -10,3 +10,9 @@ plotting:
 heat_pumps:
   max_capacity: 6900 # https://www.energysage.com/electricity/house-watts/how-many-watts-does-an-air-source-heat-pump-use/
   min_capacity: 830 # https://www.energysage.com/electricity/house-watts/how-many-watts-does-an-air-source-heat-pump-use/
+
+set_capacities:
+  clusters: 48
+  planning_horizon: "2030"
+  time_resolution: "100H"
+  scenario: ["flexible", "retro_tes", "flexible-moderate", "rigid "]
