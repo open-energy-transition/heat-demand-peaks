@@ -129,7 +129,8 @@ rule plot_all:
             **config["plotting"],
         ),
 
-rule set_capacities:
+
+rule set_capacity:
     params:
         clusters=config["set_capacities"]["clusters"],
         planning_horizon=config["set_capacities"]["planning_horizon"],
@@ -140,3 +141,11 @@ rule set_capacities:
         mem_mb=20000,
     script:
         "scripts/set_capacities.py"
+
+
+rule set_capacities:
+    input:
+        expand(
+            "scripts/logs/set_capacities_{clusters}_{planning_horizon}_{scenario}.txt",
+            **config["set_capacities"],
+        ),
