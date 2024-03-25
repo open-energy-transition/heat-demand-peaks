@@ -39,7 +39,7 @@ Navigate into the main Snakemake workflow directory of `PyPSA-Eur`:
 
 To run the scenarios of a particular configuration file (e.g. `configs/EEE_study/config.flexible-industry.yaml`), run:
 
-    snakemake -call --configfile ../../configs/EEE_study/config.flexible-industry.yaml solve_sector_networks
+    snakemake -call solve_sector_networks --configfile ../../configs/EEE_study/config.flexible-industry_2030.yaml 
 
 This call requires a high-performance computing environment, as well as a [Gurobi license](https://www.gurobi.com/downloads/gurobi-software/).
 
