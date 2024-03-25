@@ -103,6 +103,8 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"Error: {e}")
             success = False
+    else:
+        success = False
 
     # move to base directory
     change_path_to_base()
