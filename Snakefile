@@ -149,3 +149,23 @@ rule set_capacities:
             "scripts/logs/set_capacities_{clusters}_{planning_horizon}_{scenario}.txt",
             **config["set_capacities"],
         ),
+
+
+rule moderate_retrofitting:
+    params:
+        clusters=config["moderate_retrofitting"]["clusters"],
+        planning_horizon=config["moderate_retrofitting"]["planning_horizon"],
+    output:
+        logs="scripts/logs/set_moderate_retrofitting_{clusters}_{planning_horizon}.txt",
+    resources:
+        mem_mb=20000,
+    script:
+        "scripts/moderate_retrofitting.py"
+
+
+rule set_moderate_retrofitting:
+    input:
+        expand(
+            "scripts/logs/set_moderate_retrofitting_{clusters}_{planning_horizon}.txt",
+            **config["moderate_retrofitting"],
+        ),
