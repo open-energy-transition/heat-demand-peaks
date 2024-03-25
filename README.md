@@ -21,22 +21,74 @@ The study is developed as an extension to the PyPSA-Eur model in this repository
 
 # Installation and Usage
 
+### 1. Installation
+
 Clone the repository including its submodules:
 
-`git clone --recurse-submodules https://github.com/open-energy-transition/heat-demand-peaks`
+    git clone --recurse-submodules https://github.com/open-energy-transition/heat-demand-peaks
 
 Install the necessary dependencies using `conda` or `mamba`:
 
-`mamba env create -f workflows/pypsa-eur/envs/environment.yaml`
+    mamba env create -f submodules/pypsa-eur/envs/environment.yaml
 
 Navigate into the main Snakemake workflow directory of `PyPSA-Eur`:
 
-`cd workflows/pypsa-eur`
+    cd submodules/pypsa-eur
+
+### 2. Running scenarios
 
 To run the scenarios of a particular configuration file (e.g. `configs/EEE_study/config.flexible-industry.yaml`), run:
 
-`snakemake -call --configfile ../../configs/EEE_study/config.flexible-industry.yaml solve_sector_networks`
+    snakemake -call --configfile ../../configs/EEE_study/config.flexible-industry.yaml solve_sector_networks
 
 This call requires a high-performance computing environment, as well as a [Gurobi license](https://www.gurobi.com/downloads/gurobi-software/).
 
 Please follow the documentation of PyPSA-Eur for more details.
+
+### 3. Transfering optimal capacities to future horizons
+
+After optimizing scenarios for one horizon, it is important to transfer optimal generation and store capacities into future horizons. To do so, configure `planning_horizon` in `set_capacities` section of `configs/config.plot.yaml`. By default, `2040` is set as `planning_horizon` in `set_capacities`, which helps to transfer `p_nom_opt` values from solved networks of 2030 into `p_nom_min` of corresponding generators and stores of unsolved network of 2040. The optimal capacities are transfered to corresponding scenarios. To set `p_nom_min` for all scenarios of 2040, run:
+
+    snakemake -call set_capacities
+
+* Note! `snakemake` must be run in `heat-demands-peak` base directory (not `pypsa-eur` submodule).
+
+To set minimum capacities for specific scenario (e.g. flexible scenario of 2050 with 48 clusters), you can run run:
+
+    snakemake -call scripts/logs/set_capacities_48_2050_flexible.txt
+
+### 4. Plotting
+
+To plot the total system cost for all planning horizons (i.e. 2030, 2040, and 2050) specified in `config.plot.yaml`, run:
+
+    snakemake -call plot_total_costs
+
+**Note!** The total costs will be plotted only for scenarios where the solved networks are present.
+
+To plot total costs for specific horizon (e.g. 2040) and number of clusters (e.g. 48), run:
+
+    snakemake -call plots/results/plot_total_costs_48_2040.png
+
+To plot electricity bills per household and electricity prices per country for all horizons (i.e. 2030, 2040, and 2050), run:
+
+    snakemake -call plot_electricity_bills
+
+**Note!** The electricity bills and prices will be computed only for scenarios with solved networks.
+
+To plot electricity bills separately for specific horizon (e.g. 2040) and number of clusters (e.g. 48), run:
+
+    snakemake -call plots/results/plot_bill_per_household_48_2040.png
+
+To estimate number of heat pumps and generate table for all horizons and clusters specified in `config.plot.yaml`, run:
+
+    snakemake -call get_heat_pumps
+
+To estimate average grid congestion and generate table for all horizons and clusters specified in `config.plot.yaml`, run:
+
+    snakemake -call get_line_congestions
+
+To generate all aforementioned plots and tables at once, run:
+
+    snakemake -call plot_all --forceall
+
+**Note!** --forceall flag is used to force a rerun of rule.

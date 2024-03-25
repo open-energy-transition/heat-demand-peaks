@@ -81,9 +81,14 @@ def update_config_from_wildcards(config, w):
     if w.get("planning_horizon"):
         planning_horizon = w.planning_horizon
         config["plotting"]["planning_horizon"] = planning_horizon
+        config["set_capacities"]["planning_horizon"] = planning_horizon
     if w.get("clusters"):
         clusters = w.clusters
         config["plotting"]["clusters"] = clusters
+        config["set_capacities"]["clusters"] = clusters
+    if w.get("scenario"):
+        scenario = w.scenario
+        config["set_capacities"]["scenario"] = scenario
     return config
 
 
@@ -96,6 +101,23 @@ def load_network(lineex, clusters, sector_opts, planning_horizon, scenario):
         print(f"Error: {e}")
         return None
     return n
+
+
+def load_unsolved_network(lineex, clusters, sector_opts, planning_horizon, scenario):
+    FILE = f"elec_s_{clusters}_l{lineex}__{sector_opts}_{planning_horizon}.nc"
+    DIR = f"results/{scenario}/prenetworks"
+    try:
+        n = pypsa.Network(os.path.join(DIR, FILE))
+    except FileNotFoundError as e:
+        print(f"Error: {e}")
+        return None
+    return n
+
+
+def save_unsolved_network(network, lineex, clusters, sector_opts, planning_horizon, scenario):
+    FILE = f"elec_s_{clusters}_l{lineex}__{sector_opts}_{planning_horizon}.nc"
+    DIR = f"results/{scenario}/prenetworks/"
+    network.export_to_netcdf(DIR+FILE)
 
 
 def change_path_to_pypsa_eur():

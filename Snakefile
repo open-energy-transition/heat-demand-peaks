@@ -128,3 +128,24 @@ rule plot_all:
             + "table_line_congestion_{clusters}.csv",
             **config["plotting"],
         ),
+
+
+rule set_capacity:
+    params:
+        clusters=config["set_capacities"]["clusters"],
+        planning_horizon=config["set_capacities"]["planning_horizon"],
+        scenario=config["set_capacities"]["scenario"]
+    output:
+        logs="scripts/logs/set_capacities_{clusters}_{planning_horizon}_{scenario}.txt",
+    resources:
+        mem_mb=20000,
+    script:
+        "scripts/set_capacities.py"
+
+
+rule set_capacities:
+    input:
+        expand(
+            "scripts/logs/set_capacities_{clusters}_{planning_horizon}_{scenario}.txt",
+            **config["set_capacities"],
+        ),

@@ -1,0 +1,115 @@
+import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(__file__ ,"../../")))
+import pypsa
+import pandas as pd
+import logging
+import warnings
+warnings.filterwarnings("ignore")
+from plots._helpers import mock_snakemake, update_config_from_wildcards, load_network, \
+                    change_path_to_pypsa_eur, change_path_to_base, load_unsolved_network, \
+                    save_unsolved_network
+
+
+def get_capacities(network, capacity="opt"):
+    # extendable generators and capacities
+    ext_gen = network.generators.query("p_nom_extendable==True")
+    ext_gen_cap = ext_gen["p_nom_"+capacity]
+    
+    # extendable stores and capacities
+    ext_store = network.stores.query("e_nom_extendable==True")
+    ext_store_cap = ext_store["e_nom_"+capacity]
+
+    return ext_gen_cap, ext_store_cap
+
+
+def get_common_index(list1, list2):
+    # get common index
+    common_index = set(list1).intersection(set(list2))
+    return common_index
+
+
+def set_optimal_capacities(solved_network, unsolved_network):
+    # get optimal capacities from previous horizon
+    opt_gen_cap, opt_store_cap = get_capacities(solved_network, "opt")
+
+    # get minimum capacities from planned horizon
+    min_gen_cap, min_store_cap = get_capacities(unsolved_network, "min")
+
+    # get common extendable generators and stores
+    common_gen = get_common_index(opt_gen_cap.index, min_gen_cap.index)
+    common_store = get_common_index(opt_store_cap.index, min_store_cap.index)
+
+    # remove generators with coal, gas, and oil carriers
+    fossil_carriers = ["coal", "oil", "gas", "co2", "co2 stored", "co2 sequestered"]
+    fossil_gens = unsolved_network.generators.query("carrier in @fossil_carriers").index
+    fossil_stores = unsolved_network.stores.query("carrier in @fossil_carriers").index
+    target_gens = list(set(common_gen).difference(set(fossil_gens)))
+    target_stores = list(set(common_store).difference(set(fossil_stores)))
+
+    # set p_nom_min and e_nom_min capacities
+    unsolved_network.generators.loc[target_gens, "p_nom_min"] = opt_gen_cap[target_gens]
+    unsolved_network.stores.loc[target_stores, "e_nom_min"] = opt_store_cap[target_stores]
+
+    return unsolved_network
+
+
+if __name__ == "__main__":
+    if "snakemake" not in globals():
+        snakemake = mock_snakemake(
+            "set_capacities", 
+            clusters="48",
+            planning_horizon="2040",
+            scenario="flexible"
+        )
+    # update config based on wildcards
+    config = update_config_from_wildcards(snakemake.config, snakemake.wildcards)
+
+    # network parameters by year
+    co2l_limits = {"2030":"0.45", "2040":"0.1", "2050":"0.0"}
+    line_limits = {"2030":"v1.15", "2040":"v1.3", "2050":"v1.5"}
+    previous_horizons = {"2040":"2030", "2050":"2040"} 
+
+    # network parameters of unsolved network
+    clusters = config["set_capacities"]["clusters"]
+    planning_horizon = config["set_capacities"]["planning_horizon"]
+    time_resolution = config["set_capacities"]["time_resolution"]
+    scenario = config["set_capacities"]["scenario"]
+    lineex = line_limits[planning_horizon]
+    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-T-H-B-I"
+
+    # network parameters of solved network
+    previous_horizon = previous_horizons[planning_horizon]
+    previous_lineex = line_limits[previous_horizon]
+    previous_sector_opts = f"Co2L{co2l_limits[previous_horizon]}-{time_resolution}-T-H-B-I"
+
+    # move to pypsa-eur directory
+    change_path_to_pypsa_eur()
+
+    # load solved network
+    solved_network = load_network(previous_lineex, clusters, previous_sector_opts, previous_horizon, scenario)
+    
+    # load unsolved network for future
+    unsolved_network = load_unsolved_network(lineex, clusters, sector_opts, planning_horizon, scenario)
+
+    # if both network is present, then set optimal capacities
+    if not solved_network is None and not unsolved_network is None:
+        updated_network = set_optimal_capacities(solved_network, unsolved_network)
+        print(f"Updated: {lineex}, {clusters}, {sector_opts}, {planning_horizon}, {scenario}")
+        # save updated network
+        try:
+            save_unsolved_network(updated_network, lineex, clusters, sector_opts, planning_horizon, scenario)
+            success = True
+        except Exception as e:
+            print(f"Error: {e}")
+            success = False
+
+    # move to base directory
+    change_path_to_base()
+
+    # write logs
+    with open(snakemake.output.logs, 'w') as f:
+        f.write(f"""Scenarios: {scenario} 
+                \nPlanning horizon: {planning_horizon} 
+                \nClusters: {clusters} 
+                \nSuccess: {success}""")
