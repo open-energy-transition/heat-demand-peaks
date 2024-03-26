@@ -15,6 +15,9 @@ scenario:
   planning_horizons:
   - 2030
 
+enable:
+  custom_busmap: true
+
 # reduce available transfer capacity to 50% to better account for grid internal bottlenecks due to low spatial resolution of 48 nodes
 lines:
   s_max_pu: 0.5
