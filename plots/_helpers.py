@@ -82,10 +82,12 @@ def update_config_from_wildcards(config, w):
         planning_horizon = w.planning_horizon
         config["plotting"]["planning_horizon"] = planning_horizon
         config["set_capacities"]["planning_horizon"] = planning_horizon
+        config["moderate_retrofitting"]["planning_horizon"] = planning_horizon
     if w.get("clusters"):
         clusters = w.clusters
         config["plotting"]["clusters"] = clusters
         config["set_capacities"]["clusters"] = clusters
+        config["moderate_retrofitting"]["clusters"] = clusters
     if w.get("scenario"):
         scenario = w.scenario
         config["set_capacities"]["scenario"] = scenario
