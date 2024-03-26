@@ -57,9 +57,9 @@ This command will set `p_nom` for moderate retrofitting network as a half of `p_
 
 As an alternative, the nominal capacities for moderate retrofitting scenario can be set by running the command with wildcards (e.g. scenario for 2030 with 48 clusters):
 
-    snakemake -call scripts/logs/set_moderate_retrofitting_48_2030.txt
+    snakemake -call scripts/logs/set_moderate_retrofitting_48_2030.txt --force
 
-The resultant file in `scripts/logs/set_moderate_retrofitting_48_2030.txt` contains `Success` parameter which indicates the success status of executed rule.
+The resultant file in `scripts/logs/set_moderate_retrofitting_48_2030.txt` contains `Success` parameter which indicates the success status of executed rule. Here, `--force` flag is used to forcefully re-execute the rule.
 
 ### 4. Transfering optimal capacities to future horizons
 
