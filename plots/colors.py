@@ -74,6 +74,7 @@ tech_colors = {
 "Coal": '#545454',
 "coal": '#545454',
 "Coal marginal": '#545454',
+"coal for industry": '#343434',
 "solid": '#545454',
 "Lignite": '#826837',
 "lignite": '#826837',
