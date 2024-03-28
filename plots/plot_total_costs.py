@@ -163,7 +163,7 @@ def rename_techs(label):
 
 
 def compute_costs(n, nice_name):
-    costs = n.statistics()[["Capital Expenditure", "Operational Expenditure"]].dropna()
+    costs = n.statistics()[["Capital Expenditure", "Operational Expenditure"]]
     full_costs = costs.sum(axis=1).droplevel(0).to_frame()
     full_costs = full_costs.groupby(full_costs.index).sum()
     full_costs.columns = [nice_name]
