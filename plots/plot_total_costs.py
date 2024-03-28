@@ -165,6 +165,7 @@ def rename_techs(label):
 def compute_costs(n, nice_name):
     costs = n.statistics()[["Capital Expenditure", "Operational Expenditure"]].dropna()
     full_costs = costs.sum(axis=1).droplevel(0).to_frame()
+    full_costs = full_costs.groupby(full_costs.index).sum()
     full_costs.columns = [nice_name]
     return full_costs
 
@@ -213,14 +214,13 @@ def plot_costs(cost_df):
     handles.reverse()
     labels.reverse()
 
-    costs_max = cost_df.sum().max() / 1e9
-    ax.set_ylim([0, costs_max])
     plt.xticks(rotation=0, fontsize=10)
 
     ax.set_ylabel("System Cost [EUR billion per year]")
 
     ax.set_xlabel("")
-    ax.set_ylim([0,900])
+    ax.set_ylim([0,1100])
+    ax.set_yticks(np.arange(0, 1100, 100))
 
     # Turn off both horizontal and vertical grid lines
     ax.grid(False, which='both')
@@ -283,8 +283,8 @@ if __name__ == "__main__":
         cost_df = cost_df.join(full_costs, how="outer").fillna(0)
 
     # drop oil from plot
-    if "oil" in cost_df.index:
-        cost_df = cost_df.drop("oil", axis=0)
+    # if "oil" in cost_df.index:
+    #     cost_df = cost_df.drop("oil", axis=0)
 
     # move to base directory
     change_path_to_base()
