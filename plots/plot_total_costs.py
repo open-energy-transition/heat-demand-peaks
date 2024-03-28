@@ -220,6 +220,7 @@ def plot_costs(cost_df):
     ax.set_ylabel("System Cost [EUR billion per year]")
 
     ax.set_xlabel("")
+    ax.set_ylim([0,900])
 
     # Turn off both horizontal and vertical grid lines
     ax.grid(False, which='both')
