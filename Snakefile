@@ -47,6 +47,18 @@ rule plot_electricity_bill:
         "plots/plot_electricity_bills.py"
 
 
+rule plot_electricity_for_heat:
+    params:
+        clusters=config["plotting"]["clusters"],
+        planning_horizon=config["plotting"]["planning_horizon"],
+    output:
+        figure=RESULTS+"plot_electricity_for_heat_{clusters}_{planning_horizon}.png",
+    resources:
+        mem_mb=20000,
+    script:
+        "plots/plot_electricity_for_heat.py"
+
+
 rule plot_electricity_bills:
     input:
         expand(
