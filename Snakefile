@@ -138,6 +138,11 @@ rule plot_all:
         ),
         expand(
             RESULTS
+            + "plot_electricity_for_heat_{clusters}_{planning_horizon}.png",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
             + "table_heat_pumps_{clusters}.csv",
             **config["plotting"],
         ),
