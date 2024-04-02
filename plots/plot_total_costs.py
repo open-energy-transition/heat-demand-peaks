@@ -94,9 +94,15 @@ PREFERRED_ORDER = pd.Index(
         "solid biomass",
         "biogas",
         "gas for industry",
+        "coal for industry",
         "methanol",
         "oil",
         "coal",
+        "shipping oil",
+        "shipping methanol",
+        "naphtha for industry",
+        "land transport oil",
+        "kerosene for aviation",
         
         "transmission lines",
         "distribution lines",
@@ -163,8 +169,9 @@ def rename_techs(label):
 
 
 def compute_costs(n, nice_name):
-    costs = n.statistics()[["Capital Expenditure", "Operational Expenditure"]].dropna()
+    costs = n.statistics()[["Capital Expenditure", "Operational Expenditure"]]
     full_costs = costs.sum(axis=1).droplevel(0).to_frame()
+    full_costs = full_costs.groupby(full_costs.index).sum()
     full_costs.columns = [nice_name]
     return full_costs
 
@@ -213,14 +220,13 @@ def plot_costs(cost_df):
     handles.reverse()
     labels.reverse()
 
-    costs_max = cost_df.sum().max() / 1e9
-    ax.set_ylim([0, costs_max])
     plt.xticks(rotation=0, fontsize=10)
 
     ax.set_ylabel("System Cost [EUR billion per year]")
 
     ax.set_xlabel("")
-    ax.set_ylim([0,900])
+    ax.set_ylim([0,1100])
+    ax.set_yticks(np.arange(0, 1100, 100))
 
     # Turn off both horizontal and vertical grid lines
     ax.grid(False, which='both')
@@ -237,6 +243,87 @@ def plot_costs(cost_df):
     ax.grid(axis='y', linestyle='--', linewidth=0.5, color='gray', zorder=0)
     plt.savefig(snakemake.output.figure, dpi=600, bbox_inches = 'tight')
     
+
+def compute_capacities(n, nice_name):
+    capacities = n.statistics()[["Optimal Capacity"]]
+    capacities = capacities[capacities.index.get_level_values(0).isin(["Generator","Link","StorageUnit"])]
+    full_caps = capacities.sum(axis=1).droplevel(0).to_frame()
+    full_caps = full_caps.groupby(full_caps.index).sum()
+    full_caps.columns = [nice_name]
+    return full_caps
+
+
+def plot_capacities(caps_df):
+    df = caps_df.groupby(caps_df.index).sum()
+
+    # drop solid biomass transport
+    df = df[df.index != 'solid biomass transport']
+
+    # convert to GW
+    df = df / 1e3
+    df = df.groupby(df.index.map(rename_techs)).sum()
+
+    caps_threshold = 10
+    to_drop = df.index[df.max(axis=1) < caps_threshold]  #df <
+
+    logger.info(
+        f"Dropping technology with capacity below {caps_threshold} GW"
+    )
+    logger.debug(df.loc[to_drop])
+
+    df = df.drop(to_drop)
+
+    logger.info(f"Total optimal capacity is {round(df.sum())} GW")
+
+    new_index = PREFERRED_ORDER.intersection(df.index).append(
+        df.index.difference(PREFERRED_ORDER)
+    )
+
+    for remove_tech in DONT_PLOT:
+        if remove_tech in new_index:
+            new_index = new_index.drop(remove_tech)
+
+    new_columns = df.sum().sort_values().index  
+
+
+    fig, ax = plt.subplots(figsize=(7, 9))
+
+    df.loc[new_index].T.plot(
+        kind="bar",
+        ax=ax,
+        stacked=True,
+        color=[c.tech_colors[i] for i in new_index],
+        zorder=1,
+    )
+
+    handles, labels = ax.get_legend_handles_labels()
+
+    handles.reverse()
+    labels.reverse()
+
+    plt.xticks(rotation=0, fontsize=10)
+
+    ax.set_ylabel("Installed capacities [GW]")
+
+    ax.set_xlabel("")
+    ax.set_ylim([0,15000])
+    ax.set_yticks(np.arange(0, 15000, 2000))
+
+    # Turn off both horizontal and vertical grid lines
+    ax.grid(False, which='both')
+
+    ax.legend(
+        handles, labels, ncol=1, loc="upper left", bbox_to_anchor=[1, 1], frameon=False
+    )
+    
+    ax.set_facecolor('white')
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_color('black')
+    ax.spines['bottom'].set_color('black')
+    ax.grid(axis='y', linestyle='--', linewidth=0.5, color='gray', zorder=0)
+    plt.savefig(snakemake.output.capacities, dpi=600, bbox_inches = 'tight')
+
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -270,6 +357,7 @@ if __name__ == "__main__":
     # load networks
     networks = {}
     cost_df = pd.DataFrame()
+    caps_df = pd.DataFrame()
     for scenario, nice_name in scenarios.items():
         n = load_network(lineex, clusters, sector_opts, planning_horizon, scenario)
 
@@ -282,9 +370,13 @@ if __name__ == "__main__":
         full_costs = compute_costs(n, nice_name)
         cost_df = cost_df.join(full_costs, how="outer").fillna(0)
 
+        # calculate capacities for scenario
+        full_caps = compute_capacities(n, nice_name)
+        caps_df = caps_df.join(full_caps, how="outer").fillna(0)
+
     # drop oil from plot
-    if "oil" in cost_df.index:
-        cost_df = cost_df.drop("oil", axis=0)
+    # if "oil" in cost_df.index:
+    #     cost_df = cost_df.drop("oil", axis=0)
 
     # move to base directory
     change_path_to_base()
@@ -292,3 +384,7 @@ if __name__ == "__main__":
     # plot costs
     if not cost_df.empty:
         plot_costs(cost_df)
+
+    # plot capacities
+    if not caps_df.empty:
+        plot_capacities(caps_df)

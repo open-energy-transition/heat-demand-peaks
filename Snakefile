@@ -19,6 +19,7 @@ rule plot_total_cost:
         planning_horizon=config["plotting"]["planning_horizon"],
     output:
         figure=RESULTS+"plot_total_costs_{clusters}_{planning_horizon}.png",
+        capacities=RESULTS+"plot_total_capacities_{clusters}_{planning_horizon}.png",
     resources:
         mem_mb=20000,
     script:
@@ -30,6 +31,11 @@ rule plot_total_costs:
         expand(
             RESULTS
             + "plot_total_costs_{clusters}_{planning_horizon}.png",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "plot_total_capacities_{clusters}_{planning_horizon}.png",
             **config["plotting"],
         ),
 
