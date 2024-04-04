@@ -50,7 +50,7 @@ def set_optimal_capacities(solved_network, unsolved_network):
                        "land transport oil", "solid biomass for industry",
                        "gas for industry", "shipping methanol", "shipping oil",
                        "naphtha for industry", "kerosene for aviation",
-                       "process emissions", "coal for industry"]
+                       "process emissions", "coal for industry", "nuclear"]
     fossil_gens = unsolved_network.generators.query("carrier in @fossil_carriers").index
     fossil_stores = unsolved_network.stores.query("carrier in @fossil_carriers").index
     fossil_links = unsolved_network.links.query("carrier in @fossil_carriers").index
