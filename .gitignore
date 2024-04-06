@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText:  Open Energy Transition gGmbH
+#
+# SPDX-License-Identifier: CC0-1.0
+
 plots/__pycache__
 plots/.ipynb_checkpoints
 plots/results
