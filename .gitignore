@@ -2,3 +2,4 @@ plots/__pycache__
 plots/.ipynb_checkpoints
 plots/results
 .snakemake/
+scripts/logs/
