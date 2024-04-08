@@ -352,6 +352,7 @@ def update_capital_cost(cap_costs_dict, p_nom_opt_dict, planning_horizon):
     delta_horizon = 10
     planning_horizon = int(planning_horizon)
     full_cost = pd.DataFrame()
+    missing_scenarios = []
 
     while planning_horizon > 2030:
         # previous horizon's year
@@ -361,16 +362,22 @@ def update_capital_cost(cap_costs_dict, p_nom_opt_dict, planning_horizon):
         delta_p_nom_opt = delta_p_nom_opt.clip(lower=0)
         # built_fraction = delta(p_nom_opt) / p_nom_opt
         built_fraction = (delta_p_nom_opt/p_nom_opt_dict[str(planning_horizon)]).fillna(0)
-        # cost sped in planning horizon
+        # cost amount in planning horizon
         cost_horizon = cap_costs_dict[str(planning_horizon)] * built_fraction
         # sum cost
         full_cost = full_cost.add(cost_horizon, fill_value=0)
+
+        # missing scenario
+        missing_scenario = cost_horizon.columns[cost_horizon.isna().all()]
+        missing_scenarios.extend(missing_scenario)
 
         # go to previous horizon
         planning_horizon = previous_horizon
     else:
         cost_horizon = cap_costs_dict[str(planning_horizon)]
         full_cost = full_cost.add(cost_horizon, fill_value=0)
+        # remove missing scenario
+        full_cost = full_cost.loc[:, ~full_cost.columns.isin(missing_scenarios)]
 
     return full_cost
 
@@ -442,12 +449,16 @@ if __name__ == "__main__":
         # update capital costs based on previous horizons
         cap_costs_dict[planning_horizon] = cap_cost_df
         p_nom_opt_dict[planning_horizon] = p_nom_opt_df
-        updated_caps_df = update_capital_cost(cap_costs_dict, p_nom_opt_dict, planning_horizon)
 
-        # add capital and operational costs
-        cost_df = sum_costs(updated_caps_df, op_cost_df)
-        # reorder scenarios
-        cost_df = cost_df[scenarios.values()]
+        # if capital costs data is present (not empty)
+        if not any([x.empty for x in cap_costs_dict.values()]):
+            updated_caps_df = update_capital_cost(cap_costs_dict, p_nom_opt_dict, planning_horizon)
+
+            # add capital and operational costs
+            cost_df = sum_costs(updated_caps_df, op_cost_df)
+            # reorder scenarios
+            reorder_columns = [s for s in scenarios.values() if s in cost_df.columns]
+            cost_df = cost_df[reorder_columns]
 
         # move to base directory
         change_path_to_base()
