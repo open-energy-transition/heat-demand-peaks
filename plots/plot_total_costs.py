@@ -422,6 +422,7 @@ if __name__ == "__main__":
         op_cost_df = pd.DataFrame()
         capacities_df = pd.DataFrame()
         p_nom_opt_df = pd.DataFrame()
+        cost_df = pd.DataFrame()
         for scenario, nice_name in scenarios.items():
             n = load_network(lineex, clusters, sector_opts, planning_horizon, scenario)
 
