@@ -17,6 +17,7 @@ from _helpers import mock_snakemake, update_config_from_wildcards, load_network,
 
 logger = logging.getLogger(__name__)
 
+RESULTS_DIR = "plots/results"
 
 DONT_PLOT = ["gas storage"]
 
@@ -168,15 +169,16 @@ def rename_techs(label):
     return label
 
 
-def compute_costs(n, nice_name):
-    costs = n.statistics()[["Capital Expenditure", "Operational Expenditure"]]
-    full_costs = costs.sum(axis=1).droplevel(0).to_frame()
-    full_costs = full_costs.groupby(full_costs.index).sum()
-    full_costs.columns = [nice_name]
-    return full_costs
+def compute_costs(n, nice_name, cost_type):
+    assert cost_type in ["Operational", "Capital"], "Type variable must be 'Operational' or 'Capital'"
+    costs = n.statistics()[[f"{cost_type} Expenditure"]]
+    new_index = [':'.join(idx) for idx in costs.index]
+    costs.index = new_index
+    costs.columns = [nice_name]
+    return costs
 
 
-def plot_costs(cost_df):
+def plot_costs(cost_df, clusters, planning_horizon):
     df = cost_df.groupby(cost_df.index).sum()
 
     # convert to billions
@@ -241,7 +243,7 @@ def plot_costs(cost_df):
     ax.spines['left'].set_color('black')
     ax.spines['bottom'].set_color('black')
     ax.grid(axis='y', linestyle='--', linewidth=0.5, color='gray', zorder=0)
-    plt.savefig(snakemake.output.figure, dpi=600, bbox_inches = 'tight')
+    plt.savefig(f"{RESULTS_DIR}/plot_total_costs_{clusters}_{planning_horizon}.png", dpi=600, bbox_inches = 'tight')
     
 
 def compute_capacities(n, nice_name):
@@ -253,7 +255,7 @@ def compute_capacities(n, nice_name):
     return full_caps
 
 
-def plot_capacities(caps_df):
+def plot_capacities(caps_df, clusters, planning_horizon):
     df = caps_df.groupby(caps_df.index).sum()
 
     # drop solid biomass transport
@@ -322,7 +324,62 @@ def plot_capacities(caps_df):
     ax.spines['left'].set_color('black')
     ax.spines['bottom'].set_color('black')
     ax.grid(axis='y', linestyle='--', linewidth=0.5, color='gray', zorder=0)
-    plt.savefig(snakemake.output.capacities, dpi=600, bbox_inches = 'tight')
+    plt.savefig(f"{RESULTS_DIR}/plot_total_capacities_{clusters}_{planning_horizon}.png", dpi=600, bbox_inches = 'tight')
+
+
+def get_p_nom_opt(n, nice_name):
+    capacities = n.statistics()[["Optimal Capacity"]]
+    new_index = [':'.join(idx) for idx in capacities.index]
+    capacities.index = new_index
+    capacities.columns = [nice_name]
+    return capacities
+
+
+def sum_costs(cap_cost_df, op_cost_df):
+    total_cost = cap_cost_df + op_cost_df
+    new_index = [x.split(":")[1] for x in total_cost.index]
+    total_cost.index = new_index
+    return total_cost
+
+
+def get_common_index(list1, list2):
+    # get common index
+    common_index = set(list1).intersection(set(list2))
+    return common_index
+
+
+def update_capital_cost(cap_costs_dict, p_nom_opt_dict, planning_horizon):
+    delta_horizon = 10
+    planning_horizon = int(planning_horizon)
+    full_cost = pd.DataFrame()
+    missing_scenarios = []
+
+    while planning_horizon > 2030:
+        # previous horizon's year
+        previous_horizon = planning_horizon - delta_horizon
+        # delta p_nom_opt 
+        delta_p_nom_opt = p_nom_opt_dict[str(planning_horizon)] - p_nom_opt_dict[str(previous_horizon)]
+        delta_p_nom_opt = delta_p_nom_opt.clip(lower=0)
+        # built_fraction = delta(p_nom_opt) / p_nom_opt
+        built_fraction = (delta_p_nom_opt/p_nom_opt_dict[str(planning_horizon)]).fillna(0)
+        # cost amount in planning horizon
+        cost_horizon = cap_costs_dict[str(planning_horizon)] * built_fraction
+        # sum cost
+        full_cost = full_cost.add(cost_horizon, fill_value=0)
+
+        # missing scenario
+        missing_scenario = cost_horizon.columns[cost_horizon.isna().all()]
+        missing_scenarios.extend(missing_scenario)
+
+        # go to previous horizon
+        planning_horizon = previous_horizon
+    else:
+        cost_horizon = cap_costs_dict[str(planning_horizon)]
+        full_cost = full_cost.add(cost_horizon, fill_value=0)
+        # remove missing scenario
+        full_cost = full_cost.loc[:, ~full_cost.columns.isin(missing_scenarios)]
+
+    return full_cost
 
 
 if __name__ == "__main__":
@@ -336,55 +393,81 @@ if __name__ == "__main__":
     config = update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
 
-    # move to submodules/pypsa-eur
-    change_path_to_pypsa_eur()
-
     # network parameters
     co2l_limits = {"2030":"0.45", "2040":"0.1", "2050":"0.0"}
     line_limits = {"2030":"v1.15", "2040":"v1.3", "2050":"v1.5"}
     clusters = config["plotting"]["clusters"]
-    planning_horizon = config["plotting"]["planning_horizon"]
+    planning_horizons = ["2030", "2040", "2050"]
     time_resolution = config["plotting"]["time_resolution"]
-    lineex = line_limits[planning_horizon]
-    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-T-H-B-I"
 
-    # define scenario namings
-    scenarios = {"flexible": "Optimal \nRenovation &\nHeating", 
-                 "retro_tes": "Optimal \nRenovation &\nGreen Heating", 
-                 "flexible-moderate": "Limited \nRenovation &\nOptimal Heating", 
-                 "rigid": "No \nRenovation &\nOptimal Heating"}
+    # initialize capital cost and p_nom_opt storing dictionary for different horizons
+    cap_costs_dict = {}
+    p_nom_opt_dict = {}
+    for planning_horizon in planning_horizons:
+        lineex = line_limits[planning_horizon]
+        sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-T-H-B-I"
 
-    # load networks
-    networks = {}
-    cost_df = pd.DataFrame()
-    caps_df = pd.DataFrame()
-    for scenario, nice_name in scenarios.items():
-        n = load_network(lineex, clusters, sector_opts, planning_horizon, scenario)
+        # define scenario namings
+        scenarios = {"flexible": "Optimal \nRenovation &\nHeating", 
+                    "retro_tes": "Optimal \nRenovation &\nGreen Heating", 
+                    "flexible-moderate": "Limited \nRenovation &\nOptimal Heating", 
+                    "rigid": "No \nRenovation &\nOptimal Heating"}
 
-        if n is None:
-            # Skip further computation for this scenario if network is not loaded
-            print(f"Network is not found for scenario '{scenario}', planning year '{planning_horizon}', and time resolution of '{time_resolution}'. Skipping...")
-            continue
+        # move to submodules/pypsa-eur
+        change_path_to_pypsa_eur()
+    
+        # load networks
+        networks = {}
+        cap_cost_df = pd.DataFrame()
+        op_cost_df = pd.DataFrame()
+        capacities_df = pd.DataFrame()
+        p_nom_opt_df = pd.DataFrame()
+        cost_df = pd.DataFrame()
+        for scenario, nice_name in scenarios.items():
+            n = load_network(lineex, clusters, sector_opts, planning_horizon, scenario)
 
-        # calculate costs for scenario
-        full_costs = compute_costs(n, nice_name)
-        cost_df = cost_df.join(full_costs, how="outer").fillna(0)
+            if n is None:
+                # Skip further computation for this scenario if network is not loaded
+                print(f"Network is not found for scenario '{scenario}', planning year '{planning_horizon}', and time resolution of '{time_resolution}'. Skipping...")
+                continue
 
-        # calculate capacities for scenario
-        full_caps = compute_capacities(n, nice_name)
-        caps_df = caps_df.join(full_caps, how="outer").fillna(0)
+            # calculate capital costs for scenario
+            cap_costs = compute_costs(n, nice_name, "Capital")
+            cap_cost_df = cap_cost_df.join(cap_costs, how="outer").fillna(0)
 
-    # drop oil from plot
-    # if "oil" in cost_df.index:
-    #     cost_df = cost_df.drop("oil", axis=0)
+            # calculate operational costs for scenario
+            op_costs = compute_costs(n, nice_name, "Operational")
+            op_cost_df = op_cost_df.join(op_costs, how="outer").fillna(0)
 
-    # move to base directory
-    change_path_to_base()
+            # calculate capacities for scenario
+            capacities = compute_capacities(n, nice_name)
+            capacities_df = capacities_df.join(capacities, how="outer").fillna(0)
 
-    # plot costs
-    if not cost_df.empty:
-        plot_costs(cost_df)
+            # get p_nom_opt for scenario
+            p_nom_opt = get_p_nom_opt(n, nice_name)
+            p_nom_opt_df = p_nom_opt_df.join(p_nom_opt, how="outer").fillna(0)
 
-    # plot capacities
-    if not caps_df.empty:
-        plot_capacities(caps_df)
+        # update capital costs based on previous horizons
+        cap_costs_dict[planning_horizon] = cap_cost_df
+        p_nom_opt_dict[planning_horizon] = p_nom_opt_df
+
+        # if capital costs data is present (not empty)
+        if not any([x.empty for x in cap_costs_dict.values()]):
+            updated_caps_df = update_capital_cost(cap_costs_dict, p_nom_opt_dict, planning_horizon)
+
+            # add capital and operational costs
+            cost_df = sum_costs(updated_caps_df, op_cost_df)
+            # reorder scenarios
+            reorder_columns = [s for s in scenarios.values() if s in cost_df.columns]
+            cost_df = cost_df[reorder_columns]
+
+        # move to base directory
+        change_path_to_base()
+
+        # plot costs
+        if not cost_df.empty:
+            plot_costs(cost_df, clusters, planning_horizon)
+
+        # plot capacities
+        if not capacities_df.empty:
+            plot_capacities(capacities_df, clusters, planning_horizon)
