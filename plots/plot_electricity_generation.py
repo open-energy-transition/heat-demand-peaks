@@ -17,91 +17,30 @@ def plot_pies(ax, elec_mix_array):
     cmap = plt.colormaps["tab20c"]
     outer_colors = ["#ff8c00", "#0fa101", "#db6a25"]
     inner_colors = cmap([1, 2, 5, 6, 9, 10])
-    inner_colors = ["#ff8c00", "#ff8c00", "#ff8c00", "#ff8c00", "#6895dd", "#235ebc", "#3dbfb0", "#f9d002", "#db6a25", "#db6a25", "#db6a25", "#db6a25"]
+    inner_colors = ["#ff8c00", "#6895dd", "#235ebc", "#3dbfb0", "#f9d002", "#db6a25"]
 
-    ax.pie(vals.sum(axis=1), radius=1, colors=outer_colors,
-        wedgeprops=dict(width=size, edgecolor='w', linewidth=0.2))
+    outer_labels = ["Nuclear", "VRES", "Gas"]
 
-    ax.pie(vals.flatten(), radius=1.15-size, colors=inner_colors,
-       wedgeprops=dict(width=size, edgecolor='w', linewidth=0.2))
+    wedges, texts, autotexts = ax.pie(vals.sum(axis=1), radius=1, colors=outer_colors,
+        wedgeprops=dict(width=size, edgecolor='w', linewidth=0.2), 
+        autopct='%.1f%%', textprops={'fontsize': 4}, pctdistance=1.5,
+        labels=outer_labels)
+    
+    # Adjust the position of autopct labels
+    for autotext, label in zip(autotexts, texts):
+        x, y = label.get_position()  # Get position of corresponding wedge label
+        autotext.set_position((x , y - 0.11))  # Set position of autopct label below the wedge label
+        autotext.set_fontsize(3)
+        align = "right" if x < 0 else "left"
+        autotext.set_horizontalalignment(align)
+
+    all_vals = vals.flatten()
+    ax.pie(all_vals[all_vals!=0], radius=1.15-size, colors=inner_colors,
+       wedgeprops=dict(width=size, edgecolor='w', linewidth=0.2),
+       autopct='%.1f%%', textprops={'fontsize': 3}, pctdistance=0.7)
 
     ax.set(aspect="equal")
 
-
-def add_text(ax, elec_mix_array, planning_horizon):
-
-    vals = np.array(elec_mix_array)
-    ref = np.sum(vals.flatten())
-
-    fontsize_numbers = 3
-    fontsize_other = 4
-
-    # unfortunately the text atm is hard coded. Is there a way to get the x and y values from the pie chart, somehow?
-    if planning_horizon == "2030":
-        ax.text(1.02, 0.25, "Nuclear", fontsize=fontsize_other)
-        ax.text(-1.5, -0.55, "Variable", fontsize=fontsize_other)
-        ax.text(-1.5, -0.7, "Renewables", fontsize=fontsize_other)
-        ax.text(
-            -1.5, -0.82,
-            str(
-                (
-                    100*elec_mix.loc[["offwind-ac", "offwind-dc", "onwind", "solar", "solar rooftop", "ror"]].sum()+
-                    elec_mix_hydro.loc[["hydro"]].sum()
-                )/ref
-            )[0:4]+"%", fontsize=fontsize_numbers
-        )
-        ax.text(1.05, -0.05, "Gas", fontsize=fontsize_other)
-
-        ax.text(1.35, -0.045, str(100*elec_mix_gas.sum()/np.sum(vals.flatten()))[0:3]+"%", fontsize=fontsize_numbers)
-        ax.text(.43, 0.1, str(100*elec_mix.loc[["nuclear"]].sum()/ref)[0:3]+"%", fontsize=fontsize_numbers)
-        ax.text(.15, 0.45, str(100*elec_mix.loc[["offwind-ac", "offwind-dc"]].sum()/ref)[0:4]+"%", fontsize=fontsize_numbers)
-        ax.text(-.6, 0.3, str(100*elec_mix.loc[["onwind"]].sum()/ref)[0:4]+"%", fontsize=fontsize_numbers)
-        ax.text(-.62, -0.35, str(100*(elec_mix.loc[["ror"]].sum()+elec_mix_hydro.loc[["hydro"]].sum())/ref)[0:3]+"%", fontsize=fontsize_numbers)
-        ax.text(0.1, -0.5, str(100*elec_mix.loc[["solar", "solar rooftop"]].sum()/ref)[0:4]+"%", fontsize=fontsize_numbers)
-    
-    if planning_horizon == "2040":
-        ax.text(1.02, 0.25, "Nuclear", fontsize=fontsize_other)
-        ax.text(-1.5, -0.55, "Variable", fontsize=fontsize_other)
-        ax.text(-1.5, -0.7, "Renewables", fontsize=fontsize_other)
-        ax.text(
-            -1.5, -0.82,
-            str(
-                (
-                    100*elec_mix.loc[["offwind-ac", "offwind-dc", "onwind", "solar", "solar rooftop", "ror"]].sum()+
-                    elec_mix_hydro.loc[["hydro"]].sum()
-                )/ref
-            )[0:4]+"%", fontsize=fontsize_numbers
-        )
-        ax.text(1.05, -0.05, "Gas", fontsize=fontsize_other)
-
-        ax.text(1.35, -0.045, str(100*elec_mix_gas.sum()/np.sum(vals.flatten()))[0:3]+"%", fontsize=fontsize_numbers)
-        ax.text(.43, 0.1, str(100*elec_mix.loc[["nuclear"]].sum()/ref)[0:3]+"%", fontsize=fontsize_numbers)
-        ax.text(.15, 0.45, str(100*elec_mix.loc[["offwind-ac", "offwind-dc"]].sum()/ref)[0:4]+"%", fontsize=fontsize_numbers)
-        ax.text(-.6, 0.3, str(100*elec_mix.loc[["onwind"]].sum()/ref)[0:4]+"%", fontsize=fontsize_numbers)
-        ax.text(-.62, -0.15, str(100*(elec_mix.loc[["ror"]].sum()+elec_mix_hydro.loc[["hydro"]].sum())/ref)[0:3]+"%", fontsize=fontsize_numbers)
-        ax.text(-0.1, -0.6, str(100*elec_mix.loc[["solar", "solar rooftop"]].sum()/ref)[0:4]+"%", fontsize=fontsize_numbers)
-    
-    if planning_horizon == "2050":
-        ax.text(1.02, 0.25, "Nuclear", fontsize=fontsize_other)
-        ax.text(-1.5, -0.55, "Variable", fontsize=fontsize_other)
-        ax.text(-1.5, -0.7, "Renewables", fontsize=fontsize_other)
-        ax.text(
-            -1.5, -0.82,
-            str(
-                (
-                    100*elec_mix.loc[["offwind-ac", "offwind-dc", "onwind", "solar", "solar rooftop", "ror"]].sum()+
-                    elec_mix_hydro.loc[["hydro"]].sum()
-                )/ref
-            )[0:4]+"%", fontsize=fontsize_numbers
-        )
-        ax.text(1.05, -0.05, "Gas", fontsize=fontsize_other)
-
-        ax.text(1.35, -0.045, str(100*elec_mix_gas.sum()/np.sum(vals.flatten()))[0:3]+"%", fontsize=fontsize_numbers)
-        ax.text(.43, 0.05, str(100*elec_mix.loc[["nuclear"]].sum()/ref)[0:3]+"%", fontsize=fontsize_numbers)
-        ax.text(.2, 0.4, str(100*elec_mix.loc[["offwind-ac", "offwind-dc"]].sum()/ref)[0:4]+"%", fontsize=fontsize_numbers)
-        ax.text(-.35, 0.45, str(100*elec_mix.loc[["onwind"]].sum()/ref)[0:4]+"%", fontsize=fontsize_numbers)
-        ax.text(-.65, 0.05, str(100*(elec_mix.loc[["ror"]].sum()+elec_mix_hydro.loc[["hydro"]].sum())/ref)[0:3]+"%", fontsize=fontsize_numbers)
-        ax.text(-0.15, -0.55, str(100*elec_mix.loc[["solar", "solar rooftop"]].sum()/ref)[0:4]+"%", fontsize=fontsize_numbers)
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -171,7 +110,6 @@ if __name__ == "__main__":
         ]
 
         plot_pies(ax, elec_mix_array)
-        add_text(ax, elec_mix_array, planning_horizon)
 
 
         ax.set(aspect="equal")
