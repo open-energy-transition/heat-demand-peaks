@@ -89,6 +89,15 @@ rule plot_electricity_generation:
         "plots/plot_electricity_generation.py"
 
 
+rule plot_electricity_generations:
+    input:
+        expand(
+            RESULTS
+            + "plot_elec_generation_{clusters}_{planning_horizon}.png",
+            **config["plotting"],
+        ),
+
+
 rule get_heat_pump:
     params:
         clusters=config["plotting"]["clusters"],
