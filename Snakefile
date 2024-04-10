@@ -141,8 +141,11 @@ rule get_line_congestions:
 rule plot_all:
     input:
         expand(
-            RESULTS
-            + "plot_total_costs_{clusters}_{planning_horizon}.png",
+            "plots/logs/plot_total_costs_{clusters}.txt",
+            **config["plotting"],
+        ),
+        expand(
+            "plots/logs/plot_total_capacities_{clusters}.txt",
             **config["plotting"],
         ),
         expand(
@@ -168,6 +171,11 @@ rule plot_all:
         expand(
             RESULTS
             + "table_line_congestion_{clusters}.csv",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "plot_elec_generation_{clusters}_{planning_horizon}.png",
             **config["plotting"],
         ),
 
