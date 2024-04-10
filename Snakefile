@@ -77,6 +77,18 @@ rule plot_electricity_bills:
         ),
 
 
+rule plot_electricity_generation:
+    params:
+        clusters=config["plotting"]["clusters"],
+        planning_horizon=config["plotting"]["planning_horizon"],
+    output:
+        figure=RESULTS+"plot_elec_generation_{clusters}_{planning_horizon}.png",
+    resources:
+        mem_mb=20000,
+    script:
+        "plots/plot_electricity_generation.py"
+
+
 rule get_heat_pump:
     params:
         clusters=config["plotting"]["clusters"],
