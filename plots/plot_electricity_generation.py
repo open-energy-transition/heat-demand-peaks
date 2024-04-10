@@ -195,5 +195,3 @@ if __name__ == "__main__":
 
     plt.savefig(snakemake.output.figure, dpi=300, bbox_inches="tight")
 
-
-
