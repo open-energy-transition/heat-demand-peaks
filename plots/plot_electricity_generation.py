@@ -17,7 +17,7 @@ def plot_pies(ax, elec_mix_array):
     cmap = plt.colormaps["tab20c"]
     outer_colors = ["#ff8c00", "#0fa101", "#db6a25"]
     inner_colors = cmap([1, 2, 5, 6, 9, 10])
-    inner_colors = ["#ff8c00", "#6895dd", "#235ebc", "#3dbfb0", "#f9d002", "#db6a25"]
+    inner_colors = ["#ff8c00", "#6895dd", "#235ebc", "#3dbfb0", "#f9d002", '#ffea80', "#db6a25"]
 
     outer_labels = ["Nuclear", "VRES", "Gas"]
 
@@ -99,14 +99,15 @@ if __name__ == "__main__":
         elec_mix_gas = -1*n.links_t.p1[links].multiply(n.snapshot_weightings.objective,axis=0).T.groupby(n.links.carrier).sum().T.sum()
 
         elec_mix_array = [
-            [elec_mix.loc[["nuclear"]].sum(), 0, 0 , 0],
+            [elec_mix.loc[["nuclear"]].sum(), 0, 0 , 0, 0],
             [
                 elec_mix.loc[["offwind-ac", "offwind-dc"]].sum(),
                 elec_mix.loc[["onwind"]].sum(),
                 (elec_mix.loc[["ror"]] + elec_mix_hydro.loc[["hydro"]].sum()).sum(),
-                elec_mix.loc[["solar", "solar rooftop"]].sum()
+                elec_mix.loc[["solar"]].sum(), 
+                elec_mix.loc[["solar rooftop"]].sum(),
             ],
-            [elec_mix_gas.sum(), 0, 0, 0]
+            [elec_mix_gas.sum(), 0, 0, 0, 0]
         ]
 
         plot_pies(ax, elec_mix_array)
@@ -119,14 +120,15 @@ if __name__ == "__main__":
     onwind_patch = mpatches.Patch(color='#235ebc', label='Onshore Wind')
     offwind_patch = mpatches.Patch(color='#6895dd', label='Offshore Wind')
     ror_patch = mpatches.Patch(color='#3dbfb0', label='Run of River')
-    solar_patch = mpatches.Patch(color='#f9d002', label='Solar PV (utility and rooftop)')
+    solar_patch = mpatches.Patch(color='#f9d002', label='Solar utility')
+    solar_rooftop_patch = mpatches.Patch(color='#ffea80', label='Solar rooftop')
     gas_patch = mpatches.Patch(color='#db6a25', label='Gas')
-    vres_patch = mpatches.Patch(color='#0fa101', label='Variable Renewables')
+    vres_patch = mpatches.Patch(color='#0fa101', label='VRES')
 
-    #ax4.legend(
-    #    handles=[nuclear_patch, vres_patch, gas_patch, onwind_patch, offwind_patch, ror_patch, solar_patch],
-    #    loc="lower center", ncol=3,
-    #)
+    axes[1].legend(
+    handles=[nuclear_patch, vres_patch, gas_patch, onwind_patch, offwind_patch, ror_patch, solar_patch, solar_rooftop_patch],
+    loc="lower center", ncol=4, fontsize=4, bbox_to_anchor=(1.1, -0.15)
+    )
     
     # move to base directory
     change_path_to_base()
