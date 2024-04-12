@@ -121,12 +121,12 @@ if __name__ == "__main__":
     ror_patch = mpatches.Patch(color='#3dbfb0', label='Run of River')
     solar_patch = mpatches.Patch(color='#f9d002', label='Solar PV (utility and rooftop)')
     gas_patch = mpatches.Patch(color='#db6a25', label='Gas')
-    vres_patch = mpatches.Patch(color='#0fa101', label='Variable Renewables')
+    vres_patch = mpatches.Patch(color='#0fa101', label='VRES')
 
-    #ax4.legend(
-    #    handles=[nuclear_patch, vres_patch, gas_patch, onwind_patch, offwind_patch, ror_patch, solar_patch],
-    #    loc="lower center", ncol=3,
-    #)
+    axes[1].legend(
+    handles=[nuclear_patch, vres_patch, gas_patch, onwind_patch, offwind_patch, ror_patch, solar_patch],
+    loc="lower center", ncol=4, fontsize=4, bbox_to_anchor=(1.1, -0.15)
+    )
     
     # move to base directory
     change_path_to_base()
