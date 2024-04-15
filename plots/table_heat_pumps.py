@@ -13,16 +13,20 @@ from _helpers import mock_snakemake, update_config_from_wildcards, load_network,
 
 def define_heat_pump_dataframe():
     # Define index levels
-    index_level_0 = ['Optimal Heat Pump Capacity [MW]', 
-                     'Optimal Heat Pump Capacity [MW]',
-                     'Optimal Heat Pump Capacity [MW]', 
-                     'Approximate number of heat pumps [millions]', 
-                     'Approximate number of heat pumps [millions]']
-    index_level_1 = ['Air-sourced', 
-                     'Ground', 
-                     'Total', 
-                     'Maximum (830 W) [1]', 
-                     'Minimum (6900 W) [1]']
+    index_level_0 = ['Optimal Heat Pump Capacity [MW_el]', 
+                     'Optimal Heat Pump Capacity [MW_el]',
+                     'Optimal Heat Pump Capacity [MW_el]', 
+                     'Number of heat pumps [millions]',
+                     'Number of heat pumps [millions]', 
+                     'Number of heat pumps [millions]',  
+                     'Number of heat pumps [millions]']
+    index_level_1 = ['Residential decentral', 
+                     'Services', 
+                     'Central',
+                     'Residential decentral', 
+                     'Services', 
+                     'Central',
+                     'Total']
     # Create a MultiIndex
     multi_index = pd.MultiIndex.from_arrays([index_level_0, index_level_1])
 
@@ -62,10 +66,13 @@ if __name__ == "__main__":
     time_resolution = config["plotting"]["time_resolution"]
 
     # heat pump techs
-    heat_pumps = {"air heat pump": "Air-sourced", "ground heat pump": "Ground"}
-    # heat pump min and max capacities in W
-    max_capacity = config["heat_pumps"]["max_capacity"]
-    min_capacity = config["heat_pumps"]["min_capacity"]
+    heat_pumps = {"residential": "Residential decentral", 
+                  "services": "Services",
+                  "urban central": "Central"}
+    # heat pump capacities for different building types
+    hp_capacity = {"residential": config["heat_pumps"]["residential_decentral"],
+                   "services": config["heat_pumps"]["services"],
+                   "urban central": config["heat_pumps"]["central"]}
 
     # define scenario namings
     scenarios = {"flexible": "Optimal Renovation and Heating", 
@@ -92,21 +99,17 @@ if __name__ == "__main__":
 
             # compute heat pump capacities
             for h, h_name in heat_pumps.items():
-                p_nom_opt = n.links.filter(like=h, axis=0).p_nom_opt.sum()
-                df_heat_pumps.loc[("Optimal Heat Pump Capacity [MW]", h_name), (planning_horizon, nice_name)] = p_nom_opt
-            # total heat pump capacity
-            total_p_nom_opt = n.links.filter(like="heat pump", axis=0).p_nom_opt.sum()
-            df_heat_pumps.loc[("Optimal Heat Pump Capacity [MW]", "Total"), (planning_horizon, nice_name)] = total_p_nom_opt
-            
-            # estimate heat pump amount
-            max_amount = total_p_nom_opt / min_capacity
-            min_amount = total_p_nom_opt / max_capacity
-            df_heat_pumps.loc[('Approximate number of heat pumps [millions]', 'Maximum (830 W) [1]'), (planning_horizon, nice_name)] = round(max_amount, 2)
-            df_heat_pumps.loc[('Approximate number of heat pumps [millions]', 'Minimum (6900 W) [1]'), (planning_horizon, nice_name)] = round(min_amount, 2)
+                p_nom_opt = n.links.filter(like=h, axis=0).filter(like="heat pump", axis=0).p_nom_opt.sum()
+                cop = n.links_t.efficiency.filter(like=h).filter(like="heat pump").mean().mean()
+                
+                df_heat_pumps.loc[("Optimal Heat Pump Capacity [MW_el]", h_name), (planning_horizon, nice_name)] = p_nom_opt.round(2)
+                df_heat_pumps.loc[("Number of heat pumps [millions]", h_name), (planning_horizon, nice_name)] = (p_nom_opt * cop / (hp_capacity[h] * 1e3)).round(2)
+
+            # estimate heat pump 
+            df_heat_pumps.loc[("Number of heat pumps [millions]", "Total"), (planning_horizon, nice_name)] = df_heat_pumps.loc[("Number of heat pumps [millions]", heat_pumps.values()), (planning_horizon, nice_name)].sum()
 
     # set heat plan amount based on EU action plan
-    df_heat_pumps.loc[('Approximate number of heat pumps [millions]', 'Maximum (830 W) [1]'), ("2030", "EU action plan (Announced Pledges Scenario) [2]")] = 45
-    df_heat_pumps.loc[('Approximate number of heat pumps [millions]', 'Minimum (6900 W) [1]'), ("2030", "EU action plan (Announced Pledges Scenario) [2]")] = 45
+    df_heat_pumps.loc[('Number of heat pumps [millions]', 'Total'), ("2030", "EU action plan (Announced Pledges Scenario) [2]")] = 45
         
     # move to base directory
     change_path_to_base()

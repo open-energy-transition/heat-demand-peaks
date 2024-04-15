@@ -8,8 +8,9 @@ plotting:
   time_resolution: "100H"
 
 heat_pumps:
-  max_capacity: 6900 # https://www.energysage.com/electricity/house-watts/how-many-watts-does-an-air-source-heat-pump-use/
-  min_capacity: 830 # https://www.energysage.com/electricity/house-watts/how-many-watts-does-an-air-source-heat-pump-use/
+  residential_decentral: 7.5 # (kW_el) https://iea.blob.core.windows.net/assets/4713780d-c0ae-4686-8c9b-29e782452695/TheFutureofHeatPumps.pdf
+  services: 20 # (kW_el) https://iea.blob.core.windows.net/assets/4713780d-c0ae-4686-8c9b-29e782452695/TheFutureofHeatPumps.pdf
+  central: 100 # (kW_el) https://iea.blob.core.windows.net/assets/4713780d-c0ae-4686-8c9b-29e782452695/TheFutureofHeatPumps.pdf
 
 set_capacities:
   clusters: 48
