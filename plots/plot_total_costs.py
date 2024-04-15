@@ -287,7 +287,6 @@ def plot_capacities(caps_df, clusters, planning_horizon):
 
     new_columns = df.sum().sort_values().index  
 
-
     fig, ax = plt.subplots(figsize=(7, 9))
 
     df.loc[new_index].T.plot(
@@ -467,7 +466,11 @@ if __name__ == "__main__":
         # plot costs
         if not cost_df.empty:
             plot_costs(cost_df, clusters, planning_horizon)
+            f = open(snakemake.output.costs, "w")
+            f.close()
 
         # plot capacities
         if not capacities_df.empty:
             plot_capacities(capacities_df, clusters, planning_horizon)
+            f = open(snakemake.output.capacities, "w")
+            f.close()
