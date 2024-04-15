@@ -9,6 +9,7 @@ import warnings
 warnings.filterwarnings("ignore")
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                      change_path_to_pypsa_eur, change_path_to_base
+from plot_total_costs import compute_costs
 
 
 if __name__ == "__main__":
@@ -36,6 +37,14 @@ if __name__ == "__main__":
                  }
 
     # define dataframe to store infra savings
+    cost_savings = pd.DataFrame(
+        index=list(scenarios.values()),
+        columns=[
+            ("2030", "wind"), ("2030", "solar"), ("2030", "gas"),
+            ("2040", "wind"), ("2040", "solar"), ("2040", "gas"),
+            ("2050", "wind"), ("2050", "solar"), ("2050", "gas")
+        ]
+    )
     df_savings = pd.DataFrame(
         index=list(scenarios.values()),
         columns=[
@@ -45,6 +54,7 @@ if __name__ == "__main__":
         ]
     )
     df_savings.columns = pd.MultiIndex.from_tuples(df_savings.columns, names=['horizon','tech'])
+    cost_savings.columns = pd.MultiIndex.from_tuples(cost_savings.columns, names=['horizon','tech'])
 
     for planning_horizon in ["2030", "2040", "2050"]:
         lineex = line_limits[planning_horizon]
@@ -52,6 +62,7 @@ if __name__ == "__main__":
 
         # benchmark network
         b = load_network(lineex, clusters, sector_opts, planning_horizon, "rigid")
+        b_costs = compute_costs(b, "rigid", "Capital")
         for scenario, nice_name in scenarios.items():
             # load networks
             n = load_network(lineex, clusters, sector_opts, planning_horizon, scenario)
@@ -82,6 +93,23 @@ if __name__ == "__main__":
             df_savings.loc[nice_name, (planning_horizon, "wind")] = wind
             df_savings.loc[nice_name, (planning_horizon, "gas")] = gas
 
+            cap_costs = compute_costs(n, nice_name, "Capital")
+            wind_costs_carriers = ["Generator:Offshore Wind (AC)", "Generator:Offshore Wind (DC)", "Generator:Onshore Wind"]
+            cost_savings.loc[nice_name, (planning_horizon, "wind")] = (
+                b_costs.loc[wind_costs_carriers].sum()[0]-
+                cap_costs.loc[wind_costs_carriers].sum()[0]
+            )/1e9
+            solar_costs_carriers = ["Generator:Solar", "Generator:solar rooftop"]
+            cost_savings.loc[nice_name, (planning_horizon, "solar")] = (
+                b_costs.loc[solar_costs_carriers].sum()[0]-
+                cap_costs.loc[solar_costs_carriers].sum()[0]
+            )/1e9
+            gas_costs_carriers = ["Store:gas", "Link:Open-Cycle Gas"]
+            cost_savings.loc[nice_name, (planning_horizon, "gas")] = (
+                b_costs.loc[gas_costs_carriers].sum()[0]-
+                cap_costs.loc[gas_costs_carriers].sum()[0]
+            )/1e9
+
     # add name for columns
     df_savings.index.name = "Scenario [GW]"
 
@@ -89,5 +117,6 @@ if __name__ == "__main__":
     change_path_to_base()
 
     # save the heat pumps data in Excel format
-    df_savings.to_csv(snakemake.output.table)
+    df_savings.to_csv(snakemake.output.table_cap)
+    cost_savings.to_csv(snakemake.output.table_costs)
 
