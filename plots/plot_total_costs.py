@@ -244,6 +244,7 @@ def plot_costs(cost_df, clusters, planning_horizon):
     ax.spines['bottom'].set_color('black')
     ax.grid(axis='y', linestyle='--', linewidth=0.5, color='gray', zorder=0)
     plt.savefig(f"{RESULTS_DIR}/plot_total_costs_{clusters}_{planning_horizon}.png", dpi=600, bbox_inches = 'tight')
+    return df.loc[new_index[::-1]]
     
 
 def compute_capacities(n, nice_name):
@@ -324,6 +325,7 @@ def plot_capacities(caps_df, clusters, planning_horizon):
     ax.spines['bottom'].set_color('black')
     ax.grid(axis='y', linestyle='--', linewidth=0.5, color='gray', zorder=0)
     plt.savefig(f"{RESULTS_DIR}/plot_total_capacities_{clusters}_{planning_horizon}.png", dpi=600, bbox_inches = 'tight')
+    return df.loc[new_index[::-1]]
 
 
 def get_p_nom_opt(n, nice_name):
@@ -381,6 +383,23 @@ def update_capital_cost(cap_costs_dict, p_nom_opt_dict, planning_horizon):
     return full_cost
 
 
+def define_table_df(scenarios):
+    # Define column levels
+    col_level_0 = ["2030"]*4 + ["2040"]*4 + ["2050"]*4
+    col_level_1 = list(scenarios.values()) * 3
+    # Create a MultiColumns
+    multi_cols = pd.MultiIndex.from_arrays([col_level_0, col_level_1], names=['Year', 'Scenario'])
+    df = pd.DataFrame(columns=multi_cols)
+    return df
+
+
+def fill_table_df(df, planning_horizon, scenarios, values):
+    for scenario in scenarios.values():
+        for tech_name, _ in values.iterrows():
+            df.loc[tech_name, (planning_horizon, scenario)] = values.loc[tech_name, scenario]
+    return df
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         snakemake = mock_snakemake(
@@ -399,18 +418,22 @@ if __name__ == "__main__":
     planning_horizons = ["2030", "2040", "2050"]
     time_resolution = config["plotting"]["time_resolution"]
 
+    # define scenario namings
+    scenarios = {"flexible": "Optimal \nRenovation &\nHeating", 
+                "retro_tes": "Optimal \nRenovation &\nGreen Heating", 
+                "flexible-moderate": "Limited \nRenovation &\nOptimal Heating", 
+                "rigid": "No \nRenovation &\nGreen Heating"}
+
     # initialize capital cost and p_nom_opt storing dictionary for different horizons
     cap_costs_dict = {}
     p_nom_opt_dict = {}
+    # initialize df for storing table information
+    table_cost_df = define_table_df(scenarios)
+    table_cap_df = define_table_df(scenarios)
+
     for planning_horizon in planning_horizons:
         lineex = line_limits[planning_horizon]
         sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-T-H-B-I"
-
-        # define scenario namings
-        scenarios = {"flexible": "Optimal \nRenovation &\nHeating", 
-                    "retro_tes": "Optimal \nRenovation &\nGreen Heating", 
-                    "flexible-moderate": "Limited \nRenovation &\nOptimal Heating", 
-                    "rigid": "No \nRenovation &\nOptimal Heating"}
 
         # move to submodules/pypsa-eur
         change_path_to_pypsa_eur()
@@ -465,12 +488,19 @@ if __name__ == "__main__":
 
         # plot costs
         if not cost_df.empty:
-            plot_costs(cost_df, clusters, planning_horizon)
-            f = open(snakemake.output.costs, "w")
-            f.close()
+            processed_cost_df = plot_costs(cost_df, clusters, planning_horizon)
+            table_cost_df = fill_table_df(table_cost_df, planning_horizon, scenarios, processed_cost_df)
 
         # plot capacities
         if not capacities_df.empty:
-            plot_capacities(capacities_df, clusters, planning_horizon)
-            f = open(snakemake.output.capacities, "w")
-            f.close()
+            processed_capacities_df = plot_capacities(capacities_df, clusters, planning_horizon)
+            table_cap_df = fill_table_df(table_cap_df, planning_horizon, scenarios, processed_capacities_df)
+
+        
+    # save all costs to csv
+    if not table_cost_df.empty:
+        table_cost_df.to_csv(snakemake.output.costs)
+
+    # save all capacities to csv
+    if not table_cost_df.empty:
+        table_cap_df.to_csv(snakemake.output.capacities) 
