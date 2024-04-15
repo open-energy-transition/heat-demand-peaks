@@ -118,7 +118,7 @@ def plot_electricity_cost(df_prices, name):
     color_codes = {"Optimal Renovation and Heating":"purple", 
                    "Optimal Renovation and Green Heating":"limegreen", 
                    "Limited Renovation and Optimal Heating":"royalblue", 
-                   "No Renovation and Optimal Heating":"#f4b609"}
+                   "No Renovation and Green Heating":"#f4b609"}
 
     # plot as bar plot
     fig, ax = plt.subplots(figsize=(7,3))
