@@ -33,7 +33,7 @@ if __name__ == "__main__":
     scenarios = {"flexible": "Optimal Renovation and Heating", 
                  "retro_tes": "Optimal Renovation and Green Heating", 
                  "flexible-moderate": "Limited Renovation and Optimal Heating", 
-                 "rigid": "No Renovation and Optimal Heating"}
+                 "rigid": "No Renovation and Green Heating"}
 
     # define dataframe to store grid congestion
     df_congestion = pd.DataFrame(index=list(scenarios.values()), columns=["2030", "2040", "2050"])

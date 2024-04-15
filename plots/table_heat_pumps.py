@@ -33,10 +33,10 @@ def define_heat_pump_dataframe():
     # Define column levels
     col_level_0 = ["2030"]*5 + ["2040"]*4 + ["2050"]*4
     col_level_1 = ["Optimal Renovation and Heating", "Optimal Renovation and Green Heating", 
-                   "Limited Renovation and Optimal Heating", "No Renovation and Optimal Heating", 
+                   "Limited Renovation and Optimal Heating", "No Renovation and Green Heating", 
                    "EU action plan (Announced Pledges Scenario) [2]"] + \
                    ["Optimal Renovation and Heating", "Optimal Renovation and Green Heating", 
-                   "Limited Renovation and Optimal Heating", "No Renovation and Optimal Heating"]*2
+                   "Limited Renovation and Optimal Heating", "No Renovation and Green Heating"]*2
 
     # Create a MultiColumns
     multi_cols = pd.MultiIndex.from_arrays([col_level_0, col_level_1], names=['Year', 'Scenario'])
