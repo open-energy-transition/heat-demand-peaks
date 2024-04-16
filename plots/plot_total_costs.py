@@ -499,8 +499,10 @@ if __name__ == "__main__":
         
     # save all costs to csv
     if not table_cost_df.empty:
+        table_cost_df.index.name = "System cost [EUR billion per year]"
         table_cost_df.to_csv(snakemake.output.costs)
 
     # save all capacities to csv
-    if not table_cost_df.empty:
+    if not table_cap_df.empty:
+        table_cap_df.index.name = "Installed capacity [GW]"
         table_cap_df.to_csv(snakemake.output.capacities) 
