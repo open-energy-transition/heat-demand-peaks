@@ -37,6 +37,7 @@ sector:
   district_heating:
     progress:
       2030: 0.3
+  residential_heat_dsm: false
   cluster_heat_buses: false
   retrofitting:
     retro_endogen: false #true 
