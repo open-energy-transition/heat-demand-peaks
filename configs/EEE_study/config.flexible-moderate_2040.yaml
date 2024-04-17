@@ -59,6 +59,8 @@ sector:
     2040: 0.6
   land_transport_ice_share:
     2040: 0.3
+  reduce_hot_water_factor:
+    2040: 0.1
 
 costs:
   year: 2035
