@@ -118,6 +118,18 @@ rule get_heat_pumps:
         ),
 
 
+rule get_infra_savings:
+    params:
+        clusters=config["plotting"]["clusters"],
+    output:
+        table_cap=RESULTS+"table_infra_savings_caps_{clusters}.csv",
+        table_costs=RESULTS+"table_infra_savings_costs_{clusters}.csv",
+    resources:
+        mem_mb=20000,
+    script:
+        "plots/table_infra_savings.py"
+
+
 rule get_line_congestion:
     params:
         clusters=config["plotting"]["clusters"],

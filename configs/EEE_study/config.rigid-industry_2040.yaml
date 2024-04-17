@@ -37,6 +37,7 @@ sector:
   district_heating:
     progress:
       2040: 0.6
+  residential_heat_dsm: false
   cluster_heat_buses: false
   retrofitting:
     retro_endogen: false #true 
@@ -59,6 +60,8 @@ sector:
     2040: 0.6
   land_transport_ice_share:
     2040: 0.3
+    reduce_hot_water_factor:
+    2040: 0
 
 costs:
   year: 2035
