@@ -54,6 +54,7 @@ sector:
   use_electrolysis_waste_heat: false
   biomass_spatial: true
   biomass_transport: true
+  bev_dsm: false
   land_transport_fuel_cell_share:
     2050: 0.15
   land_transport_electric_share:
