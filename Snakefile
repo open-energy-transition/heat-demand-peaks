@@ -18,8 +18,8 @@ rule plot_total_cost:
         clusters=config["plotting"]["clusters"],
         planning_horizon=config["plotting"]["planning_horizon"],
     output:
-        costs="plots/logs/plot_total_costs_{clusters}.txt",
-        capacities="plots/logs/plot_total_capacities_{clusters}.txt",
+        costs=RESULTS+"table_total_costs_{clusters}.csv",
+        capacities=RESULTS+"table_total_capacities_{clusters}.csv",
     resources:
         mem_mb=20000,
     script:
@@ -28,12 +28,12 @@ rule plot_total_cost:
 
 rule plot_total_costs:
     input:
-        expand(
-            "plots/logs/plot_total_costs_{clusters}.txt",
+        expand(RESULTS
+            + "table_total_costs_{clusters}.csv",
             **config["plotting"],
         ),
-        expand(
-            "plots/logs/plot_total_capacities_{clusters}.txt",
+        expand(RESULTS
+            + "table_total_capacities_{clusters}.csv",
             **config["plotting"],
         ),
 
@@ -140,12 +140,12 @@ rule get_line_congestions:
 
 rule plot_all:
     input:
-        expand(
-            "plots/logs/plot_total_costs_{clusters}.txt",
+        expand(RESULTS
+            + "table_total_costs_{clusters}.csv",
             **config["plotting"],
         ),
-        expand(
-            "plots/logs/plot_total_capacities_{clusters}.txt",
+        expand(RESULTS
+            + "table_total_capacities_{clusters}.csv",
             **config["plotting"],
         ),
         expand(
