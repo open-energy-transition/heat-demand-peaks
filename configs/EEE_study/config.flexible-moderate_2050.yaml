@@ -66,6 +66,8 @@ sector:
 
 costs:
   year: 2045
+  fill_values:
+    "discount rate": 0.04
 
 solving:
   options:

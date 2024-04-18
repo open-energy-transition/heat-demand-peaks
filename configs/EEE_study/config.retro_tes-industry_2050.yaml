@@ -31,6 +31,8 @@ energy:
 
 biomass:
   year: 2050
+  fill_values:
+    "discount rate": 0.04
 
 sector:
   agriculture: false
