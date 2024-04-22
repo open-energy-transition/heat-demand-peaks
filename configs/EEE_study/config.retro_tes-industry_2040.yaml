@@ -66,6 +66,9 @@ sector:
 
 costs:
   year: 2035
+  lifetime:
+    "central solar thermal": 30
+    "decentral solar thermal": 30
 
 solving:
   options:
