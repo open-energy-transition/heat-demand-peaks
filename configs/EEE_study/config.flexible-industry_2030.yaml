@@ -23,7 +23,7 @@ lines:
   s_max_pu: 0.5
 
 electricity:
-  powerplants_filter: DateOut >= 2030 and not Fueltype == 'Nuclear'
+  powerplants_filter: DateOut >= 2030 and not Fueltype.isin(['Nuclear', 'Hard Coal', 'Lignite'])
   custom_powerplants: DateIn <= 2030 and DateOut >= 2030
 
 energy:
