@@ -66,6 +66,9 @@ sector:
 
 costs:
   year: 2035
+  investment:
+    "central solar thermal": 196455
+    "decentral solar thermal": 300245
   lifetime:
     "central solar thermal": 30
     "decentral solar thermal": 30
