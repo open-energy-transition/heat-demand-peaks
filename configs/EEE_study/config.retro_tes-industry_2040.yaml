@@ -11,7 +11,7 @@ scenario:
   clusters:
   - 48
   sector_opts:
-  - Co2L0.1-1H-T-H-B-I
+  - Co2L0.1-12H-dist1.1-T-H-B-I
   planning_horizons:
   - 2040
 
@@ -66,6 +66,16 @@ sector:
 
 costs:
   year: 2035
+  fuel: # https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:52022SC0230
+    OCGT: 38.84
+    CCGT: 38.84
+    gas: 38.84
+  investment:
+    "central solar thermal": 196455
+    "decentral solar thermal": 300245
+  lifetime:
+    "central solar thermal": 30
+    "decentral solar thermal": 30
 
 solving:
   options:
