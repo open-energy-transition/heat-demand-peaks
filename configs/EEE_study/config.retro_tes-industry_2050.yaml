@@ -66,6 +66,10 @@ sector:
 
 costs:
   year: 2045
+  fuel: # https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:52022SC0230
+    OCGT: 42.08
+    CCGT: 42.08
+    gas: 42.08
   investment:
     "central solar thermal": 112260
     "decentral solar thermal": 171570

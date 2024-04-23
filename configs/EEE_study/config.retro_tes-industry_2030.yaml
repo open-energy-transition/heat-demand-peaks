@@ -66,6 +66,10 @@ sector:
 
 costs:
   year: 2025
+  fuel: # https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:52022SC0230
+    OCGT: 38.84
+    CCGT: 38.84
+    gas: 38.84
   investment:
     "central solar thermal": 280650
     "decentral solar thermal": 428920
