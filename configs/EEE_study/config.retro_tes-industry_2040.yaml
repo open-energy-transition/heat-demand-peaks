@@ -63,6 +63,7 @@ sector:
     2040: 0.3
   reduce_hot_water_factor:
     2040: 0.2
+  keep_OCGT: True
 
 costs:
   year: 2035
