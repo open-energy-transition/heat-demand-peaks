@@ -11,7 +11,7 @@ scenario:
   clusters:
   - 48
   sector_opts:
-  - Co2L0.45-12H-dist1.1-T-H-B-I
+  - Co2L0.45-100H-dist1.1-T-H-B-I
   planning_horizons:
   - 2030
 
@@ -28,6 +28,17 @@ electricity:
 
 energy:
   energy_totals_year: 2013
+
+pypsa_eur:
+  Generator:
+  - onwind
+  - offwind-ac
+  - offwind-dc
+  - solar
+  - ror
+  - nuclear
+  - coal
+  - lignite
 
 biomass:
   year: 2030
