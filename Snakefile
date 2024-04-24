@@ -98,6 +98,32 @@ rule plot_electricity_generations:
         ),
 
 
+rule plot_curtailment:
+    params:
+        clusters=config["plotting"]["clusters"],
+    output:
+        figure=RESULTS+"plot_curtailment_{clusters}.png",
+        table=RESULTS+"table_curtailment_{clusters}.csv",
+    resources:
+        mem_mb=20000,
+    script:
+        "plots/plot_curtailment.py"
+
+
+rule plot_curtailments:
+    input:
+        expand(
+            RESULTS
+            + "plot_curtailment_{clusters}.png",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "table_curtailment_{clusters}.csv",
+            **config["plotting"],
+        ),
+
+
 rule get_heat_pump:
     params:
         clusters=config["plotting"]["clusters"],
@@ -188,6 +214,16 @@ rule plot_all:
         expand(
             RESULTS
             + "plot_elec_generation_{clusters}_{planning_horizon}.png",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "plot_curtailment_{clusters}.png",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "table_curtailment_{clusters}.csv",
             **config["plotting"],
         ),
 
