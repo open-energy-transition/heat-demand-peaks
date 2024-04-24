@@ -23,11 +23,22 @@ lines:
   s_max_pu: 0.5
 
 electricity:
-  powerplants_filter: DateOut >= 2040 and not Fueltype == 'Nuclear'
+  powerplants_filter: DateOut >= 2040 and not Fueltype.isin(['Nuclear', 'Hard Coal', 'Lignite'])
   custom_powerplants: DateIn <= 2040 and DateOut >= 2040
 
 energy:
   energy_totals_year: 2013
+
+pypsa_eur:
+  Generator:
+  - onwind
+  - offwind-ac
+  - offwind-dc
+  - solar
+  - ror
+  - nuclear
+  - coal
+  - lignite
 
 biomass:
   year: 2040
