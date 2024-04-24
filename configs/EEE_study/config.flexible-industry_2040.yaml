@@ -11,7 +11,7 @@ scenario:
   clusters:
   - 48
   sector_opts:
-  - Co2L0.1-12H-dist1.1-T-H-B-I
+  - Co2L0.1-100H-dist1.1-T-H-B-I
   planning_horizons:
   - 2040
 
@@ -36,9 +36,6 @@ pypsa_eur:
   - offwind-dc
   - solar
   - ror
-  - nuclear
-  - coal
-  - lignite
 
 biomass:
   year: 2040
@@ -74,10 +71,17 @@ sector:
     2040: 0.3
   reduce_hot_water_factor:
     2040: 0.2
+  conventional_generation:
+    OCGT: gas
+    coal: coal
+    lignite: lignite
+    nuclear: uranium
   keep_OCGT: True
 
 costs:
   year: 2035
+  fill_values:
+    "discount rate": 0.04
   fuel: # https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:52022SC0230
     OCGT: 38.84
     CCGT: 38.84

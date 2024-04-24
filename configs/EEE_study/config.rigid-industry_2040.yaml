@@ -78,6 +78,8 @@ sector:
 
 costs:
   year: 2035
+  fill_values:
+    "discount rate": 0.04
   fuel: # https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:52022SC0230
     OCGT: 38.84
     CCGT: 38.84
