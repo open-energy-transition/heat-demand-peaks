@@ -92,12 +92,12 @@ if __name__ == "__main__":
     time_resolution = config["set_capacities"]["time_resolution"]
     scenario = config["set_capacities"]["scenario"]
     lineex = line_limits[planning_horizon]
-    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-T-H-B-I"
+    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-dist1.1-T-H-B-I"
 
     # network parameters of solved network
     previous_horizon = previous_horizons[planning_horizon]
     previous_lineex = line_limits[previous_horizon]
-    previous_sector_opts = f"Co2L{co2l_limits[previous_horizon]}-{time_resolution}-T-H-B-I"
+    previous_sector_opts = f"Co2L{co2l_limits[previous_horizon]}-{time_resolution}-dist1.1-T-H-B-I"
 
     # move to pypsa-eur directory
     change_path_to_pypsa_eur()
