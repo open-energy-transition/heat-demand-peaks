@@ -68,7 +68,8 @@ def define_table_df(scenarios):
     col_level_1 = list(scenarios.values()) * 3
     # Create a MultiColumns
     multi_cols = pd.MultiIndex.from_arrays([col_level_0, col_level_1], names=['Year', 'Scenario'])
-    df = pd.DataFrame(columns=multi_cols, index=["Solar", "Wind", "Total"])
+    df = pd.DataFrame(columns=multi_cols, index=["Solar Rooftop PV", "Solar Utility PV", 
+                                                 "Onshore Wind", "Offshore Wind", "Total"])
     return df
 
 
