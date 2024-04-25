@@ -3,17 +3,17 @@
 # SPDX-License-Identifier: CC0-1.0
 
 run:
-  name: "rigid"
+  name: "BAU"
 
 scenario:
   ll:
-  - v1.3
+  - v1.0
   clusters:
   - 48
   sector_opts:
-  - Co2L0.1-100H-dist1.1-T-H-B-I
+  - Co2L0.7-100H-dist1.1-T-H-B-I
   planning_horizons:
-  - 2040
+  - 2020
 
 enable:
   custom_busmap: true
@@ -23,8 +23,8 @@ lines:
   s_max_pu: 0.5
 
 electricity:
-  powerplants_filter: DateOut >= 2040 and not Fueltype.isin(['Nuclear', 'Hard Coal', 'Lignite'])
-  custom_powerplants: DateIn <= 2040 and DateOut >= 2040
+  powerplants_filter: DateOut >= 2020 and not Fueltype.isin(['Nuclear', 'Hard Coal', 'Lignite'])
+  custom_powerplants: DateIn <= 2020 and DateOut >= 2020
 
 energy:
   energy_totals_year: 2013
@@ -38,13 +38,13 @@ pypsa_eur:
   - ror
 
 biomass:
-  year: 2040
+  year: 2020
 
 sector:
   agriculture: false
   district_heating:
     progress:
-      2040: 0.6
+      2020: 0.0
   residential_heat_dsm: false
   cluster_heat_buses: false
   retrofitting:
@@ -64,13 +64,13 @@ sector:
   biomass_transport: true
   bev_dsm: false
   land_transport_fuel_cell_share:
-    2040: 0.1
+    2020: 0.0
   land_transport_electric_share:
-    2040: 0.6
+    2020: 0.0
   land_transport_ice_share:
-    2040: 0.3
-    reduce_hot_water_factor:
-    2040: 0
+    2030: 1.0
+  reduce_hot_water_factor:
+    2030: 0 # no retrofitting allowed
   conventional_generation:
     OCGT: gas
     coal: coal
@@ -79,7 +79,7 @@ sector:
   keep_existing_capacities: True
 
 costs:
-  year: 2035
+  year: 2020
   fill_values:
     "discount rate": 0.04
   fuel: # https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:52022SC0230
@@ -87,8 +87,8 @@ costs:
     CCGT: 38.84
     gas: 38.84
   investment:
-    "central solar thermal": 196455
-    "decentral solar thermal": 300245
+    "central solar thermal": 280650
+    "decentral solar thermal": 428920
   lifetime:
     "central solar thermal": 30
     "decentral solar thermal": 30

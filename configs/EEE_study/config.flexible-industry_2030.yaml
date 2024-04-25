@@ -76,7 +76,7 @@ sector:
     coal: coal
     lignite: lignite
     nuclear: uranium
-  keep_OCGT: True
+  keep_existing_capacities: True
 
 costs:
   year: 2025
