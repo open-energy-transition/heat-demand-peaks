@@ -100,7 +100,14 @@ if __name__ == "__main__":
                 continue
             
             curtailment_dict = get_curtailment(n, nice_name)
-            print(curtailment_dict)
+            curtailment_df.loc[:, (planning_horizon, nice_name)] = pd.Series(curtailment_dict)
+    
+    # move to base directory
+    change_path_to_base()
+
+    # store to csv
+    if not curtailment_df.empty:
+        curtailment_df.to_csv(snakemake.output.table)
             
     #         # calculate capital costs for scenario
     #         cap_costs = compute_costs(n, nice_name, "Capital")
