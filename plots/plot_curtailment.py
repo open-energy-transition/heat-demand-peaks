@@ -22,8 +22,11 @@ RESULTS_DIR = "plots/results"
 
 def get_curtailment(n, nice_name):
     curtailments = n.statistics()[["Curtailment"]]
-    techs = {"Solar": ["solar rooftop", "Solar"],
-             "Wind": ["Offshore Wind (AC)", "Offshore Wind (DC)", "Onshore Wind"]
+    techs = {
+             "Solar Rooftop PV": ["solar rooftop"],
+             "Solar Utility PV": ["Solar"],
+             "Onshore Wind": ["Onshore Wind"],
+             "Offshore Wind": ["Offshore Wind (AC)", "Offshore Wind (DC)"]
              }
     
     curtailment_dict = {}
