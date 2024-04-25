@@ -126,59 +126,7 @@ if __name__ == "__main__":
 
     # store to csv and png
     if not curtailment_df.empty:
+        # save to csv
         curtailment_df.to_csv(snakemake.output.table)
+        # make plot
         plot_curtailment(curtailment_df)
-            
-    #         # calculate capital costs for scenario
-    #         cap_costs = compute_costs(n, nice_name, "Capital")
-    #         cap_cost_df = cap_cost_df.join(cap_costs, how="outer").fillna(0)
-
-    #         # calculate operational costs for scenario
-    #         op_costs = compute_costs(n, nice_name, "Operational")
-    #         op_cost_df = op_cost_df.join(op_costs, how="outer").fillna(0)
-
-    #         # calculate capacities for scenario
-    #         capacities = compute_capacities(n, nice_name)
-    #         capacities_df = capacities_df.join(capacities, how="outer").fillna(0)
-
-    #         # get p_nom_opt for scenario
-    #         p_nom_opt = get_p_nom_opt(n, nice_name)
-    #         p_nom_opt_df = p_nom_opt_df.join(p_nom_opt, how="outer").fillna(0)
-
-    #     # update capital costs based on previous horizons
-    #     cap_costs_dict[planning_horizon] = cap_cost_df
-    #     p_nom_opt_dict[planning_horizon] = p_nom_opt_df
-
-    #     # if capital costs data is present (not empty)
-    #     if not any([x.empty for x in cap_costs_dict.values()]):
-    #         updated_caps_df = update_capital_cost(cap_costs_dict, p_nom_opt_dict, planning_horizon)
-
-    #         # add capital and operational costs
-    #         cost_df = sum_costs(updated_caps_df, op_cost_df)
-    #         # reorder scenarios
-    #         reorder_columns = [s for s in scenarios.values() if s in cost_df.columns]
-    #         cost_df = cost_df[reorder_columns]
-
-    #     # move to base directory
-    #     change_path_to_base()
-
-    #     # plot costs
-    #     if not cost_df.empty:
-    #         processed_cost_df = plot_costs(cost_df, clusters, planning_horizon)
-    #         table_cost_df = fill_table_df(table_cost_df, planning_horizon, scenarios, processed_cost_df)
-
-    #     # plot capacities
-    #     if not capacities_df.empty:
-    #         processed_capacities_df = plot_capacities(capacities_df, clusters, planning_horizon)
-    #         table_cap_df = fill_table_df(table_cap_df, planning_horizon, scenarios, processed_capacities_df)
-
-        
-    # # save all costs to csv
-    # if not table_cost_df.empty:
-    #     table_cost_df.index.name = "System cost [EUR billion per year]"
-    #     table_cost_df.to_csv(snakemake.output.costs)
-
-    # # save all capacities to csv
-    # if not table_cap_df.empty:
-    #     table_cap_df.index.name = "Installed capacity [GW]"
-    #     table_cap_df.to_csv(snakemake.output.capacities) 
