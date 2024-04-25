@@ -37,7 +37,26 @@ def get_curtailment(n, nice_name):
 
 
 def plot_curtailment(df_curtailment):
-    pass
+    # color codes for legend
+    color_codes = {"Optimal Renovation and Heating":"purple", 
+                   "Optimal Renovation and Green Heating":"limegreen", 
+                   "Limited Renovation and Optimal Heating":"royalblue", 
+                   "No Renovation and Green Heating":"#f4b609"}
+    
+    # MWh to TWh
+    df_curtailment = df_curtailment / 1e6
+
+    fig, ax = plt.subplots(figsize=(7, 3))
+    for nice_name, color_code in color_codes.items():
+        df_curtailment.loc["Total", (slice(None), nice_name)].plot(ax=ax, color=color_code, 
+                                                                   linewidth=2, marker='o', label=nice_name)
+    unique_years = sorted(set(df_curtailment.columns.get_level_values(0)))
+    ax.set_xticks(range(len(unique_years)))  # Set the tick locations
+    ax.set_xticklabels(unique_years)  # Set the tick labels
+    ax.set_ylabel("Curtailment [TWh]")
+    ax.set_xlabel(None)
+    ax.legend(loc="upper right", facecolor="white", fontsize='x-small')
+    plt.savefig(f"{RESULTS_DIR}/plot_curtailment_{clusters}.png", dpi=600, bbox_inches = 'tight')
     
 
 def define_table_df(scenarios):
@@ -105,9 +124,10 @@ if __name__ == "__main__":
     # move to base directory
     change_path_to_base()
 
-    # store to csv
+    # store to csv and png
     if not curtailment_df.empty:
         curtailment_df.to_csv(snakemake.output.table)
+        plot_curtailment(curtailment_df)
             
     #         # calculate capital costs for scenario
     #         cap_costs = compute_costs(n, nice_name, "Capital")
