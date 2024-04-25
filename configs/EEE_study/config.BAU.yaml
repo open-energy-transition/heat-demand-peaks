@@ -1,0 +1,102 @@
+# SPDX-FileCopyrightText: : 2017-2023 The PyPSA-Eur Authors
+#
+# SPDX-License-Identifier: CC0-1.0
+
+run:
+  name: "BAU"
+
+scenario:
+  ll:
+  - v1.15
+  clusters:
+  - 48
+  sector_opts:
+  - Co2L0.45-100H-dist1.1-T-H-B-I
+  planning_horizons:
+  - 2020
+
+enable:
+  custom_busmap: true
+
+# reduce available transfer capacity to 50% to better account for grid internal bottlenecks due to low spatial resolution of 48 nodes
+lines:
+  s_max_pu: 0.5
+
+electricity:
+  powerplants_filter: DateOut >= 2020 and not Fueltype.isin(['Nuclear', 'Hard Coal', 'Lignite'])
+  custom_powerplants: DateIn <= 2020 and DateOut >= 2020
+
+energy:
+  energy_totals_year: 2013
+
+pypsa_eur:
+  Generator:
+  - onwind
+  - offwind-ac
+  - offwind-dc
+  - solar
+  - ror
+
+biomass:
+  year: 2020
+
+sector:
+  agriculture: false
+  district_heating:
+    progress:
+      2020: 0.0
+  residential_heat_dsm: false
+  cluster_heat_buses: false
+  retrofitting:
+    retro_endogen: false #true 
+  tes: false #true
+  boilers: false #true
+  biomass_boiler: false
+  micro_chp: true
+  regional_coal_demand: true
+  use_fischer_tropsch_waste_heat: false
+  use_haber_bosch_waste_heat: false
+  use_methanolisation_waste_heat: false
+  use_methanation_waste_heat: false
+  use_fuel_cell_waste_heat: true
+  use_electrolysis_waste_heat: false
+  biomass_spatial: true
+  biomass_transport: true
+  bev_dsm: false
+  land_transport_fuel_cell_share:
+    2020: 0.0
+  land_transport_electric_share:
+    2020: 0.0
+  land_transport_ice_share:
+    2030: 1.0
+  reduce_hot_water_factor:
+    2030: 0 # no retrofitting allowed
+  conventional_generation:
+    OCGT: gas
+    coal: coal
+    lignite: lignite
+    nuclear: uranium
+  keep_existing_capacities: True
+
+costs:
+  year: 2020
+  fill_values:
+    "discount rate": 0.04
+  fuel: # https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:52022SC0230
+    OCGT: 38.84
+    CCGT: 38.84
+    gas: 38.84
+  investment:
+    "central solar thermal": 280650
+    "decentral solar thermal": 428920
+  lifetime:
+    "central solar thermal": 30
+    "decentral solar thermal": 30
+
+solving:
+  options:
+    assign_all_duals: true
+  solver_options:
+    gurobi-default:
+      threads: 8
+      BarConvTol: 1.e-4
