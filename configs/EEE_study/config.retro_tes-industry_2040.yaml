@@ -36,9 +36,6 @@ pypsa_eur:
   - offwind-dc
   - solar
   - ror
-  - nuclear
-  - coal
-  - lignite
 
 biomass:
   year: 2040
@@ -74,7 +71,12 @@ sector:
     2040: 0.3
   reduce_hot_water_factor:
     2040: 0.2
-  keep_OCGT: True
+  conventional_generation:
+    OCGT: gas
+    coal: coal
+    lignite: lignite
+    nuclear: uranium
+  keep_existing_capacities: True
 
 costs:
   year: 2035
