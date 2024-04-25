@@ -7,11 +7,11 @@ run:
 
 scenario:
   ll:
-  - v1.15
+  - v1.0
   clusters:
   - 48
   sector_opts:
-  - Co2L0.45-100H-dist1.1-T-H-B-I
+  - Co2L0.7-100H-dist1.1-T-H-B-I
   planning_horizons:
   - 2020
 
