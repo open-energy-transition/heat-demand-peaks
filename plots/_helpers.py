@@ -7,6 +7,18 @@ BASE_PATH = os.path.abspath(os.path.join(__file__ ,"../.."))
 # relative path to folder where to store plots
 PATH_PLOTS = "plots/results/"
 
+# Co2L limits
+CO2L_LIMITS = {"2020": "0.7", 
+               "2030": "0.45", 
+               "2040": "0.1", 
+               "2050": "0.0"}
+# Line limits
+LINE_LIMITS = {"2020": "v1.0",
+               "2030": "v1.15",
+               "2040": "v1.3",
+               "2050": "v1.5"}
+# BAU year
+BAU_HORIZON = "2020"
 
 def mock_snakemake(rulename, **wildcards):
     """
