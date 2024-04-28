@@ -13,7 +13,8 @@ import colors as c
 import warnings
 warnings.filterwarnings("ignore")
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
-                     change_path_to_pypsa_eur, change_path_to_base
+                     change_path_to_pypsa_eur, change_path_to_base, \
+                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +87,8 @@ RENAME = {
     'H2 Store': "H2 storage",
     'Hydrogen Storage': "H2 storage",
     'co2 sequestered': "CO2 sequestration",
-    "solid biomass transport": "solid biomass"
+    "solid biomass transport": "solid biomass",
+    "uranium": "nuclear",
 }
 
 PREFERRED_ORDER = pd.Index(
@@ -98,6 +100,7 @@ PREFERRED_ORDER = pd.Index(
         "coal for industry",
         "methanol",
         "oil",
+        "lignite",
         "coal",
         "shipping oil",
         "shipping methanol",
@@ -178,7 +181,7 @@ def compute_costs(n, nice_name, cost_type):
     return costs
 
 
-def plot_costs(cost_df, clusters, planning_horizon):
+def plot_costs(cost_df, clusters, planning_horizon, plot_width=7):
     df = cost_df.groupby(cost_df.index).sum()
 
     # convert to billions
@@ -207,7 +210,7 @@ def plot_costs(cost_df, clusters, planning_horizon):
     new_columns = df.sum().sort_values().index  
 
 
-    fig, ax = plt.subplots(figsize=(7, 8))
+    fig, ax = plt.subplots(figsize=(plot_width, 8))
 
     df.loc[new_index].T.plot(
         kind="bar",
@@ -256,7 +259,7 @@ def compute_capacities(n, nice_name):
     return full_caps
 
 
-def plot_capacities(caps_df, clusters, planning_horizon):
+def plot_capacities(caps_df, clusters, planning_horizon, plot_width=7):
     df = caps_df.groupby(caps_df.index).sum()
 
     # drop solid biomass transport
@@ -288,7 +291,7 @@ def plot_capacities(caps_df, clusters, planning_horizon):
 
     new_columns = df.sum().sort_values().index  
 
-    fig, ax = plt.subplots(figsize=(7, 9))
+    fig, ax = plt.subplots(figsize=(plot_width, 9))
 
     df.loc[new_index].T.plot(
         kind="bar",
@@ -412,11 +415,12 @@ if __name__ == "__main__":
 
 
     # network parameters
-    co2l_limits = {"2030":"0.45", "2040":"0.1", "2050":"0.0"}
-    line_limits = {"2030":"v1.15", "2040":"v1.3", "2050":"v1.5"}
+    co2l_limits = CO2L_LIMITS
+    line_limits = LINE_LIMITS
     clusters = config["plotting"]["clusters"]
     planning_horizons = ["2030", "2040", "2050"]
     time_resolution = config["plotting"]["time_resolution"]
+    opts = config["plotting"]["sector_opts"]
 
     # define scenario namings
     scenarios = {"flexible": "Optimal \nRenovation &\nHeating", 
@@ -433,7 +437,7 @@ if __name__ == "__main__":
 
     for planning_horizon in planning_horizons:
         lineex = line_limits[planning_horizon]
-        sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-T-H-B-I"
+        sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-{opts}"
 
         # move to submodules/pypsa-eur
         change_path_to_pypsa_eur()
@@ -496,7 +500,38 @@ if __name__ == "__main__":
             processed_capacities_df = plot_capacities(capacities_df, clusters, planning_horizon)
             table_cap_df = fill_table_df(table_cap_df, planning_horizon, scenarios, processed_capacities_df)
 
-        
+
+    # add BAU
+    BAU_horizon = BAU_HORIZON
+    scenario = "BAU"
+    lineex = line_limits[BAU_horizon]
+    sector_opts = f"Co2L{co2l_limits[BAU_horizon]}-{time_resolution}-{opts}"
+    
+    # move to submodules/pypsa-eur
+    change_path_to_pypsa_eur()
+
+    n = load_network(lineex, clusters, sector_opts, BAU_horizon, scenario)
+
+    # move to base directory
+    change_path_to_base()
+
+    if n is None:
+        # Skip further computation for this scenario if network is not loaded
+        print(f"Network is not found for scenario '{scenario}', BAU year '{BAU_horizon}', and time resolution of '{time_resolution}'. Skipping...")
+    else:
+        cap_costs = compute_costs(n, "BAU", "Capital")
+        op_costs = compute_costs(n, "BAU", "Operational")
+        cost_BAU = sum_costs(cap_costs, op_costs)
+        capacities_BAU = compute_capacities(n, "BAU")
+        if not table_cost_df.empty and not cost_BAU.empty:
+            processed_cost_BAU = plot_costs(cost_BAU, clusters, BAU_horizon, plot_width=1.6)
+            table_cost_df = fill_table_df(table_cost_df, BAU_horizon, {"BAU":"BAU"}, processed_cost_BAU)
+
+        if not table_cap_df.empty and not capacities_BAU.empty:
+            processed_capacities_BAU = plot_capacities(capacities_BAU, clusters, BAU_horizon, plot_width=1.6)
+            table_cap_df = fill_table_df(table_cap_df, BAU_horizon, {"BAU":"BAU"}, processed_capacities_BAU)
+
+
     # save all costs to csv
     if not table_cost_df.empty:
         table_cost_df.index.name = "System cost [EUR billion per year]"
