@@ -8,7 +8,8 @@ import pandas as pd
 import warnings
 warnings.filterwarnings("ignore")
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
-                     change_path_to_pypsa_eur, change_path_to_base
+                     change_path_to_pypsa_eur, change_path_to_base, \
+                     CO2L_LIMITS, LINE_LIMITS, BAU_HORIZON
 
 
 def get_households():
@@ -54,6 +55,8 @@ def electricity_bills(network, households):
     ev_tech_consume = n.links_t.p0[ev_charge_links]
     ev_tech_consume = ev_tech_consume.rename(columns=ev_charge_mapping)
     ev_tech_consume = ev_tech_consume.T.groupby(level=0).sum().T
+    if ev_tech_consume.empty:
+        ev_tech_consume = pd.DataFrame(0, index=lv_load.index, columns=lv_load.columns)
     
     # electricity prosumption of land transport EV to low_voltage bus in links
     ev_discharge_links = n.links.query("carrier in @ev_tech_discharge").index
@@ -61,6 +64,8 @@ def electricity_bills(network, households):
     ev_tech_prosume = n.links_t.p1[ev_discharge_links]
     ev_tech_prosume = ev_tech_prosume.rename(columns=ev_discharge_mapping)
     ev_tech_prosume = ev_tech_prosume.T.groupby(level=0).sum().T
+    if ev_tech_prosume.empty:
+        ev_tech_prosume = pd.DataFrame(0, index=lv_load.index, columns=lv_load.columns)
     
     # electricity prosumption of micro CHP to low_voltage bus in links
     rh_mCHP_links = n.links.query("carrier in @rh_techs_mCHP").index
@@ -118,7 +123,8 @@ def plot_electricity_cost(df_prices, name):
     color_codes = {"Optimal Renovation and Heating":"purple", 
                    "Optimal Renovation and Green Heating":"limegreen", 
                    "Limited Renovation and Optimal Heating":"royalblue", 
-                   "No Renovation and Green Heating":"#f4b609"}
+                   "No Renovation and Green Heating":"#f4b609",
+                   "BAU": "grey"}
 
     # plot as bar plot
     fig, ax = plt.subplots(figsize=(7,3))
@@ -187,22 +193,26 @@ if __name__ == "__main__":
     config = update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     # network parameters
-    co2l_limits = {"2030":"0.45", "2040":"0.1", "2050":"0.0"}
-    line_limits = {"2030":"v1.15", "2040":"v1.3", "2050":"v1.5"}
+    co2l_limits = CO2L_LIMITS
+    line_limits = LINE_LIMITS
     clusters = config["plotting"]["clusters"]
     planning_horizon = config["plotting"]["planning_horizon"]
     time_resolution = config["plotting"]["time_resolution"]
+    opts = config["plotting"]["sector_opts"]
     lineex = line_limits[planning_horizon]
-    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-T-H-B-I"
+    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-{opts}"
 
     # move to submodules/pypsa-eur
     change_path_to_pypsa_eur()
 
     # define scenario namings
-    scenarios = {"flexible": "Optimal Renovation and Heating", 
-                 "retro_tes": "Optimal Renovation and Green Heating", 
-                 "flexible-moderate": "Limited Renovation and Optimal Heating", 
-                 "rigid": "No Renovation and Green Heating"}
+    if planning_horizon == BAU_HORIZON:
+        scenarios = {"BAU": "BAU"}
+    else:
+        scenarios = {"flexible": "Optimal Renovation and Heating", 
+                     "retro_tes": "Optimal Renovation and Green Heating", 
+                     "flexible-moderate": "Limited Renovation and Optimal Heating", 
+                     "rigid": "No Renovation and Green Heating"}
 
     # load networks
     networks = {}
