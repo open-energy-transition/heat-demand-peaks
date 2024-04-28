@@ -15,13 +15,13 @@ def plot_pies(ax, elec_mix_array):
     vals = np.array(elec_mix_array)
 
     cmap = plt.colormaps["tab20c"]
-    outer_colors = ["#ff8c00", "#0fa101", "#db6a25"]
+    outer_colors = ["#ff8c00", "#0fa101", "#db6a25", "#545454"]
     inner_colors = cmap([1, 2, 5, 6, 9, 10])
-    inner_colors = ["#ff8c00", "#6895dd", "#235ebc", "#3dbfb0", "#f9d002", '#ffea80', "#db6a25"]
+    inner_colors = ["#ff8c00", "#6895dd", "#235ebc", "#3dbfb0", "#f9d002", '#ffea80', "#db6a25", "#545454", "#826837"]
 
-    outer_labels = ["Nuclear", "VRES", "Gas"]
+    outer_labels = ["Nuclear", "VRES", "Gas", "Coal"]
 
-    wedges, texts, autotexts = ax.pie(vals.sum(axis=1), radius=1, colors=outer_colors,
+    _, texts, autotexts = ax.pie(vals.sum(axis=1), radius=1, colors=outer_colors,
         wedgeprops=dict(width=size, edgecolor='w', linewidth=0.2), 
         autopct='%.1f%%', textprops={'fontsize': 4}, pctdistance=1.5,
         labels=outer_labels)
@@ -59,7 +59,7 @@ if __name__ == "__main__":
     planning_horizon = config["plotting"]["planning_horizon"]
     time_resolution = config["plotting"]["time_resolution"]
     lineex = line_limits[planning_horizon]
-    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-T-H-B-I"
+    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-dist1.1-T-H-B-I"
 
     # move to submodules/pypsa-eur
     change_path_to_pypsa_eur()
@@ -97,9 +97,17 @@ if __name__ == "__main__":
         buses = n.stores.query("carrier == 'gas'").bus
         links = n.links.query("bus0 in @buses and bus1 in @elec").index
         elec_mix_gas = -1*n.links_t.p1[links].multiply(n.snapshot_weightings.objective,axis=0).T.groupby(n.links.carrier).sum().T.sum()
+        # elec mix links (nuclear)
+        buses = n.stores.query("carrier == 'uranium'").bus
+        links = n.links.query("bus0 in @buses and bus1 in @elec").index
+        elec_mix_nuc = -1*n.links_t.p1[links].multiply(n.snapshot_weightings.objective,axis=0).T.groupby(n.links.carrier).sum().T.sum()
+        # elec mix links (coal/lignite)
+        buses = n.stores.query("carrier in ['coal', 'lignite']").bus
+        links = n.links.query("bus0 in @buses and bus1 in @elec").index
+        elec_mix_coal = -1*n.links_t.p1[links].multiply(n.snapshot_weightings.objective,axis=0).T.groupby(n.links.carrier).sum().T.sum()
 
         elec_mix_array = [
-            [elec_mix.loc[["nuclear"]].sum(), 0, 0 , 0, 0],
+            [elec_mix_nuc.sum(), 0, 0 , 0, 0],
             [
                 elec_mix.loc[["offwind-ac", "offwind-dc"]].sum(),
                 elec_mix.loc[["onwind"]].sum(),
@@ -107,7 +115,8 @@ if __name__ == "__main__":
                 elec_mix.loc[["solar"]].sum(), 
                 elec_mix.loc[["solar rooftop"]].sum(),
             ],
-            [elec_mix_gas.sum(), 0, 0, 0, 0]
+            [elec_mix_gas.sum(), 0, 0, 0, 0],
+            [elec_mix_coal.loc["coal"].sum(), elec_mix_coal.loc["lignite"].sum(), 0, 0, 0]
         ]
 
         plot_pies(ax, elec_mix_array)
@@ -119,14 +128,16 @@ if __name__ == "__main__":
     nuclear_patch = mpatches.Patch(color='#ff8c00', label='Nuclear')
     onwind_patch = mpatches.Patch(color='#235ebc', label='Onshore Wind')
     offwind_patch = mpatches.Patch(color='#6895dd', label='Offshore Wind')
-    ror_patch = mpatches.Patch(color='#3dbfb0', label='Run of River')
+    ror_patch = mpatches.Patch(color='#3dbfb0', label='Hydropower')
     solar_patch = mpatches.Patch(color='#f9d002', label='Solar utility')
     solar_rooftop_patch = mpatches.Patch(color='#ffea80', label='Solar rooftop')
     gas_patch = mpatches.Patch(color='#db6a25', label='Gas')
     vres_patch = mpatches.Patch(color='#0fa101', label='VRES')
+    coal_patch = mpatches.Patch(color='#545454', label='(Hard) Coal)')
+    lignite_patch = mpatches.Patch(color='#826837', label='Lignite')
 
     axes[1].legend(
-    handles=[nuclear_patch, vres_patch, gas_patch, onwind_patch, offwind_patch, ror_patch, solar_patch, solar_rooftop_patch],
+    handles=[nuclear_patch, vres_patch, gas_patch, coal_patch, lignite_patch, onwind_patch, offwind_patch, ror_patch, solar_patch, solar_rooftop_patch],
     loc="lower center", ncol=4, fontsize=4, bbox_to_anchor=(1.1, -0.15)
     )
     
