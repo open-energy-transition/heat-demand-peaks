@@ -433,7 +433,7 @@ if __name__ == "__main__":
 
     for planning_horizon in planning_horizons:
         lineex = line_limits[planning_horizon]
-        sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-T-H-B-I"
+        sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-dist1.1-T-H-B-I"
 
         # move to submodules/pypsa-eur
         change_path_to_pypsa_eur()
