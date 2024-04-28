@@ -11,7 +11,7 @@ scenario:
   clusters:
   - 48
   sector_opts:
-  - Co2L0.1-100H-dist1.1-T-H-B-I
+  - Co2L0.1-24H-dist1.1-T-H-B-I
   planning_horizons:
   - 2040
 
