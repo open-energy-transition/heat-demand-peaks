@@ -91,6 +91,7 @@ RENAME = {
 
 PREFERRED_ORDER = pd.Index(
     [
+        "uranium",
         "nuclear",
         "solid biomass",
         "biogas",
@@ -145,6 +146,7 @@ PREFERRED_ORDER = pd.Index(
         "gas boiler",
         "biomass boiler",
         "building retrofitting",
+        "WWHRS",
      ]
 )
 
@@ -415,7 +417,7 @@ if __name__ == "__main__":
     co2l_limits = {"2030":"0.45", "2040":"0.1", "2050":"0.0"}
     line_limits = {"2030":"v1.15", "2040":"v1.3", "2050":"v1.5"}
     clusters = config["plotting"]["clusters"]
-    planning_horizons = ["2030", "2040", "2050"]
+    planning_horizons = config["plotting"]["planning_horizon"]
     time_resolution = config["plotting"]["time_resolution"]
 
     # define scenario namings
