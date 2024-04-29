@@ -147,6 +147,7 @@ PREFERRED_ORDER = pd.Index(
         "ground heat pump",
         "gas boiler",
         "biomass boiler",
+        "WWHRS",
         "building retrofitting",
      ]
 )
@@ -205,7 +206,8 @@ def plot_costs(cost_df, clusters, planning_horizon, plot_width=7):
     )
 
     for remove_tech in DONT_PLOT:
-        new_index = new_index.drop(remove_tech)
+        if remove_tech in new_index:
+            new_index = new_index.drop(remove_tech)
 
     new_columns = df.sum().sort_values().index  
 
