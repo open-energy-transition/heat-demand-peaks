@@ -401,7 +401,8 @@ def define_table_df(scenarios):
 def fill_table_df(df, planning_horizon, scenarios, values):
     for scenario in scenarios.values():
         for tech_name, _ in values.iterrows():
-            df.loc[tech_name, (planning_horizon, scenario)] = values.loc[tech_name, scenario]
+            if scenario in values.columns:
+                df.loc[tech_name, (planning_horizon, scenario)] = values.loc[tech_name, scenario]
     return df
 
 
