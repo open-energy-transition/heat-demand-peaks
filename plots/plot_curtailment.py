@@ -13,7 +13,8 @@ import colors as c
 import warnings
 warnings.filterwarnings("ignore")
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
-                     change_path_to_pypsa_eur, change_path_to_base
+                     change_path_to_pypsa_eur, change_path_to_base, \
+                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON
 
 logger = logging.getLogger(__name__)
 
@@ -44,16 +45,24 @@ def plot_curtailment(df_curtailment):
     color_codes = {"Optimal Renovation and Heating":"purple", 
                    "Optimal Renovation and Green Heating":"limegreen", 
                    "Limited Renovation and Optimal Heating":"royalblue", 
-                   "No Renovation and Green Heating":"#f4b609"}
+                   "No Renovation and Green Heating":"#f4b609",
+                   "BAU": "grey"}
     
     # MWh to TWh
     df_curtailment = df_curtailment / 1e6
+    # get BAU year
+    BAU_year = df_curtailment.filter(like="BAU", axis=1).columns.get_level_values(0)
 
     fig, ax = plt.subplots(figsize=(7, 3))
     for nice_name, color_code in color_codes.items():
-        df_curtailment.loc["Total", (slice(None), nice_name)].plot(ax=ax, color=color_code, 
-                                                                   linewidth=2, marker='o', label=nice_name)
-    unique_years = sorted(set(df_curtailment.columns.get_level_values(0)))
+        if not nice_name == "BAU":
+            df_curtailment.loc["Total", (slice(None), nice_name)].plot(ax=ax, color=color_code, 
+                                                                       linewidth=2, marker='o', label=nice_name, zorder=5)
+        elif nice_name == "BAU" and not BAU_year.empty:
+            ax.axhline(y=df_curtailment.loc["Total", (BAU_year, nice_name)].values, 
+                       color=color_code, linestyle='--', label=nice_name, zorder=1)
+
+    unique_years = sorted(set(df_curtailment.columns.get_level_values(0)) - set(BAU_year))
     ax.set_xticks(range(len(unique_years)))  # Set the tick locations
     ax.set_xticklabels(unique_years)  # Set the tick labels
     ax.set_ylabel("Curtailment [TWh]")
@@ -93,9 +102,10 @@ if __name__ == "__main__":
     change_path_to_pypsa_eur()
 
     # network parameters
-    co2l_limits = {"2030":"0.45", "2040":"0.1", "2050":"0.0"}
-    line_limits = {"2030":"v1.15", "2040":"v1.3", "2050":"v1.5"}
+    co2l_limits = CO2L_LIMITS
+    line_limits = LINE_LIMITS
     clusters = config["plotting"]["clusters"]
+    opts = config["plotting"]["sector_opts"]
     planning_horizons = ["2030", "2040", "2050"]
     time_resolution = config["plotting"]["time_resolution"]
 
@@ -111,7 +121,7 @@ if __name__ == "__main__":
 
     for planning_horizon in planning_horizons:
         lineex = line_limits[planning_horizon]
-        sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-T-H-B-I"
+        sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-{opts}"
     
         # load networks
         for scenario, nice_name in scenarios.items():
@@ -125,6 +135,21 @@ if __name__ == "__main__":
             curtailment_dict = get_curtailment(n, nice_name)
             curtailment_df.loc[:, (planning_horizon, nice_name)] = pd.Series(curtailment_dict)
     
+    # Add BAU scenario
+    BAU_horizon = BAU_HORIZON
+    scenario = "BAU"
+    lineex = line_limits[BAU_horizon]
+    sector_opts = f"Co2L{co2l_limits[BAU_horizon]}-{time_resolution}-{opts}"
+
+    n = load_network(lineex, clusters, sector_opts, BAU_horizon, scenario)
+
+    if n is None:
+        # Skip further computation for this scenario if network is not loaded
+        print(f"Network is not found for scenario '{scenario}', planning year '{BAU_horizon}', and time resolution of '{time_resolution}'. Skipping...")
+    else:
+        curtailment_dict = get_curtailment(n, scenario)
+        curtailment_df.loc[:, (BAU_horizon, scenario)] = pd.Series(curtailment_dict)
+
     # move to base directory
     change_path_to_base()
 
