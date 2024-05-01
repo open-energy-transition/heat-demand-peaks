@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 import pypsa
+import logging
 
 # get the base working directory
 BASE_PATH = os.path.abspath(os.path.join(__file__ ,"../.."))
@@ -169,6 +170,7 @@ def load_network(lineex, clusters, sector_opts, planning_horizon, scenario):
     DIR = f"results/{scenario}/postnetworks"
     try:
         n = pypsa.Network(os.path.join(DIR, FILE))
+        logging.info(f"Loading {FILE} in {DIR}")
     except FileNotFoundError as e:
         print(f"Error: {e}")
         return None
@@ -180,6 +182,7 @@ def load_unsolved_network(lineex, clusters, sector_opts, planning_horizon, scena
     DIR = f"results/{scenario}/prenetworks"
     try:
         n = pypsa.Network(os.path.join(DIR, FILE))
+        logging.info(f"Loading {FILE} in {DIR}")
     except FileNotFoundError as e:
         print(f"Error: {e}")
         return None
@@ -190,6 +193,7 @@ def save_unsolved_network(network, lineex, clusters, sector_opts, planning_horiz
     FILE = f"elec_s_{clusters}_l{lineex}__{sector_opts}_{planning_horizon}.nc"
     DIR = f"results/{scenario}/prenetworks/"
     network.export_to_netcdf(DIR+FILE)
+    logging.info(f"Saving {FILE} to {DIR}")
 
 
 def change_path_to_pypsa_eur():
