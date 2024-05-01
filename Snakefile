@@ -133,6 +133,38 @@ rule plot_curtailments:
         ),
 
 
+rule plot_hydrogen_production:
+    params:
+        clusters=config["plotting"]["clusters"],
+    output:
+        figure_elec=RESULTS+"plot_H2_prod_elec_use_{clusters}.png",
+        figure_prod=RESULTS+"plot_H2_prod_{clusters}.png",
+        table=RESULTS+"table_H2_prod_{clusters}.csv",
+    resources:
+        mem_mb=20000,
+    script:
+        "plots/plot_hydrogen_production.py"
+
+
+rule plot_hydrogen_productions:
+    input:
+        expand(
+            RESULTS
+            + "plot_H2_prod_elec_use_{clusters}.png",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "plot_H2_prod_{clusters}.png",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "table_H2_prod_{clusters}.csv",
+            **config["plotting"],
+        ),
+
+
 rule get_heat_pump:
     params:
         clusters=config["plotting"]["clusters"],
@@ -233,6 +265,21 @@ rule plot_all:
         expand(
             RESULTS
             + "table_curtailment_{clusters}.csv",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "plot_H2_prod_elec_use_{clusters}.png",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "plot_H2_prod_{clusters}.png",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "table_H2_prod_{clusters}.csv",
             **config["plotting"],
         ),
 
