@@ -68,7 +68,7 @@ def plot_curtailment(df_curtailment):
     ax.set_ylabel("Curtailment [TWh]")
     ax.set_xlabel(None)
     ax.legend(loc="upper right", facecolor="white", fontsize='x-small')
-    plt.savefig(f"{RESULTS_DIR}/plot_curtailment_{clusters}.png", dpi=600, bbox_inches = 'tight')
+    plt.savefig(snakemake.output.figure, dpi=600, bbox_inches = 'tight')
     
 
 def define_table_df(scenarios):
