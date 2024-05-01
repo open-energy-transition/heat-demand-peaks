@@ -8,7 +8,8 @@ import pandas as pd
 import warnings
 warnings.filterwarnings("ignore")
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
-                     change_path_to_pypsa_eur, change_path_to_base
+                     change_path_to_pypsa_eur, change_path_to_base, \
+                     LINE_LIMITS, CO2L_LIMITS
 
 
 def define_heat_pump_dataframe():
@@ -60,10 +61,11 @@ if __name__ == "__main__":
     # move to submodules/pypsa-eur
     change_path_to_pypsa_eur()
     # network parameters
-    co2l_limits = {"2030":"0.45", "2040":"0.1", "2050":"0.0"}
-    line_limits = {"2030":"v1.15", "2040":"v1.3", "2050":"v1.5"}
+    co2l_limits = CO2L_LIMITS
+    line_limits = LINE_LIMITS
     clusters = config["plotting"]["clusters"]
     time_resolution = config["plotting"]["time_resolution"]
+    opts = config["plotting"]["sector_opts"]
 
     # heat pump techs
     heat_pumps = {"residential": "Residential decentral", 
@@ -78,7 +80,7 @@ if __name__ == "__main__":
     scenarios = {"flexible": "Optimal Renovation and Heating", 
                  "retro_tes": "Optimal Renovation and Green Heating", 
                  "flexible-moderate": "Limited Renovation and Optimal Heating", 
-                 "rigid": "No Renovation and Optimal Heating"}
+                 "rigid": "No Renovation and Green Heating"}
 
     # define heat pumps dataframe
     df_heat_pumps = define_heat_pump_dataframe()
@@ -86,7 +88,7 @@ if __name__ == "__main__":
     # heat pumps estimation
     for planning_horizon in ["2030", "2040", "2050"]:
         lineex = line_limits[planning_horizon]
-        sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-T-H-B-I"
+        sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-{opts}"
 
         for scenario, nice_name in scenarios.items():
             # load networks

@@ -8,7 +8,7 @@ import warnings
 warnings.filterwarnings("ignore")
 from plots._helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                     change_path_to_pypsa_eur, change_path_to_base, load_unsolved_network, \
-                    save_unsolved_network
+                    save_unsolved_network, LINE_LIMITS, CO2L_LIMITS
 
 
 def get_capacities(network, capacity="opt"):
@@ -82,8 +82,8 @@ if __name__ == "__main__":
     config = update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     # network parameters by year
-    co2l_limits = {"2030":"0.45", "2040":"0.1", "2050":"0.0"}
-    line_limits = {"2030":"v1.15", "2040":"v1.3", "2050":"v1.5"}
+    co2l_limits = CO2L_LIMITS
+    line_limits = LINE_LIMITS
     previous_horizons = {"2040":"2030", "2050":"2040"} 
 
     # network parameters of unsolved network
@@ -91,13 +91,14 @@ if __name__ == "__main__":
     planning_horizon = config["set_capacities"]["planning_horizon"]
     time_resolution = config["set_capacities"]["time_resolution"]
     scenario = config["set_capacities"]["scenario"]
+    opts = config["set_capacities"]["sector_opts"]
     lineex = line_limits[planning_horizon]
-    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-dist1.1-T-H-B-I"
+    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-{opts}"
 
     # network parameters of solved network
     previous_horizon = previous_horizons[planning_horizon]
     previous_lineex = line_limits[previous_horizon]
-    previous_sector_opts = f"Co2L{co2l_limits[previous_horizon]}-{time_resolution}-dist1.1-T-H-B-I"
+    previous_sector_opts = f"Co2L{co2l_limits[previous_horizon]}-{time_resolution}-{opts}"
 
     # move to pypsa-eur directory
     change_path_to_pypsa_eur()

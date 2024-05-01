@@ -77,6 +77,15 @@ rule plot_electricity_bills:
         ),
 
 
+rule plot_electricity_for_heats:
+    input:
+        expand(
+            RESULTS
+            + "plot_electricity_for_heat_{clusters}_{planning_horizon}.png",
+            **config["plotting"],
+        ),
+
+
 rule plot_electricity_generation:
     params:
         clusters=config["plotting"]["clusters"],
