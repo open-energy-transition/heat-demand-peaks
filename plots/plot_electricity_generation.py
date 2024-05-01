@@ -7,7 +7,20 @@ import pandas as pd
 import warnings
 warnings.filterwarnings("ignore")
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
-                     change_path_to_pypsa_eur, change_path_to_base
+                     change_path_to_pypsa_eur, change_path_to_base, \
+                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON
+
+
+def autopct_format_inner(value, threshold=1):
+    return f'{value:.1f}%' if value >= threshold else ''
+
+
+def autopct_format_outer(value, threshold=3):
+    return f'{value:.1f}%' if value >= threshold else ''
+
+
+def filter_labels(labels, autopct_values):
+    return [label if autopct_values[i] else None for i, label in enumerate(labels)]
 
 
 def plot_pies(ax, elec_mix_array):
@@ -15,16 +28,25 @@ def plot_pies(ax, elec_mix_array):
     vals = np.array(elec_mix_array)
 
     cmap = plt.colormaps["tab20c"]
-    outer_colors = ["#ff8c00", "#0fa101", "#db6a25"]
+    outer_colors = ["#ff8c00", "#db6a25", "#0fa101", "#545454"]
     inner_colors = cmap([1, 2, 5, 6, 9, 10])
-    inner_colors = ["#ff8c00", "#6895dd", "#235ebc", "#3dbfb0", "#f9d002", '#ffea80', "#db6a25"]
+    inner_colors = ["#ff8c00", "#db6a25", "#6895dd", "#235ebc", "#3dbfb0", "#f9d002", '#ffea80', "#545454", "#826837"]
 
-    outer_labels = ["Nuclear", "VRES", "Gas"]
+    outer_labels = ["Nuclear", "Gas", "VRES", "Coal"]
 
-    wedges, texts, autotexts = ax.pie(vals.sum(axis=1), radius=1, colors=outer_colors,
+    # threshold to show outer label
+    threshold = 2.0
+    # get percentage of outer layer  
+    autopct_values = [100*value/vals.sum(axis=1).sum() for value in vals.sum(axis=1)]
+    # filter out percentages lower than threshold
+    autopct_values = [value if value >= threshold else None for value in autopct_values]
+    # outer labels that has value >= threshold 
+    valid_outer_labels = filter_labels(outer_labels, autopct_values)
+
+    _, texts, autotexts = ax.pie(vals.sum(axis=1), radius=1, colors=outer_colors,
         wedgeprops=dict(width=size, edgecolor='w', linewidth=0.2), 
-        autopct='%.1f%%', textprops={'fontsize': 4}, pctdistance=1.5,
-        labels=outer_labels)
+        autopct=autopct_format_outer, textprops={'fontsize': 4}, pctdistance=1.5,
+        labels=valid_outer_labels)
     
     # Adjust the position of autopct labels
     for autotext, label in zip(autotexts, texts):
@@ -37,7 +59,7 @@ def plot_pies(ax, elec_mix_array):
     all_vals = vals.flatten()
     ax.pie(all_vals[all_vals!=0], radius=1.15-size, colors=inner_colors,
        wedgeprops=dict(width=size, edgecolor='w', linewidth=0.2),
-       autopct='%.1f%%', textprops={'fontsize': 3}, pctdistance=0.7)
+       autopct=autopct_format_inner, textprops={'fontsize': 3}, pctdistance=0.7)
 
     ax.set(aspect="equal")
 
@@ -45,7 +67,7 @@ def plot_pies(ax, elec_mix_array):
 if __name__ == "__main__":
     if "snakemake" not in globals():
         snakemake = mock_snakemake(
-            "plot_electricity_generation_pies", 
+            "plot_electricity_generation", 
             clusters="48",
             planning_horizon="2030",
         )
@@ -53,34 +75,43 @@ if __name__ == "__main__":
     config = update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     # network parameters
-    co2l_limits = {"2030":"0.45", "2040":"0.1", "2050":"0.0"}
-    line_limits = {"2030":"v1.15", "2040":"v1.3", "2050":"v1.5"}
+    co2l_limits = CO2L_LIMITS
+    line_limits = LINE_LIMITS
     clusters = config["plotting"]["clusters"]
     planning_horizon = config["plotting"]["planning_horizon"]
     time_resolution = config["plotting"]["time_resolution"]
+    opts = config["plotting"]["sector_opts"]
     lineex = line_limits[planning_horizon]
-    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-T-H-B-I"
+    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-{opts}"
 
     # move to submodules/pypsa-eur
     change_path_to_pypsa_eur()
 
     # define scenario namings
-    scenarios = {"flexible": "OROH", 
-                 "retro_tes": "ORGH", 
-                 "flexible-moderate": "LROH", 
-                 "rigid": "NROH"}
+    if planning_horizon == BAU_HORIZON:
+        scenarios = {"BAU": "BAU"}
+    else:
+        scenarios = {"flexible": "OROH", 
+                     "retro_tes": "ORGH", 
+                     "flexible-moderate": "LROH", 
+                     "rigid": "NROH"}
 
     # define figure
-    fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4) #each scenario one axis
-    axes = [ax1, ax2, ax3, ax4]
+    count_scenarios = len(scenarios.keys())
+    fig, axes = plt.subplots(1, count_scenarios, figsize=(1.6*count_scenarios, 1.9)) #each scenario one axis
 
     # load networks
     i = 0
     for scenario, nice_name in scenarios.items():
-        ax = axes[i]
+        ax = axes[i] if isinstance(axes, np.ndarray) else axes
         i += 1
-        
+
         n = load_network(lineex, clusters, sector_opts, planning_horizon, scenario)
+
+        if n is None:
+            # Skip further computation for this scenario if network is not loaded
+            print(f"Network is not found for scenario '{scenario}', planning year '{planning_horizon}', and time resolution of '{time_resolution}'. Skipping...")
+            continue
 
         # definde elec buses
         elec = ["AC", "low voltage"]
@@ -97,9 +128,18 @@ if __name__ == "__main__":
         buses = n.stores.query("carrier == 'gas'").bus
         links = n.links.query("bus0 in @buses and bus1 in @elec").index
         elec_mix_gas = -1*n.links_t.p1[links].multiply(n.snapshot_weightings.objective,axis=0).T.groupby(n.links.carrier).sum().T.sum()
+        # elec mix links (nuclear)
+        buses = n.stores.query("carrier == 'uranium'").bus
+        links = n.links.query("bus0 in @buses and bus1 in @elec").index
+        elec_mix_nuc = -1*n.links_t.p1[links].multiply(n.snapshot_weightings.objective,axis=0).T.groupby(n.links.carrier).sum().T.sum()
+        # elec mix links (coal/lignite)
+        buses = n.stores.query("carrier in ['coal', 'lignite']").bus
+        links = n.links.query("bus0 in @buses and bus1 in @elec").index
+        elec_mix_coal = -1*n.links_t.p1[links].multiply(n.snapshot_weightings.objective,axis=0).T.groupby(n.links.carrier).sum().T.sum()
 
         elec_mix_array = [
-            [elec_mix.loc[["nuclear"]].sum(), 0, 0 , 0, 0],
+            [elec_mix_nuc.sum(), 0, 0, 0, 0],
+            [elec_mix_gas.sum(), 0, 0, 0, 0],
             [
                 elec_mix.loc[["offwind-ac", "offwind-dc"]].sum(),
                 elec_mix.loc[["onwind"]].sum(),
@@ -107,7 +147,7 @@ if __name__ == "__main__":
                 elec_mix.loc[["solar"]].sum(), 
                 elec_mix.loc[["solar rooftop"]].sum(),
             ],
-            [elec_mix_gas.sum(), 0, 0, 0, 0]
+            [elec_mix_coal.loc["coal"].sum(), elec_mix_coal.loc["lignite"].sum(), 0, 0, 0]
         ]
 
         plot_pies(ax, elec_mix_array)
@@ -119,16 +159,24 @@ if __name__ == "__main__":
     nuclear_patch = mpatches.Patch(color='#ff8c00', label='Nuclear')
     onwind_patch = mpatches.Patch(color='#235ebc', label='Onshore Wind')
     offwind_patch = mpatches.Patch(color='#6895dd', label='Offshore Wind')
-    ror_patch = mpatches.Patch(color='#3dbfb0', label='Run of River')
+    ror_patch = mpatches.Patch(color='#3dbfb0', label='Hydropower')
     solar_patch = mpatches.Patch(color='#f9d002', label='Solar utility')
     solar_rooftop_patch = mpatches.Patch(color='#ffea80', label='Solar rooftop')
     gas_patch = mpatches.Patch(color='#db6a25', label='Gas')
     vres_patch = mpatches.Patch(color='#0fa101', label='VRES')
+    coal_patch = mpatches.Patch(color='#545454', label='Hard Coal')
+    lignite_patch = mpatches.Patch(color='#826837', label='Lignite')
 
-    axes[1].legend(
-    handles=[nuclear_patch, vres_patch, gas_patch, onwind_patch, offwind_patch, ror_patch, solar_patch, solar_rooftop_patch],
-    loc="lower center", ncol=4, fontsize=4, bbox_to_anchor=(1.1, -0.15)
-    )
+    if isinstance(axes, np.ndarray):
+        axes[1].legend(
+        handles=[nuclear_patch, vres_patch, gas_patch, coal_patch, lignite_patch, onwind_patch, offwind_patch, ror_patch, solar_patch, solar_rooftop_patch],
+        loc="lower center", ncol=5, fontsize=4, bbox_to_anchor=(1.1, -0.15)
+        )
+    else:
+        axes.legend(
+        handles=[nuclear_patch, vres_patch, gas_patch, coal_patch, lignite_patch, onwind_patch, offwind_patch, ror_patch, solar_patch, solar_rooftop_patch],
+        loc="lower center", ncol=5, fontsize=4, bbox_to_anchor=(0.5, -0.15)
+        )
     
     # move to base directory
     change_path_to_base()
