@@ -65,8 +65,8 @@ def set_optimal_capacities(solved_network, unsolved_network):
 
     # set p_nom_max as max of p_nom_min and p_nom_max
     unsolved_network.generators.loc[target_gens, "p_nom_max"] = unsolved_network.generators.loc[target_gens, ["p_nom_min", "p_nom_max"]].max(axis=1)
-    unsolved_network.stores.loc[target_stores, "e_nom_min"] = unsolved_network.stores.loc[target_stores, ["e_nom_min", "e_nom_max"]].max(axis=1)
-    unsolved_network.links.loc[target_links, "p_nom_min"] = unsolved_network.links.loc[target_links, ["p_nom_min", "p_nom_max"]].max(axis=1)
+    unsolved_network.stores.loc[target_stores, "e_nom_max"] = unsolved_network.stores.loc[target_stores, ["e_nom_min", "e_nom_max"]].max(axis=1)
+    unsolved_network.links.loc[target_links, "p_nom_max"] = unsolved_network.links.loc[target_links, ["p_nom_min", "p_nom_max"]].max(axis=1)
 
     # set p_nom_max as max(p_nom_max, p_nom_min) for retrofitting
     retro_idx = unsolved_network.generators.query("carrier == 'retrofitting'").index
