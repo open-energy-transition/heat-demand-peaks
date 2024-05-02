@@ -91,7 +91,7 @@ def prepare_prenetwork(scenario, horizon):
     # get .nc filename
     filename = get_network_name(scenario, horizon)
     # run prenetwork
-    command = f"snakemake --cores 2 results/{scenario}/prenetworks/{filename} --configfile {config_path} --force"
+    command = f"snakemake -call results/{scenario}/prenetworks/{filename} --configfile {config_path} --force"
     subprocess.run(command, shell=True)
     logging.info(f"Prenetwork was prepared for {scenario} scenario in {horizon} horizon!")
 
@@ -125,7 +125,7 @@ def solve_network(scenario, horizon):
     change_path_to_pypsa_eur()
 
     # solve the network
-    command = f"snakemake --cores 2 solve_sector_networks --configfile {config_path}"
+    command = f"snakemake -call solve_sector_networks --configfile {config_path}"
     subprocess.run(command, shell=True)
     logging.info(f"Network was solved for {scenario} scenario in {horizon} horizon!")
 
