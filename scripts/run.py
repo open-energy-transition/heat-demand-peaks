@@ -79,6 +79,67 @@ def get_network_name(scenario, horizon):
     return filename
 
 
+def increase_biomass_potential(factor=1.2):
+    # change path to pypsa-eur
+    change_path_to_pypsa_eur()
+
+    # Define the file path
+    file_path = 'scripts/prepare_sector_network.py'
+
+    # Define the line to be added
+    new_line = f'    biomass_potentials = {factor} * biomass_potentials\n'
+
+    # Read the contents of the file
+    with open(file_path, 'r') as file:
+        lines = file.readlines()
+
+    # Find the index of the line containing the specified text
+    index = next((i for i, line in enumerate(lines) if 'biomass_potentials = pd.read_csv(snakemake.input.biomass_potentials, index_col=0)' in line), None)
+
+    # Insert the new line after the specified line
+    if index is not None:
+        lines.insert(index + 1, new_line)
+
+    # Write the modified contents back to the file
+    with open(file_path, 'w') as file:
+        file.writelines(lines)
+
+    # log changes
+    logging.info(f"Increase biomass potentials by {factor} factor")
+
+    # move to base directory
+    change_path_to_base()
+
+
+def revert_biomass_potential():
+    # Change path to pypsa-eur
+    change_path_to_pypsa_eur()
+
+    # Define the file path
+    file_path = 'scripts/prepare_sector_network.py'
+
+    # Read the contents of the file
+    with open(file_path, 'r') as file:
+        lines = file.readlines()
+
+    # Find the index of the line containing the specified text
+    index = next((i for i, line in enumerate(lines) if 'biomass_potentials = 1.2 * biomass_potentials' in line), None)
+
+    # Remove the line if found
+    if index is not None:
+        del lines[index]
+
+    # Write the modified contents back to the file
+    with open(file_path, 'w') as file:
+        file.writelines(lines)
+
+    # log changes
+    logging.info(f"Revert biomass potentials back")
+
+    # Move to base directory
+    change_path_to_base()
+
+
 def prepare_prenetwork(scenario, horizon):
     # get config path
     config_path = get_config_path(scenario, horizon)
@@ -142,6 +203,8 @@ if __name__ == "__main__":
 
     # run model for given horizon
     for horizon in horizons:
+        if horizon == 2050:
+            increase_biomass_potential()
         # run prenetwork
         prepare_prenetwork(scenario=scenario, horizon=horizon)
         
@@ -156,3 +219,6 @@ if __name__ == "__main__":
         # solve the network
         solve_network(scenario, horizon)
 
+        # revert biomass potential
+        if horizon == 2050:
+            revert_biomass_potential()
