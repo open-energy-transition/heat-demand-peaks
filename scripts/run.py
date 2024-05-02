@@ -136,7 +136,7 @@ def solve_network(scenario, horizon):
 if __name__ == "__main__":
     # get scenario from argument
     scenario, start_horizon = get_scenario()
-    # scenario, start_horizon = "rigid", 2050
+
     # horizons to be simulated
     horizons = get_horizon_list(start_horizon=start_horizon)
 
