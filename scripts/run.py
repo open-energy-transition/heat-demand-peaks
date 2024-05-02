@@ -146,7 +146,7 @@ if __name__ == "__main__":
         prepare_prenetwork(scenario=scenario, horizon=horizon)
         
         # set capacities if 2040 or 2050
-        if not horizon == "2030":
+        if not horizon == 2030:
             set_capacities(scenario=scenario, horizon=horizon)
 
         # set moderate retrofitting
