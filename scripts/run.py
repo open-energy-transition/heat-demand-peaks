@@ -23,7 +23,7 @@ def get_scenario():
     logging.info(f"Scenario: {scenario}")
 
     # Access the value of the horizon argument
-    c = int(args.continue_horizon)
+    c = args.continue_horizon
     # log scenario name
     if c:
         logging.info(f"Start simulating from {c}")
@@ -31,7 +31,7 @@ def get_scenario():
         c = 2030
         logging.info("No horizon specified. Starting from default horizon (2030)")
 
-    return scenario, c
+    return scenario, int(c)
 
 
 def get_horizon_list(start_horizon):
