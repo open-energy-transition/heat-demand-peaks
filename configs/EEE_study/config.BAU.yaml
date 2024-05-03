@@ -11,7 +11,7 @@ scenario:
   clusters:
   - 48
   sector_opts:
-  - Co2L0.7-100H-dist1.1-T-H-B-I
+  - Co2L0.7-12H-dist1.1-T-H-B-I
   planning_horizons:
   - 2020
 
@@ -48,7 +48,8 @@ sector:
   residential_heat_dsm: false
   cluster_heat_buses: false
   retrofitting:
-    retro_endogen: false #true 
+    retro_endogen: false #true
+    WWHR_endogen: false # Waste Water Heat Recovery
   tes: false #true
   boilers: false #true
   biomass_boiler: false
