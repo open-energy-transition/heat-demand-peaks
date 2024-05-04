@@ -313,8 +313,8 @@ def plot_capacities(caps_df, clusters, planning_horizon, plot_width=7):
     ax.set_ylabel("Installed capacities [GW]")
 
     ax.set_xlabel("")
-    ax.set_ylim([0,15000])
-    ax.set_yticks(np.arange(0, 15000, 2000))
+    ax.set_ylim([0,19000])
+    ax.set_yticks(np.arange(0, 19000, 2000))
 
     # Turn off both horizontal and vertical grid lines
     ax.grid(False, which='both')
