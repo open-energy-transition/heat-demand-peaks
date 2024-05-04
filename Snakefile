@@ -165,6 +165,27 @@ rule plot_hydrogen_productions:
         ),
 
 
+rule plot_heat_tech_ratio:
+    params:
+        clusters=config["plotting"]["clusters"],
+        planning_horizon=config["plotting"]["planning_horizon"],
+    output:
+        table=RESULTS+"table_heat_tech_ratio_{clusters}.csv",
+    resources:
+        mem_mb=20000,
+    script:
+        "plots/plot_heat_tech_ratio.py"
+
+
+rule plot_heat_tech_ratios:
+    input:
+        expand(
+            RESULTS
+            + "table_heat_tech_ratio_{clusters}.csv",
+            **config["plotting"],
+        ),
+
+
 rule get_heat_pump:
     params:
         clusters=config["plotting"]["clusters"],
@@ -280,6 +301,11 @@ rule plot_all:
         expand(
             RESULTS
             + "table_H2_prod_{clusters}.csv",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "table_heat_tech_ratio_{clusters}.csv",
             **config["plotting"],
         ),
 
