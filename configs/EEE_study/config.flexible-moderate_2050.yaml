@@ -11,7 +11,7 @@ scenario:
   clusters:
   - 48
   sector_opts:
-  - Co2L0.0-12H-dist1.1-T-H-B-I
+  - Co2L0.0-3H-dist1.1-T-H-B-I
   planning_horizons:
   - 2050
 
@@ -48,8 +48,10 @@ sector:
   residential_heat_dsm: true
   residential_heat_restriction_value: 0.3
   cluster_heat_buses: false
+  reduce_space_heat_exogenously: false
   retrofitting:
-    retro_endogen: true 
+    retro_endogen: true
+    WWHR_endogen: true
   tes: true
   boilers: true
   biomass_boiler: false
