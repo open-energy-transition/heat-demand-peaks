@@ -60,7 +60,11 @@ def plot_pies(ax, elec_mix_array):
     ax.pie(all_vals[all_vals!=0], radius=1.15-size, colors=inner_colors,
        wedgeprops=dict(width=size, edgecolor='w', linewidth=0.2),
        autopct=autopct_format_inner, textprops={'fontsize': 3}, pctdistance=0.7)
-
+    
+    # Calculate total generated electricity
+    total_electricity = np.sum(vals)
+    # Add total generated electricity to the center of the pie chart
+    ax.text(0, 0, f"{total_electricity/1e6:.2f}"+"\nTWh", ha='center', va='center', fontsize=4)
     ax.set(aspect="equal")
 
 
