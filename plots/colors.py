@@ -185,6 +185,7 @@ tech_colors = {
 "services urban decentral resistive heater": '#98e991',
 "urban central resistive heater": '#8cdf85',
 "retrofitting": '#8487e8',
+"WWHRS": '#8487e8',
 "building retrofitting": '#8487e8',
 "WWHRS": '#5054de',
 

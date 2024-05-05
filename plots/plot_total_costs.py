@@ -93,6 +93,7 @@ RENAME = {
 
 PREFERRED_ORDER = pd.Index(
     [
+        "uranium",
         "nuclear",
         "solid biomass",
         "biogas",
@@ -149,6 +150,7 @@ PREFERRED_ORDER = pd.Index(
         "biomass boiler",
         "WWHRS",
         "building retrofitting",
+        "WWHRS",
      ]
 )
 
@@ -421,7 +423,7 @@ if __name__ == "__main__":
     co2l_limits = CO2L_LIMITS
     line_limits = LINE_LIMITS
     clusters = config["plotting"]["clusters"]
-    planning_horizons = ["2030", "2040", "2050"]
+    planning_horizons = config["plotting"]["planning_horizon"]
     time_resolution = config["plotting"]["time_resolution"]
     opts = config["plotting"]["sector_opts"]
 
