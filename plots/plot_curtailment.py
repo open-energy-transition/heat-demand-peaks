@@ -106,7 +106,8 @@ if __name__ == "__main__":
     line_limits = LINE_LIMITS
     clusters = config["plotting"]["clusters"]
     opts = config["plotting"]["sector_opts"]
-    planning_horizons = ["2030", "2040", "2050"]
+    planning_horizons = config["plotting"]["planning_horizon"]
+    planning_horizons = [str(x) for x in planning_horizons if not str(x) == BAU_HORIZON]
     time_resolution = config["plotting"]["time_resolution"]
 
     # define scenario namings

@@ -9,7 +9,7 @@ import warnings
 warnings.filterwarnings("ignore")
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                      change_path_to_pypsa_eur, change_path_to_base, \
-                     LINE_LIMITS, CO2L_LIMITS
+                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON
                      
 from plot_total_costs import compute_costs
 
@@ -31,6 +31,8 @@ if __name__ == "__main__":
     line_limits = LINE_LIMITS
     clusters = config["plotting"]["clusters"]
     time_resolution = config["plotting"]["time_resolution"]
+    planning_horizons = config["plotting"]["planning_horizon"]
+    planning_horizons = [str(x) for x in planning_horizons if not str(x) == BAU_HORIZON]
     opts = config["plotting"]["sector_opts"]
 
     # define scenario namings
@@ -59,7 +61,7 @@ if __name__ == "__main__":
     df_savings.columns = pd.MultiIndex.from_tuples(df_savings.columns, names=['horizon','tech'])
     cost_savings.columns = pd.MultiIndex.from_tuples(cost_savings.columns, names=['horizon','tech'])
 
-    for planning_horizon in ["2030", "2040", "2050"]:
+    for planning_horizon in planning_horizons:
         lineex = line_limits[planning_horizon]
         sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-{opts}"
 

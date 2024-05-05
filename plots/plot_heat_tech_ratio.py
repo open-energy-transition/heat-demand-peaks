@@ -106,7 +106,8 @@ if __name__ == "__main__":
     line_limits = LINE_LIMITS
     clusters = config["plotting"]["clusters"]
     time_resolution = config["plotting"]["time_resolution"]
-    planning_horizons = ["2030", "2040", "2050", "2020"]
+    planning_horizons = config["plotting"]["planning_horizon"]
+    planning_horizons = [str(x) for x in planning_horizons]
     opts = config["plotting"]["sector_opts"]
 
     # define scenario namings
@@ -125,6 +126,11 @@ if __name__ == "__main__":
         # if planning_horizon is 2020
         if planning_horizon == BAU_HORIZON:
             scenarios = {"BAU": "BAU"}
+        else:
+            scenarios = {"flexible": "Optimal \nRenovation &\nHeating", 
+                         "retro_tes": "Optimal \nRenovation &\nGreen Heating", 
+                         "flexible-moderate": "Limited \nRenovation &\nOptimal Heating", 
+                         "rigid": "No \nRenovation &\nGreen Heating"}
 
         # move to submodules/pypsa-eur
         change_path_to_pypsa_eur()
