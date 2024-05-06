@@ -186,6 +186,15 @@ rule plot_heat_tech_ratios:
         ),
 
 
+rule plot_COP:
+    output:
+        figure=RESULTS+"plot_COP.png",
+    resources:
+        mem_mb=20000,
+    script:
+        "plots/plot_COP.py"
+
+
 rule get_heat_pump:
     params:
         clusters=config["plotting"]["clusters"],
@@ -296,6 +305,11 @@ rule plot_all:
         expand(
             RESULTS
             + "plot_H2_prod_{clusters}.png",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "plot_COP.png",
             **config["plotting"],
         ),
         expand(
