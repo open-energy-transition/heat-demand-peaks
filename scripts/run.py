@@ -161,19 +161,31 @@ def prepare_prenetwork(scenario, horizon):
 
 
 def set_capacities(scenario, horizon):
-    # get number of clusters
-    clusters = get_clusters(scenario, horizon)
-    command = f"snakemake -call scripts/logs/set_capacities_{clusters}_{horizon}_{scenario}.txt --forceall"
-    subprocess.run(command, shell=True)
-    logging.info(f"Capacities are set to {scenario} scenario in {horizon} horizon!")
+    error = []
+    try:
+        # get number of clusters
+        clusters = get_clusters(scenario, horizon)
+        command = f"snakemake -call scripts/logs/set_capacities_{clusters}_{horizon}_{scenario}.txt --forceall"
+        subprocess.run(command, shell=True, check=True)
+        logging.info(f"Capacities are set to {scenario} scenario in {horizon} horizon!")
+    except subprocess.CalledProcessError  as e:
+        logging.error(f"Error occurred during command execution: {e}")
+        error.append(e)
+    return error
 
 
 def moderate_retrofitting(scenario, horizon):
-    # get number of clusters
-    clusters = get_clusters(scenario, horizon)
-    command = f"snakemake -call scripts/logs/set_moderate_retrofitting_{clusters}_{horizon}.txt --forceall"
-    subprocess.run(command, shell=True)
-    logging.info(f"Moderate retrofitting capacities are set to {scenario} scenario in {horizon} horizon!")
+    error = []
+    try:
+        # get number of clusters
+        clusters = get_clusters(scenario, horizon)
+        command = f"snakemake -call scripts/logs/set_moderate_retrofitting_{clusters}_{horizon}.txt --forceall"
+        subprocess.run(command, shell=True, check=True)
+        logging.info(f"Moderate retrofitting capacities are set to {scenario} scenario in {horizon} horizon!")
+    except subprocess.CalledProcessError  as e:
+        logging.error(f"Error occurred during command execution: {e}")
+        error.append(e)
+    return error
 
 
 def solve_network(scenario, horizon):
@@ -210,11 +222,17 @@ if __name__ == "__main__":
         
         # set capacities if 2040 or 2050
         if not horizon == 2030:
-            set_capacities(scenario=scenario, horizon=horizon)
+            error_capacities = set_capacities(scenario=scenario, horizon=horizon)
 
         # set moderate retrofitting
         if scenario == "flexible-moderate":
-            moderate_retrofitting(scenario=scenario, horizon=horizon)
+            error_moderate = moderate_retrofitting(scenario=scenario, horizon=horizon)
+
+        # break if error happens
+        if error_capacities or error_moderate:
+            if horizon == 2050:
+                revert_biomass_potential()
+            break
 
         # solve the network
         solve_network(scenario, horizon)

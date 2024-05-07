@@ -11,6 +11,10 @@ from plots._helpers import mock_snakemake, update_config_from_wildcards, load_ne
                     save_unsolved_network, LINE_LIMITS, CO2L_LIMITS
 
 
+class CustomError(Exception):
+    pass
+
+
 def get_capacities(network, capacity="opt"):
     # extendable generators and capacities
     ext_gen = network.generators.query("p_nom_extendable==True")
@@ -124,9 +128,9 @@ if __name__ == "__main__":
             success = True
         except Exception as e:
             print(f"Error: {e}")
-            success = False
+            raise FileNotFoundError("File was not saved")
     else:
-        success = False
+        raise FileNotFoundError("Missing input network")
 
     # move to base directory
     change_path_to_base()

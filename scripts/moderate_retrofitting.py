@@ -62,9 +62,9 @@ if __name__ == "__main__":
             success = True
         except Exception as e:
             print(f"Error: {e}")
-            success = False
+            raise FileNotFoundError("File was not saved")
     else:
-        success = False
+        raise FileNotFoundError("Missing input network")
 
     # move to base directory
     change_path_to_base()
