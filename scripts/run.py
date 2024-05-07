@@ -219,6 +219,9 @@ if __name__ == "__main__":
             increase_biomass_potential()
         # run prenetwork
         prepare_prenetwork(scenario=scenario, horizon=horizon)
+
+        # initialize error_capacities and error_moderate
+        error_capacities, error_moderate = [], []
         
         # set capacities if 2040 or 2050
         if not horizon == 2030:
