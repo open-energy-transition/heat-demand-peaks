@@ -88,6 +88,10 @@ costs:
     OCGT: 38.84
     CCGT: 38.84
     gas: 38.84
+    coal: 24.57
+    lignite: 22.11
+    nuclear: 1.75
+    uranium: 1.75
   investment:
     "central solar thermal": 280650
     "decentral solar thermal": 428920
