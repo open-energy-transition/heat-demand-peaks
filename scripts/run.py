@@ -15,6 +15,8 @@ def get_scenario():
                         choices=["flexible", "flexible-moderate", "retro_tes", "rigid"])
     parser.add_argument("-c", "--continue_horizon", help="Specify the horizon to continue simulations", 
                         choices=["2030", "2040", "2050"])
+    parser.add_argument("-y", "--year", help="Specify a single horizon to simulate", 
+                        choices=["2030", "2040", "2050"])
     args = parser.parse_args()
 
     # Access the value of the scenario argument
@@ -22,16 +24,24 @@ def get_scenario():
     # log scenario name
     logging.info(f"Scenario: {scenario}")
 
-    # Access the value of the horizon argument
+    # Access the value of horizon from which simulation is continued
     c = args.continue_horizon
+    # Access the value of specific horizon to simulate
+    y = args.year
+
     # log scenario name
-    if c:
-        logging.info(f"Start simulating from {c}")
+    if y:
+        horizons = [int(y)]
+        logging.info(f"Start simulating {scenario} scenario for {y}")
+    elif c:
+        horizons = get_horizon_list(int(c))
+        logging.info(f"Start simulating {scenario} scenario for {horizons}")
     else:
         c = 2030
+        horizons = get_horizon_list(int(c))
         logging.info("No horizon specified. Starting from default horizon (2030)")
 
-    return scenario, int(c)
+    return scenario, horizons
 
 
 def get_horizon_list(start_horizon):
@@ -208,10 +218,7 @@ def solve_network(scenario, horizon):
 
 if __name__ == "__main__":
     # get scenario from argument
-    scenario, start_horizon = get_scenario()
-
-    # horizons to be simulated
-    horizons = get_horizon_list(start_horizon=start_horizon)
+    scenario, horizons = get_scenario()
 
     # run model for given horizon
     for horizon in horizons:
