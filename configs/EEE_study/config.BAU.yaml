@@ -23,6 +23,8 @@ lines:
   s_max_pu: 0.5
 
 electricity:
+  extendable_carriers:
+    Generator: [solar, onwind, offwind-ac, offwind-dc]
   powerplants_filter: DateOut >= 2020 and not Fueltype.isin(['Nuclear', 'Hard Coal', 'Lignite'])
   custom_powerplants: DateIn <= 2020 and DateOut >= 2020
 
