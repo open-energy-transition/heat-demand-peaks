@@ -195,6 +195,32 @@ rule plot_COP:
         "plots/plot_COP.py"
 
 
+rule plot_co2_level:
+    params:
+        clusters=config["plotting"]["clusters"],
+    output:
+        figure=RESULTS+"plot_co2_level_{clusters}.png",
+        table=RESULTS+"table_co2_level_{clusters}.csv",
+    resources:
+        mem_mb=20000,
+    script:
+        "plots/plot_co2_level.py"
+
+
+rule plot_co2_levels:
+    input:
+        expand(
+            RESULTS
+            + "plot_co2_level_{clusters}.png",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "table_co2_level_{clusters}.csv",
+            **config["plotting"],
+        ),
+
+
 rule get_heat_pump:
     params:
         clusters=config["plotting"]["clusters"],
@@ -310,6 +336,16 @@ rule plot_all:
         expand(
             RESULTS
             + "plot_COP.png",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "plot_co2_level_{clusters}.png",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "table_co2_level_{clusters}.csv",
             **config["plotting"],
         ),
         expand(
