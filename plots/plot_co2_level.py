@@ -31,7 +31,10 @@ def get_co2(n, nice_name):
 
 def plot_co2(df_co2):
     # color codes for legend
-    color_codes = {"No Renovation and Green Heating":"#f4b609",
+    color_codes = {"Optimal Renovation and Heating":"purple", 
+                   "Optimal Renovation and Green Heating":"limegreen", 
+                   "Limited Renovation and Optimal Heating":"royalblue", 
+                   "No Renovation and Green Heating":"#f4b609",
                    "BAU": "grey"}
     
     # tCO2_eq to MtCO2_eq
@@ -43,7 +46,7 @@ def plot_co2(df_co2):
     for nice_name, color_code in color_codes.items():
         if not nice_name == "BAU":
             df_co2.loc["Total", (slice(None), nice_name)].plot(ax=ax, color=color_code, 
-                                                                       linewidth=2, marker='o', label="Scenarios", zorder=5)
+                                                                       linewidth=2, marker='o', label=nice_name, zorder=5)
         elif nice_name == "BAU" and not BAU_year.empty:
             ax.axhline(y=df_co2.loc["Total", (BAU_year, nice_name)].values, 
                        color=color_code, linestyle='--', label=nice_name, zorder=1)
@@ -53,7 +56,7 @@ def plot_co2(df_co2):
     ax.set_xticklabels(unique_years)  # Set the tick labels
     ax.set_ylabel(r"CO$_2$ emissions [MtCO$_{2-eq}$]")
     ax.set_xlabel(None)
-    ax.legend(facecolor="white", fontsize='x-small')
+    ax.legend(facecolor="white", fontsize='x-small', loc="upper right")
     plt.savefig(snakemake.output.figure, dpi=600, bbox_inches = 'tight')
     
 
