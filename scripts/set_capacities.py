@@ -55,17 +55,25 @@ def set_optimal_capacities(solved_network, unsolved_network):
                        "gas for industry", "shipping methanol", "shipping oil",
                        "naphtha for industry", "kerosene for aviation",
                        "process emissions", "coal for industry", "nuclear"]
+    # gas boiler carriers
+    boiler_carriers = ["residential rural gas boiler", "services rural gas boiler",
+                       "residential urban decentral gas boiler", "services urban decentral gas boiler",
+                       "urban central gas boiler"]
     fossil_gens = unsolved_network.generators.query("carrier in @fossil_carriers").index
     fossil_stores = unsolved_network.stores.query("carrier in @fossil_carriers").index
     fossil_links = unsolved_network.links.query("carrier in @fossil_carriers").index
+    boiler_links = unsolved_network.links.query("carrier in @boiler_carriers").index
     target_gens = list(set(common_gen).difference(set(fossil_gens)))
     target_stores = list(set(common_store).difference(set(fossil_stores)))
-    target_links = list(set(common_link).difference(set(fossil_links)))
+    target_links = list(set(common_link).difference(set(fossil_links)).difference(set(boiler_links)))
 
     # set p_nom_min and e_nom_min capacities
     unsolved_network.generators.loc[target_gens, "p_nom_min"] = opt_gen_cap[target_gens]
     unsolved_network.stores.loc[target_stores, "e_nom_min"] = opt_store_cap[target_stores]
     unsolved_network.links.loc[target_links, "p_nom_min"] = opt_link_cap[target_links]
+
+    # set p_nom_max for gas boilers
+    unsolved_network.links.loc[boiler_links, "p_nom_max"] = opt_link_cap[boiler_links]
 
     # set p_nom_max as max of p_nom_min and p_nom_max
     unsolved_network.generators.loc[target_gens, "p_nom_max"] = unsolved_network.generators.loc[target_gens, ["p_nom_min", "p_nom_max"]].max(axis=1)
