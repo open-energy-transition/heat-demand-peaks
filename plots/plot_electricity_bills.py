@@ -31,7 +31,8 @@ def electricity_bills(network, households):
                      'residential rural air heat pump']
     rh_techs_gas = ['residential rural gas boiler', 'residential urban decentral gas boiler', 'urban central gas boiler']
     rh_techs_mCHP = ['residential rural micro gas CHP', 'residential urban decentral micro gas CHP']
-    
+    rh_techs_gasCHP = ['urban central gas CHP', 'urban central gas CHP CC']
+
     ev_tech_charge = ['BEV charger']
     ev_tech_discharge = ["V2G"]
     
@@ -75,12 +76,16 @@ def electricity_bills(network, households):
     rh_mCHP_prosume = rh_mCHP_prosume.T.groupby(level=0).sum().T
     
     # gas consumption of micro CHP in EU_gas bus in links
-    rh_mCHP_consume = n.links_t.p2[rh_mCHP_links]
+    rh_mCHP_consume = n.links_t.p2[rh_mCHP_links].divide(n.links.loc[rh_mCHP_links, "efficiency2"], axis=1)
     
+    # gas consumption by gas CHPs
+    rh_gasCHP_links = n.links.query("carrier in @rh_techs_gasCHP").index
+    rh_gasCHP_consume = n.links_t.p2[rh_gasCHP_links].divide(n.links.loc[rh_gasCHP_links, "efficiency2"], axis=1)
+
     # gas consumption of gas boilers in EU_gas bus in links
     rh_gas_links = n.links.query("carrier in @rh_techs_gas").index
     if not rh_gas_links.empty:
-        rh_gas_consume = n.links_t.p1[rh_gas_links]
+        rh_gas_consume = n.links_t.p1[rh_gas_links].divide(n.links.loc[rh_gas_links, "efficiency"], axis=1)
     else:
         rh_gas_consume = pd.DataFrame()
     
@@ -91,11 +96,12 @@ def electricity_bills(network, households):
     if not rh_gas_links.empty:
         rh_mCHP_consume.columns = [" ".join(x.split(" ")[0:4]) for x in rh_mCHP_consume.columns]
         rh_gas_consume.columns = [" ".join(x.split(" ")[0:4]) for x in rh_gas_consume.columns]
-        total_gas_load = (rh_mCHP_consume + rh_gas_consume).multiply(n.snapshot_weightings.stores, axis=0).fillna(0)
-        # total_gas_load = (rh_gas_consume).multiply(n.snapshot_weightings.stores, axis=0)
-        print("ADD CHPs!!! (columns currently don't match everywhere -> fillna(0)")
+        rh_gasCHP_consume.columns = [" ".join(x.split(" ")[0:4]) for x in rh_gasCHP_consume.columns]
+        # group gas consumption of CHP for each country (because we have gas CHP and gas CHP CC)
+        rh_gasCHP_consume = rh_gasCHP_consume.groupby(rh_gasCHP_consume.columns, axis=1).sum()
+        total_gas_load = rh_mCHP_consume.add(rh_gas_consume, fill_value=0).add(rh_gasCHP_consume, fill_value=0).multiply(n.snapshot_weightings.stores, axis=0)
     else:
-        total_gas_load = rh_mCHP_consume.multiply(n.snapshot_weightings.stores, axis=0)
+        total_gas_load = rh_mCHP_consume.add(rh_gasCHP_consume, fill_value=0).multiply(n.snapshot_weightings.stores, axis=0)
     
      # total gas cost
     total_gas_cost = (-n.generators.loc["EU gas"].marginal_cost * total_gas_load).sum()
