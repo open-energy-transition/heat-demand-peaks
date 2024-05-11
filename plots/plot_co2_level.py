@@ -20,45 +20,225 @@ logger = logging.getLogger(__name__)
 
 RESULTS_DIR = "plots/results"
 
+PREFIX_TO_REMOVE = [
+    "residential ",
+    "services ",
+    "urban ",
+    "rural ",
+    "central ",
+    "decentral ",
+]
 
-def get_co2(n, nice_name):
+RENAME_IF_CONTAINS = [
+    "solid biomass CHP",
+    "gas CHP",
+    "gas boiler",
+    "biogas",
+    "solar thermal",
+    "air heat pump",
+    "ground heat pump",
+    "resistive heater",
+    "Fischer-Tropsch",
+]
+
+RENAME_IF_CONTAINS_DICT = {
+    "water tanks": "TES",
+    "retrofitting": "building retrofitting",
+    # "H2 Electrolysis": "hydrogen storage",
+    # "H2 Fuel Cell": "hydrogen storage",
+    # "H2 pipeline": "hydrogen storage",
+    "battery": "battery storage",
+    # "CC": "CC"
+}
+
+RENAME = {
+    "Solar": "solar PV",
+    "solar": "solar PV",
+    "Sabatier": "methanation",
+    "helmeth" : "methanation",
+    "Offshore Wind (AC)": "offshore wind",
+    "Offshore Wind (DC)": "offshore wind",
+    "Onshore Wind": "onshore wind",
+    "offwind-ac": "offshore wind",
+    "offwind-dc": "offshore wind",
+    "Run of River": "hydroelectricity",
+    "Run of river": "hydroelectricity",
+    "Reservoir & Dam": "hydroelectricity",
+    "Pumped Hydro Storage": "hydroelectricity",
+    "PHS": "hydroelectricity",
+    "NH3": "ammonia",
+    "co2 Store": "DAC",
+    "co2 stored": "CO2 sequestration",
+    "AC": "transmission lines",
+    "DC": "transmission lines",
+    "B2B": "transmission lines",
+    "solid biomass for industry": "solid biomass for industry",
+    "solid biomass for industry CC": "solid biomass for industry",
+    "electricity distribution grid": "distribution lines",
+    "Open-Cycle Gas":"OCGT",
+    "gas": "gas storage",
+    'gas pipeline new': 'gas pipeline',
+    "gas for industry CC": "gas for industry",
+    "SMR CC": "SMR",
+    "process emissions CC": "process emissions",
+    "Battery Storage": "battery storage",
+    'H2 Store': "H2 storage",
+    'Hydrogen Storage': "H2 storage",
+    'co2 sequestered': "CO2 sequestration",
+    "solid biomass transport": "solid biomass",
+    "uranium": "nuclear",
+}
+
+
+PREFERRED_ORDER = pd.Index(
+    [
+        "co2",
+        "DAC",
+        "biogas",
+        "solid biomass for industry",
+        "solid biomass CHP",
+
+        "uranium",
+        "nuclear",
+        "solid biomass",
+        "biogas",
+        "solid biomass for industry",
+        "gas for industry",
+        "coal for industry",
+        "methanol",
+        "oil",
+        "lignite",
+        "coal",
+        "shipping oil",
+        "shipping methanol",
+        "naphtha for industry",
+        "land transport oil",
+        "kerosene for aviation",
+        
+        "transmission lines",
+        "distribution lines",
+        "gas pipeline",
+        "H2 pipeline",
+        
+        "H2 Electrolysis",
+        "H2 Fuel Cell",
+        "DAC",
+        "Fischer-Tropsch",
+        "methanation",
+        "BEV charger",
+        "V2G",
+        "SMR",
+        "methanolisation",
+        
+        "battery storage",
+        "gas storage",
+        "H2 storage",
+        "TES",
+        
+        "hydroelectricity",
+        "OCGT",
+        "onshore wind",
+        "offshore wind",
+        "solar PV",
+        "solar thermal",
+        "solar rooftop",
+
+        "co2",
+        "CO2 sequestration",
+        "process emissions",
+
+        "gas CHP",
+        "resistive heater",
+        "air heat pump",
+        "ground heat pump",
+        "gas boiler",
+        "biomass boiler",
+        "WWHRS",
+        "building retrofitting",
+        "WWHRS",
+     ]
+)
+
+
+def rename_techs(label):
+
+    for ptr in PREFIX_TO_REMOVE:
+        if label[: len(ptr)] == ptr:
+            label = label[len(ptr) :]
+
+    for rif in RENAME_IF_CONTAINS:
+        if rif in label:
+            label = rif
+
+    for old, new in RENAME_IF_CONTAINS_DICT.items():
+        if old in label:
+            label = new
+
+    for old, new in RENAME.items():
+        if old == label:
+            label = new
+    return label
+
+def get_co2_balance(n, nice_name):
     co2_carrier = 'co2'
-    co2_bus = n.stores.query("carrier in @co2_carrier").index
-    # get co2 level in MtCO2_eq
-    co2_level = n.stores_t.e[co2_bus].iloc[-1]
-    return co2_level.values
+    balance = n.statistics.energy_balance()
+    # get co2 balance
+    df = balance.loc[:, :, co2_carrier].droplevel(0).groupby(level=0).sum().to_frame()
+    df.columns = [nice_name]
+    return df
 
 
-def plot_co2(df_co2):
-    # color codes for legend
-    color_codes = {"Optimal Renovation and Heating":"purple", 
-                   "Optimal Renovation and Green Heating":"limegreen", 
-                   "Limited Renovation and Optimal Heating":"royalblue", 
-                   "No Renovation and Green Heating":"#f4b609",
-                   "BAU": "grey"}
-    
-    # tCO2_eq to MtCO2_eq
-    df_co2 = df_co2 / 1e6
-    # get BAU year
-    BAU_year = df_co2.filter(like="BAU", axis=1).columns.get_level_values(0)
+def plot_co2_balance(co2_df, clusters, planning_horizon, plot_width=7):
+    # filter out technologies with very small emission
+    co2_threshold = 20e6 # 1% of 2e9
+    to_drop = co2_df.index[co2_df.abs().max(axis=1) < co2_threshold]
+    logger.info(
+        f"Dropping technology with co2 balance below {co2_threshold} ton CO2_eq per year"
+    )
+    logger.debug(co2_df.loc[to_drop])
+    co2_df = co2_df.drop(to_drop)
 
-    fig, ax = plt.subplots(figsize=(7, 3))
-    for nice_name, color_code in color_codes.items():
-        if not nice_name == "BAU":
-            df_co2.loc["Total", (slice(None), nice_name)].plot(ax=ax, color=color_code, 
-                                                                       linewidth=2, marker='o', label=nice_name, zorder=5)
-        elif nice_name == "BAU" and not BAU_year.empty:
-            ax.axhline(y=df_co2.loc["Total", (BAU_year, nice_name)].values, 
-                       color=color_code, linestyle='--', label=nice_name, zorder=1)
+    # reorder index
+    new_index = PREFERRED_ORDER.intersection(co2_df.index).append(
+        co2_df.index.difference(PREFERRED_ORDER)
+    )
+    co2_reordered = co2_df.T[new_index]
 
-    unique_years = sorted(set(df_co2.columns.get_level_values(0)) - set(BAU_year))
-    ax.set_xticks(range(len(unique_years)))  # Set the tick locations
-    ax.set_xticklabels(unique_years)  # Set the tick labels
-    ax.set_ylabel(r"CO$_2$ emissions [MtCO$_{2-eq}$]")
-    ax.set_xlabel(None)
-    ax.legend(facecolor="white", fontsize='x-small', loc="upper right")
-    plt.savefig(snakemake.output.figure, dpi=600, bbox_inches = 'tight')
-    
+    # get colors
+    colors = c.tech_colors
+    # plot co2 balance
+    fig, ax = plt.subplots(figsize=(plot_width,9))
+    co2_reordered.plot.bar(ax=ax, 
+                           stacked=True, 
+                           color=[colors[x] for x in co2_reordered.columns])
+    # configure plot
+    handles, labels = ax.get_legend_handles_labels()
+    handles.reverse()
+    labels.reverse()
+    # reverse negatives co2 technologies
+    negative_co2_names = co2_reordered.loc[:, co2_reordered.mean()<0].columns
+    neg_co2_length = len(negative_co2_names)
+    handles = handles[:-neg_co2_length] + handles[-neg_co2_length:][::-1]
+    labels = labels[:-neg_co2_length] + labels[-neg_co2_length:][::-1]
+
+    plt.xticks(rotation=0, fontsize=10)
+    ax.set_ylabel("CO$_2$ emissions [tCO$_{2-eq}$]")
+    ax.set_xlabel("")
+    ax.set_ylim([-2.8e9,2.8e9])
+    # ax.set_yticks(np.arange(-3e9, 3e9, 5e8))
+    # Turn off both horizontal and vertical grid lines
+    ax.grid(False, which='both')
+    ax.legend(
+        handles, labels, ncol=1, loc="upper left", bbox_to_anchor=[1, 1], frameon=False
+    )
+    ax.set_facecolor('white')
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_color('black')
+    ax.spines['bottom'].set_color('black')
+    ax.grid(axis='y', linestyle='--', linewidth=0.5, color='gray', zorder=0)
+    plt.savefig(f"{RESULTS_DIR}/plot_co2_level_{clusters}_{planning_horizon}.png", dpi=600, bbox_inches='tight')
+
 
 def define_table_df(scenarios):
     # Define column levels
@@ -66,7 +246,15 @@ def define_table_df(scenarios):
     col_level_1 = list(scenarios.values()) * 3
     # Create a MultiColumns
     multi_cols = pd.MultiIndex.from_arrays([col_level_0, col_level_1], names=['Year', 'Scenario'])
-    df = pd.DataFrame(columns=multi_cols, index=["Total"])
+    df = pd.DataFrame(columns=multi_cols)
+    return df
+
+
+def fill_table_df(df, planning_horizon, scenarios, values):
+    for scenario in scenarios.values():
+        for tech_name, _ in values.iterrows():
+            if scenario in values.columns:
+                df.loc[tech_name, (planning_horizon, scenario)] = values.loc[tech_name, scenario]
     return df
 
 
@@ -79,8 +267,6 @@ if __name__ == "__main__":
     # update config based on wildcards
     config = update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
-    # move to submodules/pypsa-eur
-    change_path_to_pypsa_eur()
 
     # network parameters
     co2l_limits = CO2L_LIMITS
@@ -92,20 +278,24 @@ if __name__ == "__main__":
     time_resolution = config["plotting"]["time_resolution"]
 
     # define scenario namings
-    scenarios = {"flexible": "Optimal Renovation and Heating", 
-                "retro_tes": "Optimal Renovation and Green Heating", 
-                "flexible-moderate": "Limited Renovation and Optimal Heating", 
-                "rigid": "No Renovation and Green Heating"}
+    scenarios = {"flexible": "Optimal \nRenovation &\nHeating", 
+                "retro_tes": "Optimal \nRenovation &\nGreen Heating", 
+                "flexible-moderate": "Limited \nRenovation &\nOptimal Heating", 
+                "rigid": "No \nRenovation &\nGreen Heating"}
 
 
-    # initialize df for storing curtailment information
-    co2_df = define_table_df(scenarios)
+    # initialize df for storing co2 balance information
+    table_co2_df = define_table_df(scenarios)
 
     for planning_horizon in planning_horizons:
         lineex = line_limits[planning_horizon]
         sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-{opts}"
+
+        # move to submodules/pypsa-eur
+        change_path_to_pypsa_eur()
     
         # load networks
+        co2_df = pd.DataFrame()
         for scenario, nice_name in scenarios.items():
             n = load_network(lineex, clusters, sector_opts, planning_horizon, scenario)
 
@@ -114,8 +304,18 @@ if __name__ == "__main__":
                 print(f"Network is not found for scenario '{scenario}', planning year '{planning_horizon}', and time resolution of '{time_resolution}'. Skipping...")
                 continue
             
-            co2_level = get_co2(n, nice_name)
-            co2_df.loc["Total", (planning_horizon, nice_name)] = co2_level
+            co2_balance = get_co2_balance(n, nice_name)
+            co2_df = co2_df.join(co2_balance, how="outer").fillna(0)
+        # grouping and renaming technologies
+        co2_df = co2_df.groupby(co2_df.index.map(rename_techs)).sum()
+
+        # move to base directory
+        change_path_to_base()
+
+        # plot co2 balance
+        if not co2_df.empty:
+            plot_co2_balance(co2_df, clusters, planning_horizon)
+            table_co2_df = fill_table_df(table_co2_df, planning_horizon, scenarios, co2_df)
     
     # Add BAU scenario
     BAU_horizon = BAU_HORIZON
@@ -123,22 +323,32 @@ if __name__ == "__main__":
     lineex = line_limits[BAU_horizon]
     sector_opts = f"Co2L{co2l_limits[BAU_horizon]}-{time_resolution}-{opts}"
 
+    # move to submodules/pypsa-eur
+    change_path_to_pypsa_eur()
+
     n = load_network(lineex, clusters, sector_opts, BAU_horizon, scenario)
+
+    # move to base directory
+    change_path_to_base()
 
     if n is None:
         # Skip further computation for this scenario if network is not loaded
         print(f"Network is not found for scenario '{scenario}', planning year '{BAU_horizon}', and time resolution of '{time_resolution}'. Skipping...")
     else:
-        co2_level = get_co2(n, scenario)
-        co2_df.loc["Total", (BAU_horizon, scenario)] = co2_level
+        # get co2 balance for BAU and group technologies
+        co2_BAU = get_co2_balance(n, "BAU")
+        co2_BAU = co2_BAU.groupby(co2_BAU.index.map(rename_techs)).sum()
+        if not table_co2_df.empty and not co2_BAU.empty:
+            plot_co2_balance(co2_BAU, clusters, BAU_horizon, plot_width=1.5)
+            table_co2_df = fill_table_df(table_co2_df, BAU_horizon, {"BAU":"BAU"}, co2_BAU)
+            table_co2_df = table_co2_df.fillna(0)
+
 
     # move to base directory
     change_path_to_base()
 
-    # store to csv and png
-    if not co2_df.empty:
+    # store to csv
+    if not table_co2_df.empty:
         # save to csv
-        co2_df.to_csv(snakemake.output.table)
-        co2_df.index.name = "CO2 emissions [tCO2_eq]"
-        # make plot
-        plot_co2(co2_df)
+        table_co2_df.index.name = "CO2 emissions [tCO2_eq]"
+        table_co2_df.to_csv(snakemake.output.table)

@@ -199,7 +199,6 @@ rule plot_co2_level:
     params:
         clusters=config["plotting"]["clusters"],
     output:
-        figure=RESULTS+"plot_co2_level_{clusters}.png",
         table=RESULTS+"table_co2_level_{clusters}.csv",
     resources:
         mem_mb=20000,
@@ -209,11 +208,6 @@ rule plot_co2_level:
 
 rule plot_co2_levels:
     input:
-        expand(
-            RESULTS
-            + "plot_co2_level_{clusters}.png",
-            **config["plotting"],
-        ),
         expand(
             RESULTS
             + "table_co2_level_{clusters}.csv",
@@ -336,11 +330,6 @@ rule plot_all:
         expand(
             RESULTS
             + "plot_COP.png",
-            **config["plotting"],
-        ),
-        expand(
-            RESULTS
-            + "plot_co2_level_{clusters}.png",
             **config["plotting"],
         ),
         expand(
