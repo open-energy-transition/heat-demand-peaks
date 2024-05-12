@@ -55,7 +55,7 @@ sector:
     retro_endogen: true
     WWHR_endogen: true
   tes: true
-  boilers: true
+  boilers: false
   biomass_boiler: false
   micro_chp: true
   regional_coal_demand: true
