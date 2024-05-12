@@ -224,8 +224,8 @@ def plot_co2_balance(co2_df, clusters, planning_horizon, plot_width=7):
     plt.xticks(rotation=0, fontsize=10)
     ax.set_ylabel("CO$_2$ emissions [tCO$_{2-eq}$]")
     ax.set_xlabel("")
-    ax.set_ylim([-2.8e9,2.8e9])
-    # ax.set_yticks(np.arange(-3e9, 3e9, 5e8))
+    ax.set_ylim([-3e9,3e9])
+    ax.set_yticks(np.arange(-3e9, 3e9, 5e8))
     # Turn off both horizontal and vertical grid lines
     ax.grid(False, which='both')
     ax.legend(
