@@ -178,7 +178,9 @@ def rename_techs(label):
 def compute_costs(n, nice_name, cost_type):
     assert cost_type in ["Operational", "Capital"], "Type variable must be 'Operational' or 'Capital'"
     # fix gas storage manually
-    n.stores.loc["EU gas Store", "e_nom_opt"] = n.stores_t.e["EU gas Store"].max()
+    n.stores.loc["EU gas Store", "e_nom_opt"] = (
+        n.stores_t.e["EU gas Store"].max() - n.stores_t.e["EU gas Store"].min()
+    )
     costs = n.statistics()[[f"{cost_type} Expenditure"]]
     new_index = [':'.join(idx) for idx in costs.index]
     costs.index = new_index
