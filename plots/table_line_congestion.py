@@ -8,7 +8,8 @@ import pandas as pd
 import warnings
 warnings.filterwarnings("ignore")
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
-                     change_path_to_pypsa_eur, change_path_to_base
+                     change_path_to_pypsa_eur, change_path_to_base, \
+                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON
 
 
 if __name__ == "__main__":
@@ -24,10 +25,13 @@ if __name__ == "__main__":
     # move to submodules/pypsa-eur
     change_path_to_pypsa_eur()
     # network parameters
-    co2l_limits = {"2030":"0.45", "2040":"0.1", "2050":"0.0"}
-    line_limits = {"2030":"v1.15", "2040":"v1.3", "2050":"v1.5"}
+    co2l_limits = CO2L_LIMITS
+    line_limits = LINE_LIMITS
     clusters = config["plotting"]["clusters"]
     time_resolution = config["plotting"]["time_resolution"]
+    planning_horizons = config["plotting"]["planning_horizon"]
+    planning_horizons = [str(x) for x in planning_horizons if not str(x) == BAU_HORIZON]
+    opts = config["plotting"]["sector_opts"]
 
     # define scenario namings
     scenarios = {"flexible": "Optimal Renovation and Heating", 
@@ -39,9 +43,9 @@ if __name__ == "__main__":
     df_congestion = pd.DataFrame(index=list(scenarios.values()), columns=["2030", "2040", "2050"])
 
     # line congestion estimation
-    for planning_horizon in ["2030", "2040", "2050"]:
+    for planning_horizon in planning_horizons:
         lineex = line_limits[planning_horizon]
-        sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-T-H-B-I"
+        sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-{opts}"
 
         for scenario, nice_name in scenarios.items():
             # load networks

@@ -77,6 +77,15 @@ rule plot_electricity_bills:
         ),
 
 
+rule plot_electricity_for_heats:
+    input:
+        expand(
+            RESULTS
+            + "plot_electricity_for_heat_{clusters}_{planning_horizon}.png",
+            **config["plotting"],
+        ),
+
+
 rule plot_electricity_generation:
     params:
         clusters=config["plotting"]["clusters"],
@@ -120,6 +129,88 @@ rule plot_curtailments:
         expand(
             RESULTS
             + "table_curtailment_{clusters}.csv",
+            **config["plotting"],
+        ),
+
+
+rule plot_hydrogen_production:
+    params:
+        clusters=config["plotting"]["clusters"],
+    output:
+        figure_elec=RESULTS+"plot_H2_prod_elec_use_{clusters}.png",
+        figure_prod=RESULTS+"plot_H2_prod_{clusters}.png",
+        table=RESULTS+"table_H2_prod_{clusters}.csv",
+    resources:
+        mem_mb=20000,
+    script:
+        "plots/plot_hydrogen_production.py"
+
+
+rule plot_hydrogen_productions:
+    input:
+        expand(
+            RESULTS
+            + "plot_H2_prod_elec_use_{clusters}.png",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "plot_H2_prod_{clusters}.png",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "table_H2_prod_{clusters}.csv",
+            **config["plotting"],
+        ),
+
+
+rule plot_heat_tech_ratio:
+    params:
+        clusters=config["plotting"]["clusters"],
+        planning_horizon=config["plotting"]["planning_horizon"],
+    output:
+        table=RESULTS+"table_heat_tech_ratio_{clusters}.csv",
+    resources:
+        mem_mb=20000,
+    script:
+        "plots/plot_heat_tech_ratio.py"
+
+
+rule plot_heat_tech_ratios:
+    input:
+        expand(
+            RESULTS
+            + "table_heat_tech_ratio_{clusters}.csv",
+            **config["plotting"],
+        ),
+
+
+rule plot_COP:
+    output:
+        figure=RESULTS+"plot_COP.png",
+    resources:
+        mem_mb=20000,
+    script:
+        "plots/plot_COP.py"
+
+
+rule plot_co2_level:
+    params:
+        clusters=config["plotting"]["clusters"],
+    output:
+        table=RESULTS+"table_co2_level_{clusters}.csv",
+    resources:
+        mem_mb=20000,
+    script:
+        "plots/plot_co2_level.py"
+
+
+rule plot_co2_levels:
+    input:
+        expand(
+            RESULTS
+            + "table_co2_level_{clusters}.csv",
             **config["plotting"],
         ),
 
@@ -224,6 +315,36 @@ rule plot_all:
         expand(
             RESULTS
             + "table_curtailment_{clusters}.csv",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "plot_H2_prod_elec_use_{clusters}.png",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "plot_H2_prod_{clusters}.png",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "plot_COP.png",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "table_co2_level_{clusters}.csv",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "table_H2_prod_{clusters}.csv",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "table_heat_tech_ratio_{clusters}.csv",
             **config["plotting"],
         ),
 

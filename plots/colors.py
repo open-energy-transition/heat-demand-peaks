@@ -187,6 +187,7 @@ tech_colors = {
 "retrofitting": '#8487e8',
 "WWHRS": '#8487e8',
 "building retrofitting": '#8487e8',
+"WWHRS": '#5054de',
 
 "H2 for industry": "#f073da",
 "H2 for shipping": "#ebaee0",

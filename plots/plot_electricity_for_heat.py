@@ -8,7 +8,8 @@ import pandas as pd
 import warnings
 warnings.filterwarnings("ignore")
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
-                     change_path_to_pypsa_eur, change_path_to_base
+                     change_path_to_pypsa_eur, change_path_to_base, \
+                     LINE_LIMITS, CO2L_LIMITS
 
 
 def add_new_carriers(n):
@@ -67,11 +68,11 @@ def plot_elec_consumption_for_heat(dict_elec):
         ax = axes[i]
         ax.set_facecolor("whitesmoke")
 
-        print("Hard coded coordinates on x-axis, selected for 12H granularity")
-        where = [2*7, 2*7*10]
+        print("Hard coded coordinates on x-axis, selected for 3H granularity")
+        where = [56, 224]
 
-        elec_demand_f_heating = elec_demand_f_heating.reset_index()[["ground heat pump", "air heat pump", "gas boiler", "resistive heater"]]
-        colors = ["#2fb537", "#48f74f", "#db6a25", "#d8f9b8", "#e69487", "#8d5e56", "#ffbf2b"]
+        elec_demand_f_heating = elec_demand_f_heating.reset_index()[["ground heat pump", "air heat pump", "resistive heater", "gas boiler"]]
+        colors = ["#2fb537", "#48f74f", "#d8f9b8", "#db6a25"]
 
         (elec_demand_f_heating/1e3).iloc[where[0] : where[1]].plot(
             kind='area', stacked=True, color=colors, legend=False,
@@ -79,7 +80,7 @@ def plot_elec_consumption_for_heat(dict_elec):
         )
 
         ax.set_xlabel("", fontsize=12)
-        ax.set_ylim([0,600])
+        ax.set_ylim([0,900])
 
         if i <3:
             ax.set_xticks([])
@@ -103,8 +104,8 @@ def plot_elec_consumption_for_heat(dict_elec):
     ax1.legend(
         reversed(handles1[0:7]),
         [
-            "Resistive Heaters (electricity)",
             "Gas Boilers (gas)",
+            "Resistive Heaters (electricity)",
             "Air-Sourced Heat Pumps (electricity)",
             "Ground-Sourced Heat Pumps (electricity)"
         ],
@@ -128,13 +129,14 @@ if __name__ == "__main__":
     config = update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     # network parameters
-    co2l_limits = {"2030":"0.45", "2040":"0.1", "2050":"0.0"}
-    line_limits = {"2030":"v1.15", "2040":"v1.3", "2050":"v1.5"}
+    co2l_limits = CO2L_LIMITS
+    line_limits = LINE_LIMITS
     clusters = config["plotting"]["clusters"]
     planning_horizon = config["plotting"]["planning_horizon"]
     time_resolution = config["plotting"]["time_resolution"]
+    opts = config["plotting"]["sector_opts"]
     lineex = line_limits[planning_horizon]
-    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-dist1.1-T-H-B-I"
+    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-{opts}"
 
     # move to submodules/pypsa-eur
     change_path_to_pypsa_eur()
@@ -149,6 +151,11 @@ if __name__ == "__main__":
     networks = {}
     for scenario, nice_name in scenarios.items():
         n = load_network(lineex, clusters, sector_opts, planning_horizon, scenario)
+        if n is None:
+            # Skip further computation for this scenario if network is not loaded
+            print(f"Network is not found for scenario '{scenario}', planning year '{planning_horizon}', and time resolution of '{time_resolution}'. Skipping...")
+            continue
+        
         add_new_carriers(n)
         networks[nice_name] = n
 

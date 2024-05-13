@@ -21,26 +21,20 @@ logger = logging.getLogger(__name__)
 RESULTS_DIR = "plots/results"
 
 
-def get_curtailment(n, nice_name):
-    curtailments = n.statistics()[["Curtailment"]]
-    techs = {
-             "Solar Rooftop PV": ["solar rooftop"],
-             "Solar Utility PV": ["Solar"],
-             "Onshore Wind": ["Onshore Wind"],
-             "Offshore Wind": ["Offshore Wind (AC)", "Offshore Wind (DC)"]
-             }
-    
-    curtailment_dict = {}
+def get_hydrogen_production(n, param_dict):
+    tech = 'H2 Electrolysis'
+    hydrogen_links = n.links.query("carrier in @tech").index
 
-    for name, tech in techs.items():
-        curtailment_dict[name] = curtailments[curtailments.index.get_level_values(1).isin(tech)].sum().item()
+    hydrogen_dict = {}
 
-    curtailment_dict["Total"] = sum(curtailment_dict.values())
+    for name, param in param_dict.items():
+        sign = -1 if param == "p1" else 1
+        hydrogen_dict[name] = n.links_t[param][hydrogen_links].multiply(n.snapshot_weightings.stores, axis=0).sum().sum() * sign / 1e6
 
-    return curtailment_dict
+    return hydrogen_dict
 
 
-def plot_curtailment(df_curtailment):
+def plot_hydrogen_production(df_hydrogen, figure_dict):
     # color codes for legend
     color_codes = {"Optimal Renovation and Heating":"purple", 
                    "Optimal Renovation and Green Heating":"limegreen", 
@@ -48,37 +42,35 @@ def plot_curtailment(df_curtailment):
                    "No Renovation and Green Heating":"#f4b609",
                    "BAU": "grey"}
     
-    # MWh to TWh
-    df_curtailment = df_curtailment / 1e6
     # get BAU year
-    BAU_year = df_curtailment.filter(like="BAU", axis=1).columns.get_level_values(0)
+    BAU_year = df_hydrogen.filter(like="BAU", axis=1).columns.get_level_values(0)
 
-    fig, ax = plt.subplots(figsize=(7, 3))
-    for nice_name, color_code in color_codes.items():
-        if not nice_name == "BAU":
-            df_curtailment.loc["Total", (slice(None), nice_name)].plot(ax=ax, color=color_code, 
-                                                                       linewidth=2, marker='o', label=nice_name, zorder=5)
-        elif nice_name == "BAU" and not BAU_year.empty:
-            ax.axhline(y=df_curtailment.loc["Total", (BAU_year, nice_name)].values, 
-                       color=color_code, linestyle='--', label=nice_name, zorder=1)
+    for idx, output in figure_dict.items():
+        _, ax = plt.subplots(figsize=(7, 3))
+        for nice_name, color_code in color_codes.items():
+            if not nice_name == "BAU":
+                df_hydrogen.loc[idx, (slice(None), nice_name)].plot(ax=ax, color=color_code, 
+                                                                        linewidth=2, marker='o', label=nice_name, zorder=5)
+            elif nice_name == "BAU" and not BAU_year.empty:
+                ax.axhline(y=df_hydrogen.loc[idx, (BAU_year, nice_name)].values, 
+                        color=color_code, linestyle='--', label=nice_name, zorder=1)
 
-    unique_years = sorted(set(df_curtailment.columns.get_level_values(0)) - set(BAU_year))
-    ax.set_xticks(range(len(unique_years)))  # Set the tick locations
-    ax.set_xticklabels(unique_years)  # Set the tick labels
-    ax.set_ylabel("Curtailment [TWh]")
-    ax.set_xlabel(None)
-    ax.legend(loc="upper right", facecolor="white", fontsize='xx-small')
-    plt.savefig(snakemake.output.figure, dpi=600, bbox_inches = 'tight')
-    
+        unique_years = sorted(set(df_hydrogen.columns.get_level_values(0)) - set(BAU_year))
+        ax.set_xticks(range(len(unique_years)))  # Set the tick locations
+        ax.set_xticklabels(unique_years)  # Set the tick labels
+        ax.set_ylabel(idx)
+        ax.set_xlabel(None)
+        ax.legend(loc="upper left", facecolor="white", fontsize='xx-small')
+        plt.savefig(output, dpi=600, bbox_inches = 'tight')
+        
 
-def define_table_df(scenarios):
+def define_table_df(scenarios, idx):
     # Define column levels
     col_level_0 = ["2030"]*4 + ["2040"]*4 + ["2050"]*4
     col_level_1 = list(scenarios.values()) * 3
     # Create a MultiColumns
     multi_cols = pd.MultiIndex.from_arrays([col_level_0, col_level_1], names=['Year', 'Scenario'])
-    df = pd.DataFrame(columns=multi_cols, index=["Solar Rooftop PV", "Solar Utility PV", 
-                                                 "Onshore Wind", "Offshore Wind", "Total"])
+    df = pd.DataFrame(columns=multi_cols, index=idx)
     return df
 
 
@@ -116,9 +108,16 @@ if __name__ == "__main__":
                 "flexible-moderate": "Limited Renovation and Optimal Heating", 
                 "rigid": "No Renovation and Green Heating"}
 
+    # define dictionary to map to links buses
+    param_dict = {"Electricity used [TWh]": "p0",
+                  "Hydrogen produced [TWh]": "p1"}
+    
+    # define dictionary that contain snakemake outputs
+    figure_dict = {"Electricity used [TWh]": snakemake.output.figure_elec,
+                   "Hydrogen produced [TWh]": snakemake.output.figure_prod}
 
-    # initialize df for storing curtailment information
-    curtailment_df = define_table_df(scenarios)
+    # initialize df for storing hydrogen production information
+    hydrogen_df = define_table_df(scenarios, idx=param_dict.keys())
 
     for planning_horizon in planning_horizons:
         lineex = line_limits[planning_horizon]
@@ -133,8 +132,8 @@ if __name__ == "__main__":
                 print(f"Network is not found for scenario '{scenario}', planning year '{planning_horizon}', and time resolution of '{time_resolution}'. Skipping...")
                 continue
             
-            curtailment_dict = get_curtailment(n, nice_name)
-            curtailment_df.loc[:, (planning_horizon, nice_name)] = pd.Series(curtailment_dict)
+            hydrogen_dict = get_hydrogen_production(n, param_dict=param_dict)
+            hydrogen_df.loc[:, (planning_horizon, nice_name)] = pd.Series(hydrogen_dict)
     
     # Add BAU scenario
     BAU_horizon = BAU_HORIZON
@@ -148,15 +147,15 @@ if __name__ == "__main__":
         # Skip further computation for this scenario if network is not loaded
         print(f"Network is not found for scenario '{scenario}', planning year '{BAU_horizon}', and time resolution of '{time_resolution}'. Skipping...")
     else:
-        curtailment_dict = get_curtailment(n, scenario)
-        curtailment_df.loc[:, (BAU_horizon, scenario)] = pd.Series(curtailment_dict)
+        hydrogen_dict = get_hydrogen_production(n, param_dict=param_dict)
+        hydrogen_df.loc[:, (BAU_horizon, scenario)] = pd.Series(hydrogen_dict)
 
     # move to base directory
     change_path_to_base()
 
     # store to csv and png
-    if not curtailment_df.empty:
+    if not hydrogen_df.empty:
         # save to csv
-        curtailment_df.to_csv(snakemake.output.table)
+        hydrogen_df.to_csv(snakemake.output.table)
         # make plot
-        plot_curtailment(curtailment_df)
+        plot_hydrogen_production(hydrogen_df, figure_dict=figure_dict)
