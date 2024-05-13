@@ -68,11 +68,11 @@ def plot_elec_consumption_for_heat(dict_elec):
         ax = axes[i]
         ax.set_facecolor("whitesmoke")
 
-        print("Hard coded coordinates on x-axis, selected for 12H granularity")
-        where = [2*7, 2*7*10]
+        print("Hard coded coordinates on x-axis, selected for 3H granularity")
+        where = [56, 224]
 
-        elec_demand_f_heating = elec_demand_f_heating.reset_index()[["ground heat pump", "air heat pump", "gas boiler", "resistive heater"]]
-        colors = ["#2fb537", "#48f74f", "#db6a25", "#d8f9b8", "#e69487", "#8d5e56", "#ffbf2b"]
+        elec_demand_f_heating = elec_demand_f_heating.reset_index()[["ground heat pump", "air heat pump", "resistive heater", "gas boiler"]]
+        colors = ["#2fb537", "#48f74f", "#d8f9b8", "#db6a25"]
 
         (elec_demand_f_heating/1e3).iloc[where[0] : where[1]].plot(
             kind='area', stacked=True, color=colors, legend=False,
@@ -80,7 +80,7 @@ def plot_elec_consumption_for_heat(dict_elec):
         )
 
         ax.set_xlabel("", fontsize=12)
-        ax.set_ylim([0,600])
+        ax.set_ylim([0,900])
 
         if i <3:
             ax.set_xticks([])
@@ -104,8 +104,8 @@ def plot_elec_consumption_for_heat(dict_elec):
     ax1.legend(
         reversed(handles1[0:7]),
         [
-            "Resistive Heaters (electricity)",
             "Gas Boilers (gas)",
+            "Resistive Heaters (electricity)",
             "Air-Sourced Heat Pumps (electricity)",
             "Ground-Sourced Heat Pumps (electricity)"
         ],
