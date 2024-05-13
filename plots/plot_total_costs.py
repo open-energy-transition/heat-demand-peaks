@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 RESULTS_DIR = "plots/results"
 
-DONT_PLOT = ["gas storage"]
+DONT_PLOT = []
 
 PREFIX_TO_REMOVE = [
     "residential ",
@@ -177,6 +177,8 @@ def rename_techs(label):
 
 def compute_costs(n, nice_name, cost_type):
     assert cost_type in ["Operational", "Capital"], "Type variable must be 'Operational' or 'Capital'"
+    # fix gas storage manually
+    n.stores.loc["EU gas Store", "e_nom_opt"] = n.stores_t.e["EU gas Store"].max()
     costs = n.statistics()[[f"{cost_type} Expenditure"]]
     new_index = [':'.join(idx) for idx in costs.index]
     costs.index = new_index
@@ -234,7 +236,7 @@ def plot_costs(cost_df, clusters, planning_horizon, plot_width=7):
     ax.set_ylabel("System Cost [EUR billion per year]")
 
     ax.set_xlabel("")
-    ax.set_ylim([0,1100])
+    ax.set_ylim([0,1200])
     ax.set_yticks(np.arange(0, 1100, 100))
 
     # Turn off both horizontal and vertical grid lines
