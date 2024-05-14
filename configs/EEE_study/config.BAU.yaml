@@ -11,7 +11,7 @@ scenario:
   clusters:
   - 48
   sector_opts:
-  - Co2L0.7-3H-dist1.05-T-H-B-I
+  - Co2L0.725-3H-dist1.05-T-H-B-I
   planning_horizons:
   - 2020
 
@@ -24,7 +24,7 @@ lines:
 
 electricity:
   extendable_carriers:
-    Generator: [solar, onwind, offwind-ac, offwind-dc]
+    Generator: [OCGT]
   powerplants_filter: DateOut >= 2020 and not Fueltype.isin(['Nuclear', 'Hard Coal', 'Lignite'])
   custom_powerplants: DateIn <= 2020 and DateOut >= 2020
 
