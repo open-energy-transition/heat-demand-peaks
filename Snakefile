@@ -215,6 +215,11 @@ rule plot_co2_levels:
         ),
 
 
+rule plot_historic_generation:
+    shell:
+        "python plots/plot_historic_generation.py"
+
+
 rule get_heat_pump:
     params:
         clusters=config["plotting"]["clusters"],

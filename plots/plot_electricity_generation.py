@@ -28,16 +28,15 @@ def plot_pies(ax, elec_mix_array):
     vals = np.array(elec_mix_array)
 
     cmap = plt.colormaps["tab20c"]
-    outer_colors = ["#ff8c00", "#db6a25", "#0fa101", "#545454"]
+    outer_colors = ["#ff8c00", "#0fa101", "#A18181"]
     inner_colors = cmap([1, 2, 5, 6, 9, 10])
     inner_colors = [
         "#ff8c00", "#ff8c00", "#ff8c00", "#ff8c00", "#ff8c00", # all Nuclear
-        "#db6a25", "#db6a25", "#db6a25", "#db6a25", "#db6a25", # all Gas
         "#6895dd", "#235ebc", "#3dbfb0", "#f9d002", '#ffea80', # different VRES
-        "#545454", "#826837", "#826837", "#826837", "#826837" # coal, rest lignite
+        "#545454", "#826837", "#db6a25", "#db6a25", "#db6a25" # coal, lignite, rest gas
     ]
 
-    outer_labels = ["Nuclear", "Gas", "VRES", "Coal"]
+    outer_labels = ["Nuclear", "VRES", "Fossil"]
 
     # threshold to show outer label
     threshold = 2.0
@@ -151,7 +150,6 @@ if __name__ == "__main__":
 
         elec_mix_array = [
             [elec_mix_nuc.sum(), 0, 0, 0, 0],
-            [elec_mix_gas.sum(), 0, 0, 0, 0],
             [
                 elec_mix.loc[["offwind-ac", "offwind-dc"]].sum(),
                 elec_mix.loc[["onwind"]].sum(),
@@ -159,7 +157,7 @@ if __name__ == "__main__":
                 elec_mix.loc[["solar"]].sum(), 
                 elec_mix.loc[["solar rooftop"]].sum(),
             ],
-            [elec_mix_coal.loc["coal"].sum(), elec_mix_coal.loc["lignite"].sum(), 0, 0, 0]
+            [elec_mix_coal.loc["coal"].sum(), elec_mix_coal.loc["lignite"].sum(), elec_mix_gas.sum(), 0, 0]
         ]
 
         plot_pies(ax, elec_mix_array)
@@ -178,16 +176,17 @@ if __name__ == "__main__":
     vres_patch = mpatches.Patch(color='#0fa101', label='VRES')
     coal_patch = mpatches.Patch(color='#545454', label='Hard Coal')
     lignite_patch = mpatches.Patch(color='#826837', label='Lignite')
+    fossil_patch = mpatches.Patch(color='#A18181', label='Fossil Fuel')
 
     if isinstance(axes, np.ndarray):
         axes[1].legend(
-        handles=[nuclear_patch, vres_patch, gas_patch, coal_patch, lignite_patch, onwind_patch, offwind_patch, ror_patch, solar_patch, solar_rooftop_patch],
-        loc="lower center", ncol=5, fontsize=4, bbox_to_anchor=(1.1, -0.15)
+        handles=[nuclear_patch, vres_patch, gas_patch, coal_patch, lignite_patch, fossil_patch, onwind_patch, offwind_patch, ror_patch, solar_patch, solar_rooftop_patch],
+        loc="lower center", ncol=6, fontsize=4, bbox_to_anchor=(1.1, -0.15)
         )
     else:
         axes.legend(
-        handles=[nuclear_patch, vres_patch, gas_patch, coal_patch, lignite_patch, onwind_patch, offwind_patch, ror_patch, solar_patch, solar_rooftop_patch],
-        loc="lower center", ncol=5, fontsize=4, bbox_to_anchor=(0.5, -0.15)
+        handles=[nuclear_patch, vres_patch, gas_patch, coal_patch, lignite_patch, fossil_patch, onwind_patch, offwind_patch, ror_patch, solar_patch, solar_rooftop_patch],
+        loc="lower center", ncol=6, fontsize=4, bbox_to_anchor=(0.5, -0.15)
         )
     
     # move to base directory
