@@ -80,7 +80,7 @@ if __name__ == "__main__":
     # define figure
     fig, ax = plt.subplots(1, 1, figsize=(1.6, 1.9)) #each scenario one axis
 
-    # electricity generation mix for cited source
+    # electricity generation mix for cited source https://www.consilium.europa.eu/en/infographics/how-is-eu-electricity-produced-and-sold/
     total_elec = 2641
     mix_nuclear = 0.219
     mix_coal = 0.158
