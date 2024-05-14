@@ -30,7 +30,12 @@ def plot_pies(ax, elec_mix_array):
     cmap = plt.colormaps["tab20c"]
     outer_colors = ["#ff8c00", "#db6a25", "#0fa101", "#545454"]
     inner_colors = cmap([1, 2, 5, 6, 9, 10])
-    inner_colors = ["#ff8c00", "#db6a25", "#6895dd", "#235ebc", "#3dbfb0", "#f9d002", '#ffea80', "#545454", "#826837"]
+    inner_colors = [
+        "#ff8c00", "#ff8c00", "#ff8c00", "#ff8c00", "#ff8c00", # all Nuclear
+        "#db6a25", "#db6a25", "#db6a25", "#db6a25", "#db6a25", # all Gas
+        "#6895dd", "#235ebc", "#3dbfb0", "#f9d002", '#ffea80', # different VRES
+        "#545454", "#826837", "#826837", "#826837", "#826837" # coal, rest lignite
+    ]
 
     outer_labels = ["Nuclear", "Gas", "VRES", "Coal"]
 
@@ -57,9 +62,12 @@ def plot_pies(ax, elec_mix_array):
         autotext.set_horizontalalignment(align)
 
     all_vals = vals.flatten()
-    ax.pie(all_vals[all_vals!=0], radius=1.15-size, colors=inner_colors,
-       wedgeprops=dict(width=size, edgecolor='w', linewidth=0.2),
-       autopct=autopct_format_inner, textprops={'fontsize': 3}, pctdistance=0.7)
+    ax.pie(
+        all_vals[all_vals!=0], radius=1.15-size,
+        colors=[inner_colors[i] for i in range(len(inner_colors)) if all_vals[i] != 0],
+        wedgeprops=dict(width=size, edgecolor='w', linewidth=0.2),
+        autopct=autopct_format_inner, textprops={'fontsize': 3}, pctdistance=0.7
+    )
     
     # Calculate total generated electricity
     total_electricity = np.sum(vals)
