@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText:  Open Energy Transition gGmbH
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 import sys
 sys.path.append("../submodules/pypsa-eur")
 import matplotlib.pyplot as plt
