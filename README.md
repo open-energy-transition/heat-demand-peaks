@@ -37,11 +37,17 @@ Install the necessary dependencies using `conda` or `mamba`:
 
     mamba env create -f submodules/pypsa-eur/envs/environment.yaml
 
+Activate `pypsa-eur` environment:
+
+    conda activate pypsa-eur
+
 Navigate into the main Snakemake workflow directory of `PyPSA-Eur`:
 
     cd submodules/pypsa-eur
 
 ### 2. Running scenarios
+
+#### A. Running individual scenario
 
 To run the scenarios of a particular configuration file (e.g. `configs/EEE_study/config.flexible-industry.yaml`), run:
 
@@ -51,15 +57,24 @@ This call requires a high-performance computing environment, as well as a [Gurob
 
 Please follow the documentation of PyPSA-Eur for more details.
 
-### 3. Setting nominal capacities of retrofitting for `Limited Renovation & Optimal Heating` scenario
+#### B. Running scenario for several horizons
 
-The nominal capacities of retrofitting for `Limited Renovation & Optimal Heating` (moderate retrofitting) scenario is set by running:
+To run the scenario for several horizons at once (e.g. *Optimal Renovation & Heating* scenario), run:
+
+    python scripts/run.py -s flexible -c 2040
+
+Using `-s` flag, the scenario is selected. `-c` flag (optional) speficies from which planning horizon the simulation should start. So if `-c 2040` is given, then 2040 and 2050 horizons will be simulated consequitively; if not specified, then 2030 is used as a starting year by default. `-c` flag is useful when simulation is interupted and it needs to be re-run from certain horizon.
+**Note!** To run *Limited Renovation & Optimal Heating* (`flexible-moderate`) scenario, *Optimal Renovation & Heating* (`flexible`) scenario needs to be run first.
+
+#### C. Setting nominal capacities of retrofitting for *Limited Renovation & Optimal Heating* scenario
+
+The nominal capacities of retrofitting for *Limited Renovation & Optimal Heating* (flexible-moderate) scenario is set by running:
 
     snakemake -call set_moderate_retrofitting
 
 * Note! This and the following `snakemake` commands must be run in `heat-demands-peak` base directory (not `pypsa-eur` submodule).
 
-This command will set `p_nom` for moderate retrofitting network as a half of `p_nom_opt` of solved `Optimal Renovation and Heating` (flexible) scenario. The network parameters, such as `clusters`, `planning_horizon`, and `time_resolution`, are defined in `moderate_retrofitting` section of `configs/config.plot.yaml`. 
+This command will set `p_nom` for moderate retrofitting network as a half of `p_nom_opt` of solved *Optimal Renovation and Heating* (flexible) scenario. The network parameters, such as `clusters`, `planning_horizon`, and `time_resolution`, are defined in `moderate_retrofitting` section of `configs/config.plot.yaml`. 
 
 As an alternative, the nominal capacities for moderate retrofitting scenario can be set by running the command with wildcards (e.g. scenario for 2030 with 48 clusters):
 
@@ -67,7 +82,7 @@ As an alternative, the nominal capacities for moderate retrofitting scenario can
 
 The resultant file in `scripts/logs/set_moderate_retrofitting_48_2030.txt` contains `Success` parameter which indicates the success status of executed rule. Here, `--force` flag is used to forcefully re-execute the rule.
 
-### 4. Transfering optimal capacities to future horizons
+#### D. Transfering optimal capacities to future horizons
 
 After optimizing scenarios for one horizon, it is important to transfer optimal generation and store capacities into future horizons. To do so, configure `planning_horizon` in `set_capacities` section of `configs/config.plot.yaml`. By default, `2040` is set as `planning_horizon` in `set_capacities`, which helps to transfer `p_nom_opt` values from solved networks of 2030 into `p_nom_min` of corresponding generators and stores of unsolved network of 2040. The optimal capacities are transfered to corresponding scenarios. To set `p_nom_min` for all scenarios of 2040, run:
 
@@ -79,7 +94,7 @@ To set minimum capacities for specific scenario (e.g. flexible scenario of 2050 
 
 The resultant file in `scripts/logs/set_capacities_48_2050_flexible.txt` contains `Success` parameter which indicates the success status of executed rule.
 
-### 5. Plotting
+### 3. Plotting
 
 To plot the total system cost for all planning horizons (i.e. 2030, 2040, and 2050) specified in `config.plot.yaml`, run:
 

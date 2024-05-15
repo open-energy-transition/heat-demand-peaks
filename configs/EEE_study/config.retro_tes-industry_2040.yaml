@@ -11,7 +11,7 @@ scenario:
   clusters:
   - 48
   sector_opts:
-  - Co2L0.1-1H-T-H-B-I
+  - Co2L0.1-3H-dist1.05-T-H-B-I
   planning_horizons:
   - 2040
 
@@ -23,11 +23,21 @@ lines:
   s_max_pu: 0.5
 
 electricity:
-  powerplants_filter: DateOut >= 2040 and not Fueltype == 'Nuclear'
+  extendable_carriers:
+    Generator: [solar, onwind, offwind-ac, offwind-dc]
+  powerplants_filter: DateOut >= 2040 and not Fueltype.isin(['Nuclear', 'Hard Coal', 'Lignite'])
   custom_powerplants: DateIn <= 2040 and DateOut >= 2040
 
 energy:
   energy_totals_year: 2013
+
+pypsa_eur:
+  Generator:
+  - onwind
+  - offwind-ac
+  - offwind-dc
+  - solar
+  - ror
 
 biomass:
   year: 2040
@@ -37,9 +47,13 @@ sector:
   district_heating:
     progress:
       2040: 0.6
+  residential_heat_dsm: true
+  residential_heat_restriction_value: 0.435
   cluster_heat_buses: false
+  reduce_space_heat_exogenously: false
   retrofitting:
-    retro_endogen: true 
+    retro_endogen: true
+    WWHR_endogen: true
   tes: true
   boilers: false #true
   biomass_boiler: false
@@ -59,9 +73,36 @@ sector:
     2040: 0.6
   land_transport_ice_share:
     2040: 0.3
+  reduce_hot_water_factor:
+    2040: 0.2
+  conventional_generation:
+    OCGT: gas
+    coal: coal
+    lignite: lignite
+    nuclear: uranium
+  keep_existing_capacities: True
 
 costs:
   year: 2035
+  fill_values:
+    "discount rate": 0.04
+  fuel:
+    OCGT: 38.84 # https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:52022SC0230 (Annex)
+    CCGT: 38.84
+    gas: 38.84
+    coal: 24.57 # https://businessanalytiq.com/procurementanalytics/index/subbituminous-coal-price-index/
+    lignite: 22.11 # https://businessanalytiq.com/procurementanalytics/index/lignite-coal-price-index/
+    nuclear: 1.75 # https://markets.businessinsider.com/commodities/uranium-price
+    uranium: 1.75
+  investment:
+    "central solar thermal": 196455
+    "decentral solar thermal": 300245
+  lifetime:
+    "central solar thermal": 30
+    "decentral solar thermal": 30
+
+adjustments:
+  sector: {"p_nom_max": {"solar rooftop": 1.134}} # https://www.epj-pv.org/articles/epjpv/full_html/2024/01/pv230071/pv230071.html
 
 solving:
   options:

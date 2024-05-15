@@ -13,31 +13,36 @@ import pandas as pd
 import warnings
 warnings.filterwarnings("ignore")
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
-                     change_path_to_pypsa_eur, change_path_to_base
+                     change_path_to_pypsa_eur, change_path_to_base, \
+                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON
 
 
 def define_heat_pump_dataframe():
     # Define index levels
-    index_level_0 = ['Optimal Heat Pump Capacity [MW]', 
-                     'Optimal Heat Pump Capacity [MW]',
-                     'Optimal Heat Pump Capacity [MW]', 
-                     'Approximate number of heat pumps [millions]', 
-                     'Approximate number of heat pumps [millions]']
-    index_level_1 = ['Air-sourced', 
-                     'Ground', 
-                     'Total', 
-                     'Maximum (830 W) [1]', 
-                     'Minimum (6900 W) [1]']
+    index_level_0 = ['Optimal Heat Pump Capacity [MW_el]', 
+                     'Optimal Heat Pump Capacity [MW_el]',
+                     'Optimal Heat Pump Capacity [MW_el]', 
+                     'Number of heat pumps [millions]',
+                     'Number of heat pumps [millions]', 
+                     'Number of heat pumps [millions]',  
+                     'Number of heat pumps [millions]']
+    index_level_1 = ['Residential decentral', 
+                     'Services', 
+                     'Central',
+                     'Residential decentral', 
+                     'Services', 
+                     'Central',
+                     'Total']
     # Create a MultiIndex
     multi_index = pd.MultiIndex.from_arrays([index_level_0, index_level_1])
 
     # Define column levels
     col_level_0 = ["2030"]*5 + ["2040"]*4 + ["2050"]*4
     col_level_1 = ["Optimal Renovation and Heating", "Optimal Renovation and Green Heating", 
-                   "Limited Renovation and Optimal Heating", "No Renovation and Optimal Heating", 
+                   "Limited Renovation and Optimal Heating", "No Renovation and Green Heating", 
                    "EU action plan (Announced Pledges Scenario) [2]"] + \
                    ["Optimal Renovation and Heating", "Optimal Renovation and Green Heating", 
-                   "Limited Renovation and Optimal Heating", "No Renovation and Optimal Heating"]*2
+                   "Limited Renovation and Optimal Heating", "No Renovation and Green Heating"]*2
 
     # Create a MultiColumns
     multi_cols = pd.MultiIndex.from_arrays([col_level_0, col_level_1], names=['Year', 'Scenario'])
@@ -61,30 +66,36 @@ if __name__ == "__main__":
     # move to submodules/pypsa-eur
     change_path_to_pypsa_eur()
     # network parameters
-    co2l_limits = {"2030":"0.45", "2040":"0.1", "2050":"0.0"}
-    line_limits = {"2030":"v1.15", "2040":"v1.3", "2050":"v1.5"}
+    co2l_limits = CO2L_LIMITS
+    line_limits = LINE_LIMITS
     clusters = config["plotting"]["clusters"]
     time_resolution = config["plotting"]["time_resolution"]
+    planning_horizons = config["plotting"]["planning_horizon"]
+    planning_horizons = [str(x) for x in planning_horizons if not str(x) == BAU_HORIZON]
+    opts = config["plotting"]["sector_opts"]
 
     # heat pump techs
-    heat_pumps = {"air heat pump": "Air-sourced", "ground heat pump": "Ground"}
-    # heat pump min and max capacities in W
-    max_capacity = config["heat_pumps"]["max_capacity"]
-    min_capacity = config["heat_pumps"]["min_capacity"]
+    heat_pumps = {"residential": "Residential decentral", 
+                  "services": "Services",
+                  "urban central": "Central"}
+    # heat pump capacities for different building types
+    hp_capacity = {"residential": config["heat_pumps"]["residential_decentral"],
+                   "services": config["heat_pumps"]["services"],
+                   "urban central": config["heat_pumps"]["central"]}
 
     # define scenario namings
     scenarios = {"flexible": "Optimal Renovation and Heating", 
                  "retro_tes": "Optimal Renovation and Green Heating", 
                  "flexible-moderate": "Limited Renovation and Optimal Heating", 
-                 "rigid": "No Renovation and Optimal Heating"}
+                 "rigid": "No Renovation and Green Heating"}
 
     # define heat pumps dataframe
     df_heat_pumps = define_heat_pump_dataframe()
 
     # heat pumps estimation
-    for planning_horizon in ["2030", "2040", "2050"]:
+    for planning_horizon in planning_horizons:
         lineex = line_limits[planning_horizon]
-        sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-T-H-B-I"
+        sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-{opts}"
 
         for scenario, nice_name in scenarios.items():
             # load networks
@@ -97,21 +108,17 @@ if __name__ == "__main__":
 
             # compute heat pump capacities
             for h, h_name in heat_pumps.items():
-                p_nom_opt = n.links.filter(like=h, axis=0).p_nom_opt.sum()
-                df_heat_pumps.loc[("Optimal Heat Pump Capacity [MW]", h_name), (planning_horizon, nice_name)] = p_nom_opt
-            # total heat pump capacity
-            total_p_nom_opt = n.links.filter(like="heat pump", axis=0).p_nom_opt.sum()
-            df_heat_pumps.loc[("Optimal Heat Pump Capacity [MW]", "Total"), (planning_horizon, nice_name)] = total_p_nom_opt
-            
-            # estimate heat pump amount
-            max_amount = total_p_nom_opt / min_capacity
-            min_amount = total_p_nom_opt / max_capacity
-            df_heat_pumps.loc[('Approximate number of heat pumps [millions]', 'Maximum (830 W) [1]'), (planning_horizon, nice_name)] = round(max_amount, 2)
-            df_heat_pumps.loc[('Approximate number of heat pumps [millions]', 'Minimum (6900 W) [1]'), (planning_horizon, nice_name)] = round(min_amount, 2)
+                p_nom_opt = n.links.filter(like=h, axis=0).filter(like="heat pump", axis=0).p_nom_opt.sum()
+                cop = n.links_t.efficiency.filter(like=h).filter(like="heat pump").mean().mean()
+                
+                df_heat_pumps.loc[("Optimal Heat Pump Capacity [MW_el]", h_name), (planning_horizon, nice_name)] = p_nom_opt.round(2)
+                df_heat_pumps.loc[("Number of heat pumps [millions]", h_name), (planning_horizon, nice_name)] = (p_nom_opt * cop / (hp_capacity[h] * 1e3)).round(2)
+
+            # estimate heat pump 
+            df_heat_pumps.loc[("Number of heat pumps [millions]", "Total"), (planning_horizon, nice_name)] = df_heat_pumps.loc[("Number of heat pumps [millions]", heat_pumps.values()), (planning_horizon, nice_name)].sum()
 
     # set heat plan amount based on EU action plan
-    df_heat_pumps.loc[('Approximate number of heat pumps [millions]', 'Maximum (830 W) [1]'), ("2030", "EU action plan (Announced Pledges Scenario) [2]")] = 45
-    df_heat_pumps.loc[('Approximate number of heat pumps [millions]', 'Minimum (6900 W) [1]'), ("2030", "EU action plan (Announced Pledges Scenario) [2]")] = 45
+    df_heat_pumps.loc[('Number of heat pumps [millions]', 'Total'), ("2030", "EU action plan (Announced Pledges Scenario) [2]")] = 45
         
     # move to base directory
     change_path_to_base()

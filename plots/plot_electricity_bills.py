@@ -13,7 +13,8 @@ import pandas as pd
 import warnings
 warnings.filterwarnings("ignore")
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
-                     change_path_to_pypsa_eur, change_path_to_base
+                     change_path_to_pypsa_eur, change_path_to_base, \
+                     CO2L_LIMITS, LINE_LIMITS, BAU_HORIZON
 
 
 def get_households():
@@ -35,7 +36,8 @@ def electricity_bills(network, households):
                      'residential rural air heat pump']
     rh_techs_gas = ['residential rural gas boiler', 'residential urban decentral gas boiler', 'urban central gas boiler']
     rh_techs_mCHP = ['residential rural micro gas CHP', 'residential urban decentral micro gas CHP']
-    
+    rh_techs_gasCHP = ['urban central gas CHP', 'urban central gas CHP CC']
+
     ev_tech_charge = ['BEV charger']
     ev_tech_discharge = ["V2G"]
     
@@ -59,6 +61,8 @@ def electricity_bills(network, households):
     ev_tech_consume = n.links_t.p0[ev_charge_links]
     ev_tech_consume = ev_tech_consume.rename(columns=ev_charge_mapping)
     ev_tech_consume = ev_tech_consume.T.groupby(level=0).sum().T
+    if ev_tech_consume.empty:
+        ev_tech_consume = pd.DataFrame(0, index=lv_load.index, columns=lv_load.columns)
     
     # electricity prosumption of land transport EV to low_voltage bus in links
     ev_discharge_links = n.links.query("carrier in @ev_tech_discharge").index
@@ -66,6 +70,8 @@ def electricity_bills(network, households):
     ev_tech_prosume = n.links_t.p1[ev_discharge_links]
     ev_tech_prosume = ev_tech_prosume.rename(columns=ev_discharge_mapping)
     ev_tech_prosume = ev_tech_prosume.T.groupby(level=0).sum().T
+    if ev_tech_prosume.empty:
+        ev_tech_prosume = pd.DataFrame(0, index=lv_load.index, columns=lv_load.columns)
     
     # electricity prosumption of micro CHP to low_voltage bus in links
     rh_mCHP_links = n.links.query("carrier in @rh_techs_mCHP").index
@@ -75,18 +81,16 @@ def electricity_bills(network, households):
     rh_mCHP_prosume = rh_mCHP_prosume.T.groupby(level=0).sum().T
     
     # gas consumption of micro CHP in EU_gas bus in links
-    rh_mCHP_gas_mapping = n.links.loc[rh_mCHP_links, "bus0"].to_dict()
-    rh_mCHP_consume = n.links_t.p0[rh_mCHP_links]
-    rh_mCHP_consume = rh_mCHP_consume.rename(columns=rh_mCHP_gas_mapping)
-    rh_mCHP_consume = rh_mCHP_consume.T.groupby(level=0).sum().T
+    rh_mCHP_consume = n.links_t.p2[rh_mCHP_links].divide(n.links.loc[rh_mCHP_links, "efficiency2"], axis=1)
     
+    # gas consumption by gas CHPs
+    rh_gasCHP_links = n.links.query("carrier in @rh_techs_gasCHP").index
+    rh_gasCHP_consume = n.links_t.p2[rh_gasCHP_links].divide(n.links.loc[rh_gasCHP_links, "efficiency2"], axis=1)
+
     # gas consumption of gas boilers in EU_gas bus in links
     rh_gas_links = n.links.query("carrier in @rh_techs_gas").index
-    if not rh_gas_links.empty:   
-        rh_gas_mapping = n.links.loc[rh_gas_links, "bus0"].to_dict()
-        rh_gas_consume = n.links_t.p0[rh_gas_links]
-        rh_gas_consume = rh_gas_consume.rename(columns=rh_gas_mapping)
-        rh_gas_consume = rh_gas_consume.T.groupby(level=0).sum().T
+    if not rh_gas_links.empty:
+        rh_gas_consume = n.links_t.p1[rh_gas_links].divide(n.links.loc[rh_gas_links, "efficiency"], axis=1)
     else:
         rh_gas_consume = pd.DataFrame()
     
@@ -94,16 +98,28 @@ def electricity_bills(network, households):
     total_elec_load = (lv_load + rh_techs_consume + ev_tech_consume + ev_tech_prosume + rh_mCHP_prosume).multiply(n.snapshot_weightings.stores, axis=0)
     
     # total gas consumption in EU_gas node
-    if not rh_gas_links.empty: 
-        total_gas_load = (rh_mCHP_consume + rh_gas_consume).multiply(n.snapshot_weightings.stores, axis=0)
+    if not rh_gas_links.empty:
+        rh_mCHP_consume.columns = [" ".join(x.split(" ")[0:4]) for x in rh_mCHP_consume.columns]
+        rh_gas_consume.columns = [" ".join(x.split(" ")[0:4]) for x in rh_gas_consume.columns]
+        rh_gasCHP_consume.columns = [" ".join(x.split(" ")[0:4]) for x in rh_gasCHP_consume.columns]
+        # group gas consumption of CHP for each country (because we have gas CHP and gas CHP CC)
+        rh_gasCHP_consume = rh_gasCHP_consume.groupby(rh_gasCHP_consume.columns, axis=1).sum()
+        total_gas_load = rh_mCHP_consume.add(rh_gas_consume, fill_value=0).add(rh_gasCHP_consume, fill_value=0).multiply(n.snapshot_weightings.stores, axis=0)
     else:
-        total_gas_load = rh_mCHP_consume.multiply(n.snapshot_weightings.stores, axis=0)
+        total_gas_load = rh_mCHP_consume.add(rh_gasCHP_consume, fill_value=0).multiply(n.snapshot_weightings.stores, axis=0)
     
+     # total gas cost
+    total_gas_cost = (-n.generators.loc["EU gas"].marginal_cost * total_gas_load).sum()
+    total_gas_cost.index = [x[:2] for x in total_gas_cost.index]
+    total_gas_cost_country = total_gas_cost.groupby(level=0).sum()
+
     # total electricity cost
     total_cost = total_elec_load.multiply(n.buses_t.marginal_price[total_elec_load.columns]).sum()
     total_cost.index = [x[:2] for x in total_cost.index]
     total_cost_country = total_cost.groupby(level=0).sum()
-        
+
+    # gas plus electricity costs
+    total_cost_country += total_gas_cost_country
     # electricity bill per household [EUR/household] (households given in thousands)
     elec_bills_household = total_cost_country / (households*1e3)
     
@@ -123,7 +139,8 @@ def plot_electricity_cost(df_prices, name):
     color_codes = {"Optimal Renovation and Heating":"purple", 
                    "Optimal Renovation and Green Heating":"limegreen", 
                    "Limited Renovation and Optimal Heating":"royalblue", 
-                   "No Renovation and Optimal Heating":"#f4b609"}
+                   "No Renovation and Green Heating":"#f4b609",
+                   "BAU": "grey"}
 
     # plot as bar plot
     fig, ax = plt.subplots(figsize=(7,3))
@@ -192,22 +209,26 @@ if __name__ == "__main__":
     config = update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     # network parameters
-    co2l_limits = {"2030":"0.45", "2040":"0.1", "2050":"0.0"}
-    line_limits = {"2030":"v1.15", "2040":"v1.3", "2050":"v1.5"}
+    co2l_limits = CO2L_LIMITS
+    line_limits = LINE_LIMITS
     clusters = config["plotting"]["clusters"]
     planning_horizon = config["plotting"]["planning_horizon"]
     time_resolution = config["plotting"]["time_resolution"]
+    opts = config["plotting"]["sector_opts"]
     lineex = line_limits[planning_horizon]
-    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-T-H-B-I"
+    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-{opts}"
 
     # move to submodules/pypsa-eur
     change_path_to_pypsa_eur()
 
     # define scenario namings
-    scenarios = {"flexible": "Optimal Renovation and Heating", 
-                 "retro_tes": "Optimal Renovation and Green Heating", 
-                 "flexible-moderate": "Limited Renovation and Optimal Heating", 
-                 "rigid": "No Renovation and Optimal Heating"}
+    if planning_horizon == BAU_HORIZON:
+        scenarios = {"BAU": "BAU"}
+    else:
+        scenarios = {"flexible": "Optimal Renovation and Heating", 
+                     "retro_tes": "Optimal Renovation and Green Heating", 
+                     "flexible-moderate": "Limited Renovation and Optimal Heating", 
+                     "rigid": "No Renovation and Green Heating"}
 
     # load networks
     networks = {}

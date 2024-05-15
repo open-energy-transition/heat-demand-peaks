@@ -13,7 +13,11 @@ import warnings
 warnings.filterwarnings("ignore")
 from plots._helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                     change_path_to_pypsa_eur, change_path_to_base, load_unsolved_network, \
-                    save_unsolved_network
+                    save_unsolved_network, LINE_LIMITS, CO2L_LIMITS
+
+
+class CustomError(Exception):
+    pass
 
 
 def get_capacities(network, capacity="opt"):
@@ -56,17 +60,30 @@ def set_optimal_capacities(solved_network, unsolved_network):
                        "gas for industry", "shipping methanol", "shipping oil",
                        "naphtha for industry", "kerosene for aviation",
                        "process emissions", "coal for industry", "nuclear"]
+    # gas boiler carriers
+    boiler_carriers = ["residential rural gas boiler", "services rural gas boiler",
+                       "residential urban decentral gas boiler", "services urban decentral gas boiler",
+                       "urban central gas boiler"]
     fossil_gens = unsolved_network.generators.query("carrier in @fossil_carriers").index
     fossil_stores = unsolved_network.stores.query("carrier in @fossil_carriers").index
     fossil_links = unsolved_network.links.query("carrier in @fossil_carriers").index
+    boiler_links = unsolved_network.links.query("carrier in @boiler_carriers").index
     target_gens = list(set(common_gen).difference(set(fossil_gens)))
     target_stores = list(set(common_store).difference(set(fossil_stores)))
-    target_links = list(set(common_link).difference(set(fossil_links)))
+    target_links = list(set(common_link).difference(set(fossil_links)).difference(set(boiler_links)))
 
     # set p_nom_min and e_nom_min capacities
     unsolved_network.generators.loc[target_gens, "p_nom_min"] = opt_gen_cap[target_gens]
     unsolved_network.stores.loc[target_stores, "e_nom_min"] = opt_store_cap[target_stores]
     unsolved_network.links.loc[target_links, "p_nom_min"] = opt_link_cap[target_links]
+
+    # set p_nom_max for gas boilers
+    unsolved_network.links.loc[boiler_links, "p_nom_max"] = opt_link_cap[boiler_links]
+
+    # set p_nom_max as max of p_nom_min and p_nom_max
+    unsolved_network.generators.loc[target_gens, "p_nom_max"] = unsolved_network.generators.loc[target_gens, ["p_nom_min", "p_nom_max"]].max(axis=1)
+    unsolved_network.stores.loc[target_stores, "e_nom_max"] = unsolved_network.stores.loc[target_stores, ["e_nom_min", "e_nom_max"]].max(axis=1)
+    unsolved_network.links.loc[target_links, "p_nom_max"] = unsolved_network.links.loc[target_links, ["p_nom_min", "p_nom_max"]].max(axis=1)
 
     # set p_nom_max as max(p_nom_max, p_nom_min) for retrofitting
     retro_idx = unsolved_network.generators.query("carrier == 'retrofitting'").index
@@ -87,8 +104,8 @@ if __name__ == "__main__":
     config = update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     # network parameters by year
-    co2l_limits = {"2030":"0.45", "2040":"0.1", "2050":"0.0"}
-    line_limits = {"2030":"v1.15", "2040":"v1.3", "2050":"v1.5"}
+    co2l_limits = CO2L_LIMITS
+    line_limits = LINE_LIMITS
     previous_horizons = {"2040":"2030", "2050":"2040"} 
 
     # network parameters of unsolved network
@@ -96,13 +113,14 @@ if __name__ == "__main__":
     planning_horizon = config["set_capacities"]["planning_horizon"]
     time_resolution = config["set_capacities"]["time_resolution"]
     scenario = config["set_capacities"]["scenario"]
+    opts = config["set_capacities"]["sector_opts"]
     lineex = line_limits[planning_horizon]
-    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-T-H-B-I"
+    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-{opts}"
 
     # network parameters of solved network
     previous_horizon = previous_horizons[planning_horizon]
     previous_lineex = line_limits[previous_horizon]
-    previous_sector_opts = f"Co2L{co2l_limits[previous_horizon]}-{time_resolution}-T-H-B-I"
+    previous_sector_opts = f"Co2L{co2l_limits[previous_horizon]}-{time_resolution}-{opts}"
 
     # move to pypsa-eur directory
     change_path_to_pypsa_eur()
@@ -123,9 +141,9 @@ if __name__ == "__main__":
             success = True
         except Exception as e:
             print(f"Error: {e}")
-            success = False
+            raise FileNotFoundError("File was not saved")
     else:
-        success = False
+        raise FileNotFoundError("Missing input network")
 
     # move to base directory
     change_path_to_base()

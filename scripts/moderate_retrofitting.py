@@ -11,17 +11,17 @@ import warnings
 warnings.filterwarnings("ignore")
 from plots._helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                     change_path_to_pypsa_eur, change_path_to_base, load_unsolved_network, \
-                    save_unsolved_network
+                    save_unsolved_network, CO2L_LIMITS, LINE_LIMITS
 
 
 def set_moderate_retrofitting(n_solved, n_unsolved):
     # get optimal retrofitting from the solved network
     retro_opt = n_solved.generators.query("carrier in 'retrofitting'")[["p_nom_opt"]]
     retro_data = retro_opt / 2
-    # set p_nom as half of p_nom_opt of flexible scenario
-    n_unsolved.generators.loc[retro_data.index, "p_nom"] = retro_data["p_nom_opt"]
+    # set p_nom_max as half of p_nom_opt of flexible scenario
+    n_unsolved.generators.loc[retro_data.index, "p_nom_max"] = retro_data["p_nom_opt"].combine(n_unsolved.generators.loc[retro_data.index, "p_nom_min"], max)
     # set retrofitting not extendable
-    n_unsolved.generators.loc[retro_data.index, "p_nom_extendable"] = False
+    n_unsolved.generators.loc[retro_data.index, "p_nom_extendable"] = True
 
     return n_unsolved
 
@@ -37,15 +37,16 @@ if __name__ == "__main__":
     config = update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     # network parameters by year
-    co2l_limits = {"2030":"0.45", "2040":"0.1", "2050":"0.0"}
-    line_limits = {"2030":"v1.15", "2040":"v1.3", "2050":"v1.5"}
+    co2l_limits = CO2L_LIMITS
+    line_limits = LINE_LIMITS
 
     # network parameters of unsolved network
     clusters = config["moderate_retrofitting"]["clusters"]
     planning_horizon = config["moderate_retrofitting"]["planning_horizon"]
     time_resolution = config["moderate_retrofitting"]["time_resolution"]
+    opts = config["moderate_retrofitting"]["sector_opts"]
     lineex = line_limits[planning_horizon]
-    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-T-H-B-I"
+    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-{opts}"
 
     # move to pypsa-eur directory
     change_path_to_pypsa_eur()
@@ -66,9 +67,9 @@ if __name__ == "__main__":
             success = True
         except Exception as e:
             print(f"Error: {e}")
-            success = False
+            raise FileNotFoundError("File was not saved")
     else:
-        success = False
+        raise FileNotFoundError("Missing input network")
 
     # move to base directory
     change_path_to_base()
