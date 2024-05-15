@@ -61,7 +61,7 @@ def plot_capacities(capacities_df, clusters, planning_horizon, plot_width=7):
     plt.xticks(rotation=0, fontsize=10)
     ax.set_ylabel("Capacity [$\mathrm{GW_{el}}$]")
     ax.set_xlabel("")
-    ax.set_ylim([0, 1300])
+    ax.set_ylim([0, 1700])
     # Turn off both horizontal and vertical grid lines
     ax.grid(False, which='both')
     ax.legend(
