@@ -131,6 +131,7 @@ if __name__ == "__main__":
             line_widths, link_widths, line_color, link_color = get_congestion_spatial(n, scaling_factor)
 
             table.loc[short_name] = (line_widths/scaling_factor).sum()+(link_widths/scaling_factor).sum()
+            table.name = short_name
             line_widths[line_widths==0] = 1
             link_widths[link_widths==0] = (
                 link_widths.loc[n.links.query("carrier == 'DC'").index].apply(lambda b: b if b > 0 else 1*scaling_factor)
@@ -175,6 +176,7 @@ if __name__ == "__main__":
             line_widths, link_widths, line_color, link_color = get_congestion_spatial(n, scaling_factor)
 
             table.loc[short_name] = (line_widths/scaling_factor).sum()+(link_widths/scaling_factor).sum()
+            table.name = short_name
             line_widths[line_widths==0] = 1
             link_widths[link_widths==0] = (
                 link_widths.loc[n.links.query("carrier == 'DC'").index].apply(lambda b: b if b > 0 else 1)
@@ -189,3 +191,4 @@ if __name__ == "__main__":
             add_legend(ax, scaling_factor)
 
             plt.savefig(snakemake.output.plot, bbox_inches="tight", dpi=200)
+            table.to_csv(snakemake.output.table)
