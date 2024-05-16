@@ -252,22 +252,24 @@ rule get_infra_savings:
         "plots/table_infra_savings.py"
 
 
-rule get_line_congestion:
+rule plot_transmission_congestion:
     params:
         clusters=config["plotting"]["clusters"],
     output:
-        table=RESULTS+"table_line_congestion_{clusters}.csv",
-    resources:
-        mem_mb=20000,
+        plot=RESULTS+"plot_line_congestion_{clusters}_{planning_horizon}.png",
+        table=RESULTS+"table_line_congestion_{clusters}_{planning_horizon}.csv",
     script:
-        "plots/table_line_congestion.py"
+        "plots/plot_transmission_congestion.py"
 
 
-rule get_line_congestions:
+rule plot_transmission_congestions:
     input:
-        expand(
-            RESULTS
-            + "table_line_congestion_{clusters}.csv",
+        expand(RESULTS
+            + "plot_line_congestion_{clusters}_{planning_horizon}.png",
+            **config["plotting"],
+        ),
+        expand(RESULTS
+            + "table_line_congestion_{clusters}_{planning_horizon}.csv",
             **config["plotting"],
         ),
 
@@ -300,11 +302,6 @@ rule plot_all:
         expand(
             RESULTS
             + "table_heat_pumps_{clusters}.csv",
-            **config["plotting"],
-        ),
-        expand(
-            RESULTS
-            + "table_line_congestion_{clusters}.csv",
             **config["plotting"],
         ),
         expand(
@@ -345,6 +342,11 @@ rule plot_all:
         expand(
             RESULTS
             + "table_H2_prod_{clusters}.csv",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "plot_line_congestion_{clusters}_{planning_horizon}.png",
             **config["plotting"],
         ),
         expand(
