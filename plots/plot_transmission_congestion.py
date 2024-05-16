@@ -175,7 +175,7 @@ if __name__ == "__main__":
             print(f"Network is not found for scenario '{scenario}', BAU year '{BAU_horizon}', and time resolution of '{time_resolution}'. Skipping...")
         else:
             _, ax = plt.subplots(subplot_kw={"projection":ccrs.EqualEarth()})
-            plt.savefig("test.png", bbox_inches="tight", dpi=200)
+
             scaling_factor = 4e-1
             line_widths, link_widths, line_color, link_color = get_congestion_spatial(n, scaling_factor)
 
