@@ -9,7 +9,7 @@ BASE_PATH = os.path.abspath(os.path.join(__file__ ,"../.."))
 PATH_PLOTS = "plots/results/"
 
 # Co2L limits
-CO2L_LIMITS = {"2020": "0.7", 
+CO2L_LIMITS = {"2020": "0.725",
                "2030": "0.45", 
                "2040": "0.1", 
                "2050": "0.0"}
