@@ -49,6 +49,7 @@ sector:
       2040: 0.6
   residential_heat_dsm: true
   residential_heat_restriction_value: 0.2175
+  residential_heat_restriction_time: [10, 22] # 9am and 9pm
   cluster_heat_buses: false
   reduce_space_heat_exogenously: false
   retrofitting:
