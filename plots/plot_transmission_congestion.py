@@ -143,6 +143,10 @@ if __name__ == "__main__":
                 link_widths=link_widths, line_widths=line_widths
             )
             ax.set_title(short_name)
+            # total congestion
+            ax.text(0, 1, "Total", ha='left', va='top', transform=ax.transAxes, fontsize='x-small')
+            ax.text(0, 0.95, f"{table[short_name]}", ha='left', va='top', transform=ax.transAxes, fontsize='x-small')
+
 
         add_legend(axes, scaling_factor)    
         
