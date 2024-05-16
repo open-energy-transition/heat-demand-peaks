@@ -1,7 +1,9 @@
 import sys
 sys.path.append("../submodules/pypsa-eur")
 import matplotlib.pyplot as plt
+import matplotlib.lines as mlines
 import pandas as pd
+import numpy as np
 import cartopy.crs as ccrs
 import logging
 import warnings
@@ -26,7 +28,6 @@ def get_congestion_spatial(n, scaling_factor = 0.4):
     drop = n.buses[n.buses.x == -5.5].index
     n.mremove("Bus", drop)
 
-    n.links.query("carrier == 'DC' and length == 0")
     test = n.links.query("carrier == 'DC' and length > 0").length
     if len(test) == len(n.links.query("carrier == 'DC' and length == 0").index):
         test.index = n.links.query("carrier == 'DC' and length == 0").index
@@ -55,6 +56,28 @@ def get_congestion_spatial(n, scaling_factor = 0.4):
     link_color[link_widths==0] = "green"
 
     return line_widths, link_widths, line_color, link_color
+
+
+def add_legend(axes, scaling_factor):
+    # Define line styles for the legend
+    green_line = mlines.Line2D([], [], color='green', linewidth=1, label="below today's costs")
+    black_line_2 = mlines.Line2D([], [], color='black', linewidth=2*scaling_factor, label="2x today's cost")
+    black_line_3 = mlines.Line2D([], [], color='black', linewidth=3*scaling_factor, label="3x today's cost")
+    black_line_5 = mlines.Line2D([], [], color='black', linewidth=5*scaling_factor, label="5x today's cost")
+
+    # Add legend to the plot
+    if isinstance(axes, np.ndarray):
+        legend = axes[1,1].legend(handles=[green_line, black_line_2, black_line_3, black_line_5],
+                                  loc='lower center', bbox_to_anchor=(-0.2, -0.35), 
+                                  ncol=2, fontsize='x-small', title="Marginal costs of lines",
+                                  title_fontsize=8)
+    else:
+        legend = axes.legend(handles=[green_line, black_line_2, black_line_3, black_line_5],
+                             loc='lower center', bbox_to_anchor=(0.5, -0.18), 
+                             ncol=2, fontsize='small', title="Marginal costs of lines",
+                             title_fontsize=10)
+    return legend
+
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -107,12 +130,10 @@ if __name__ == "__main__":
             scaling_factor = 4e-1
             line_widths, link_widths, line_color, link_color = get_congestion_spatial(n, scaling_factor)
 
-            print((line_widths/scaling_factor).mean()+(link_widths/scaling_factor).mean())
-            print("++++++++++++++++++++++++")
             table.loc[short_name] = (line_widths/scaling_factor).sum()+(link_widths/scaling_factor).sum()
             line_widths[line_widths==0] = 1
             link_widths[link_widths==0] = (
-                link_widths.loc[n.links.query("carrier == 'DC'").index].apply(lambda b: b if b > 0 else 1)
+                link_widths.loc[n.links.query("carrier == 'DC'").index].apply(lambda b: b if b > 0 else 1*scaling_factor)
             )
 
             n.plot(
@@ -121,7 +142,8 @@ if __name__ == "__main__":
                 link_widths=link_widths, line_widths=line_widths
             )
             ax.set_title(short_name)
-            
+
+        add_legend(axes, scaling_factor)    
         
         # move to base directory
         change_path_to_base()
@@ -131,7 +153,7 @@ if __name__ == "__main__":
     # add BAU
     BAU_horizon = BAU_HORIZON
     if BAU_horizon in config["plotting"]["planning_horizon"]:
-        scenario = "BAU"
+        scenario, short_name = "BAU", "BAU"
         lineex = line_limits[BAU_horizon]
         sector_opts = f"Co2L{co2l_limits[BAU_horizon]}-{time_resolution}-{opts}"
         
@@ -163,4 +185,7 @@ if __name__ == "__main__":
                 line_colors=line_color, link_colors=link_color,
                 link_widths=link_widths, line_widths=line_widths
             )
+
+            add_legend(ax, scaling_factor)
+
             plt.savefig(snakemake.output.plot, bbox_inches="tight", dpi=200)
