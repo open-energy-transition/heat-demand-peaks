@@ -20,7 +20,7 @@ Shadow (dual) price of the line volume constraint in multiplies of underground c
 """
 
 
-def get_congestion_spatial(n, scaling_factor = 0.4):
+def get_congestion_spatial(n):
 
     drop = n.buses[n.buses.x.isna()].index
     n.mremove("Bus", drop)
@@ -35,25 +35,25 @@ def get_congestion_spatial(n, scaling_factor = 0.4):
 
     # https://pdf.sciencedirectassets.com/318494/1-s2.0-S2589004221X00120/1-s2.0-S2589004221014668/main.pdf?X-Amz-Security-Token=IQoJb3JpZ2luX2VjEJj%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLWVhc3QtMSJGMEQCIH76%2F5RRp%2FsyvzTic70TZIlp86HT4kbfRopf%2BPfCiKlIAiBqjv49cp5HNULujFZfLq19GyetA%2F809nhKn69hEosbdyq8BQjw%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F8BEAUaDDA1OTAwMzU0Njg2NSIMMCqRnIBKGAzBgNaHKpAFjqw6qsazYTtiYyRP17t2V2FEz8Kvij96D6Io2g6uSMPQMK5%2FCHjGAAfz1lVHhlsAjR1PjMJDzUtkEc%2BNsxNb7Dlfl80MXXYSwrkBXbn9JPbwuAFSdcAxQ46zMZ9a83oHcBIT27rV%2BKCBNqyu6Y39mAV6yUx6xh82OCFidkFybcvPs59aNR4NrN6mg6OvD%2FYcB4FKebXtllUJ6s7F07CXdT%2Fk%2BDaRrGQu2MStEUjUiBAMXUdf%2BWCzSsEvfz9HJJNmZE5B3vUrRSKI6%2B5rbD%2Bu9RkuT28RFfb%2FHvQTAAIIhFq91XePPtsJIDTSFpw0R1U7YMBofS4AH0MaDXETHM2ZdOot4yQZD%2BkskD0PZW2LRzqp6g3OJ2TV8E%2FViHw7vYF8ad1e2tWU%2FGIs%2Bdt20l%2FKu%2BKtJ6pr1kOCkRGmU3oqxc2DI0opTwJLaUQ2LvRs3%2FmIL%2FRmvRzg%2F6XUS0IZhyjUysqcyI%2FkVb%2B52uTGM5GhhAYpQcPDGbeyXp1T3Pd0fqKxlDxn3uKaIuAbB8OspJfBBpPVRF6Juye4Z11l6qhi5cWV1uDNj1FzUnbxQhq27Upqf3RRzqdSy085BPhsqhrfem06LygmcaLbVxjqj%2FRMG2tUVbSj%2Fbbl4sfAMCW0CHZAmzoN3ZKT2auVJ07jGdRbhKud14oKlzGDtZRSbGGxdsacuAav65srDgPQx2jdKn5oysvWUbkeWb7Ers1KwsiGa%2FPUstkxV%2BdZh3j%2BW2Jw9YJz4V3XwXzT3yTGHAi9mAHlOuNDtD2pqaDQXNTyXuYLvKeLDmg44CACOD72UdxdB3qS81HLQGwwKzTKxMfT2GfxoixIHUo2qqtACKTPuf%2FuZuIMmyDAbqHzz8uyfJhupdAwu6%2FusQY6sgEkY6yDtQ0mlyGtyXl%2BwEU1JQzkZDWO7kedvhtEUzH%2BS2tYGu5TDRnwHXIEKZ3py%2BJ5hHlHuO5qNhzlu7aDkREluSr5DdGiBvINuAGGlfKLcApKATslo43d1xYupSmS2lN8GfrmWR00C%2F9%2F40HcRBAdWENO%2BIjO2vldofIdGM%2Bm7%2Bn1NeQzwnKOJgDgam%2BLEd8PHjyppJZPYsqJ4lJ6h4rxe3iO6Rw%2F%2BtSXK2akqcJkDnkn&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20240508T155938Z&X-Amz-SignedHeaders=host&X-Amz-Expires=300&X-Amz-Credential=ASIAQ3PHCVTY7JI3FMEE%2F20240508%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Signature=dbbc05d918718a07e6d93d5e80a132a7a580c594d44027197c1a1b07e868f0eb&hash=17515ee88de6288f8910103d9e5e5400e91b9e9644facac0bc3fd21b4bbd2597&host=68042c943591013ac2b2430a89b270f6af2c76d8dfd086a07176afe7c76c2c61&pii=S2589004221014668&tid=spdf-77f5d991-24e5-49bb-82f7-b5bffd495306&sid=55b3e9e9166f494fcd2bfde0146533710f85gxrqa&type=client&tsoh=d3d3LnNjaWVuY2VkaXJlY3QuY29t&ua=01025a56530f005b595b&rr=880aa879ac193a8a&cc=de
 
-    link_widths = pd.Series(index=n.links.index, data=0)
-    link_widths = n.links_t.mu_lower.multiply(n.snapshot_weightings.objective, axis=0).sum(axis=0)
-    link_widths += -1*n.links_t.mu_upper.multiply(n.snapshot_weightings.objective, axis=0).sum(axis=0)
+    # taking DC links
+    dc_links = n.links.query("carrier == 'DC'").index
+    link_widths = n.links_t.mu_lower[dc_links].multiply(n.snapshot_weightings.objective, axis=0).sum(axis=0)
+    link_widths += -1*n.links_t.mu_upper[dc_links].multiply(n.snapshot_weightings.objective, axis=0).sum(axis=0)
     link_widths /= n.links.length # shadow price is EUR / MVA
     link_widths /= 100 # costs DC: 100 EUR / MWkm
-    link_widths[n.links.query("carrier != 'DC'").index] = 0
-    link_widths = link_widths.apply(lambda b: math.floor(b))*scaling_factor
+    link_widths = link_widths.apply(lambda b: math.floor(b))
 
     line_widths = n.lines_t.mu_lower.multiply(n.snapshot_weightings.objective, axis=0).sum(axis=0)
     line_widths += -1*n.lines_t.mu_upper.multiply(n.snapshot_weightings.objective, axis=0).sum(axis=0)
     line_widths /= n.lines.length
     line_widths /= 200 # costs AC: 200 EUR / MWkm
-    line_widths = line_widths.apply(lambda b: math.floor(b))*scaling_factor
+    line_widths = line_widths.apply(lambda b: math.floor(b))
 
-    line_color = pd.Series(index=n.lines.index, data="black")
-    line_color[line_widths==0] = "green"
+    line_color = pd.Series(index=line_widths.index, data="black")
+    line_color[line_widths<1] = "green"
 
-    link_color = pd.Series(index=n.links.index, data="black")
-    link_color[link_widths==0] = "green"
+    link_color = pd.Series(index=link_widths.index, data="black")
+    link_color[link_widths<1] = "green"
 
     return line_widths, link_widths, line_color, link_color
 
@@ -127,25 +127,33 @@ if __name__ == "__main__":
                 print(f"Network is not found for scenario '{scenario}', planning year '{planning_horizon}', and time resolution of '{time_resolution}'. Skipping...")
                 continue
 
-            scaling_factor = 4e-1
-            line_widths, link_widths, line_color, link_color = get_congestion_spatial(n, scaling_factor)
+            line_widths, link_widths, line_color, link_color = get_congestion_spatial(n)
 
-            table.loc[short_name] = (line_widths/scaling_factor).sum()+(link_widths/scaling_factor).sum()
+            # take average across links and lines to get average increase compared to todays costs
+            table.loc[short_name] = pd.concat([line_widths, link_widths]).mean()
             table.name = short_name
-            line_widths[line_widths==0] = 1
-            link_widths[link_widths==0] = (
-                link_widths.loc[n.links.query("carrier == 'DC'").index].apply(lambda b: b if b > 0 else 1*scaling_factor)
-            )
+
+            # scale width for plots
+            scaling_factor = 4e-1
+            scaled_line_widths = line_widths * scaling_factor
+            scaled_link_widths = link_widths * scaling_factor
+            # set green cases thicker
+            scaled_line_widths[scaled_line_widths==0] = 1
+            scaled_link_widths[scaled_link_widths==0] = 1
 
             n.plot(
                 ax=ax, color_geomap={"land": "ghostwhite"},
                 line_colors=line_color, link_colors=link_color,
-                link_widths=link_widths, line_widths=line_widths
+                link_widths=scaled_link_widths, line_widths=scaled_line_widths
             )
             ax.set_title(short_name)
             # total congestion
-            ax.text(0, 1, "Total", ha='left', va='top', transform=ax.transAxes, fontsize='x-small')
-            ax.text(0, 0.95, f"{table[short_name]}", ha='left', va='top', transform=ax.transAxes, fontsize='x-small')
+            ax.text(0, 1, "Avg", ha='left', va='top', 
+                    transform=ax.transAxes, fontsize='x-small',
+                    bbox=dict(facecolor='white', edgecolor='none', pad=3))
+            ax.text(0, 0.93, f"{table[short_name].round(2)}x", ha='left', va='top', 
+                    transform=ax.transAxes, fontsize='x-small',
+                    bbox=dict(facecolor='white', edgecolor='none', pad=3))
 
 
         add_legend(axes, scaling_factor)    
@@ -176,22 +184,28 @@ if __name__ == "__main__":
         else:
             _, ax = plt.subplots(subplot_kw={"projection":ccrs.EqualEarth()})
 
-            scaling_factor = 4e-1
-            line_widths, link_widths, line_color, link_color = get_congestion_spatial(n, scaling_factor)
+            line_widths, link_widths, line_color, link_color = get_congestion_spatial(n)
 
-            table.loc[short_name] = (line_widths/scaling_factor).sum()+(link_widths/scaling_factor).sum()
+            # take average across links and lines to get average increase compared to todays costs
+            table.loc[short_name] = pd.concat([line_widths, link_widths]).mean()
             table.name = short_name
-            line_widths[line_widths==0] = 1
-            link_widths[link_widths==0] = (
-                link_widths.loc[n.links.query("carrier == 'DC'").index].apply(lambda b: b if b > 0 else 1)
-            )
+
+            # scaling width for plot
+            scaling_factor = 4e-1
+            scaled_line_widths = line_widths * scaling_factor
+            scaled_link_widths = link_widths * scaling_factor
+            # set green cases thicker
+            scaled_line_widths[scaled_line_widths==0] = 1
+            scaled_link_widths[scaled_link_widths==0] = 1
 
             n.plot(
                 ax=ax, color_geomap={"land": "ghostwhite"},
                 line_colors=line_color, link_colors=link_color,
-                link_widths=link_widths, line_widths=line_widths
+                link_widths=scaled_link_widths, line_widths=scaled_line_widths
             )
 
+            ax.set_title(short_name)
+            
             add_legend(ax, scaling_factor)
 
             plt.savefig(snakemake.output.plot, bbox_inches="tight", dpi=200)
