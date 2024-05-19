@@ -3,8 +3,10 @@ import argparse
 import logging
 import yaml
 import sys
+import os
+import pypsa
 sys.path.append("plots")
-from _helpers import change_path_to_pypsa_eur, change_path_to_base
+from _helpers import change_path_to_pypsa_eur, change_path_to_base, load_network
 
 # Set up logging configuration
 logging.basicConfig(level=logging.INFO)
@@ -216,37 +218,155 @@ def solve_network(scenario, horizon):
     change_path_to_base()
 
 
+def get_heat_saved(scenario, horizon):
+    # change path to pypsa-eur
+    change_path_to_pypsa_eur()
+
+    # get .nc filename
+    filename = get_network_name(scenario, horizon)
+
+    # load solved network
+    n = None
+    try:
+        n = pypsa.Network(os.path.join(f"results/{scenario}/postnetworks", filename))
+        logging.info(f"Loading {filename} for {scenario}")
+    except FileNotFoundError as e:
+        print(f"Error: {e}")
+
+    # move to base directory
+    change_path_to_base()
+
+    # calculate saved heat ratio
+    retrofitting = n.generators_t.p.filter(like="retrofitting").multiply(n.snapshot_weightings.objective, axis=0).sum().sum()
+    heat_demand = n.loads_t.p_set.filter(like="heat").multiply(n.snapshot_weightings.objective, axis=0).sum().sum()
+    heat_saved_ratio = retrofitting / heat_demand
+    return heat_saved_ratio
+
+
+def calculate_sink_T(heat_saved_ratio):
+    # calculate heat_pump_sink_T
+    sink_T = (55-21)*heat_saved_ratio + 21
+    return sink_T
+
+
+def delete_config_yaml():
+    # change path to pypsa-eur
+    change_path_to_pypsa_eur()
+
+    # Define the path to the config.yaml file
+    config_file_path = os.path.join('config', 'config.yaml')
+
+    # Check if the file exists before attempting to delete it
+    if os.path.exists(config_file_path):
+        os.remove(config_file_path)
+        print(f"Deleted {config_file_path}")
+    else:
+        print(f"{config_file_path} does not exist") 
+
+    # log changes
+    logging.info("config/config.yaml was deleted.")
+    
+    # move to base directory
+    change_path_to_base()
+    
+
+def update_sink_T(scenario, horizon, sink_T):
+    # change path to pypsa-eur
+    change_path_to_pypsa_eur()
+
+    # Define the file path
+    config_path = get_config_path(scenario, horizon)
+    config_path = "../../" + config_path
+
+    # Define the line to be set
+    new_line = f'  heat_pump_sink_T: {sink_T:.2f}\n'
+
+    # Read the contents of the file
+    with open(config_path, 'r') as file:
+        lines = file.readlines()
+
+    # Find the index of the line containing the specified text
+    index = next((i for i, line in enumerate(lines) if '  heat_pump_sink_T:' in line), None)
+
+    # Insert the new line after the specified line
+    if index is not None:
+        lines[index] = new_line
+
+    # Write the modified contents back to the file
+    with open(config_path, 'w') as file:
+        file.writelines(lines)
+
+    # log changes
+    logging.info(f"Changed heat_pump_sink_T to {sink_T}")
+
+    # move to base directory
+    change_path_to_base()
+
+
+def run_workflow(scenario, horizon):
+    # increase biomass potential for 2050 by 1.2
+    if horizon == 2050:
+        increase_biomass_potential()
+    # run prenetwork
+    prepare_prenetwork(scenario=scenario, horizon=horizon)
+
+    # initialize error_capacities and error_moderate
+    error_capacities, error_moderate = [], []
+    
+    # set capacities if 2040 or 2050
+    if not horizon == 2030:
+        error_capacities = set_capacities(scenario=scenario, horizon=horizon)
+
+    # set moderate retrofitting
+    if scenario == "flexible-moderate":
+        error_moderate = moderate_retrofitting(scenario=scenario, horizon=horizon)
+
+    # break if error happens
+    if error_capacities or error_moderate:
+        if horizon == 2050:
+            revert_biomass_potential()
+        return None # return None is error happens
+
+    # solve the network
+    solve_network(scenario, horizon)
+
+    # revert biomass potential
+    if horizon == 2050:
+        revert_biomass_potential()
+
+    return True # return True if success
+
+
 if __name__ == "__main__":
     # get scenario from argument
     scenario, horizons = get_scenario()
 
     # run model for given horizon
     for horizon in horizons:
-        if horizon == 2050:
-            increase_biomass_potential()
-        # run prenetwork
-        prepare_prenetwork(scenario=scenario, horizon=horizon)
+        # run full network preparation and solving workflow 
+        run_status = run_workflow(scenario, horizon)
 
-        # initialize error_capacities and error_moderate
-        error_capacities, error_moderate = [], []
-        
-        # set capacities if 2040 or 2050
-        if not horizon == 2030:
-            error_capacities = set_capacities(scenario=scenario, horizon=horizon)
-
-        # set moderate retrofitting
-        if scenario == "flexible-moderate":
-            error_moderate = moderate_retrofitting(scenario=scenario, horizon=horizon)
-
-        # break if error happens
-        if error_capacities or error_moderate:
-            if horizon == 2050:
-                revert_biomass_potential()
+        # stop further execution if workflow did not succeed
+        if run_workflow is None:
+            logging.error("Workflow broke!")
             break
 
-        # solve the network
-        solve_network(scenario, horizon)
+        # for Optimal and Limited retrofitting proceed with improved COP
+        if scenario in ["flexible", "flexible-moderate"]:
+            # read heat saved
+            heat_saved_ratio = get_heat_saved(scenario, horizon)
 
-        # revert biomass potential
-        if horizon == 2050:
-            revert_biomass_potential()
+            # calculate heat_pump_sink_T
+            sink_T = calculate_sink_T(heat_saved_ratio)
+
+            # delete config.yaml
+            delete_config_yaml()
+
+            # update heat_pump_sink_T
+            update_sink_T(scenario, horizon, sink_T)
+
+            # run full network preparation and solving workflow
+            run_status = run_workflow(scenario, horizon)
+
+            # revert heat_pump_sink_T to 55.0
+            # update_sink_T(scenario, horizon, 55.0)
