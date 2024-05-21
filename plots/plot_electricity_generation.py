@@ -105,7 +105,7 @@ if __name__ == "__main__":
         scenarios = {"flexible": "OROH", 
                      "retro_tes": "ORGH", 
                      "flexible-moderate": "LROH", 
-                     "rigid": "NROH"}
+                     "rigid": "NRGH"}
 
     # define figure
     count_scenarios = len(scenarios.keys())
