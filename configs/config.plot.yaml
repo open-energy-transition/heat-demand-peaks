@@ -25,3 +25,8 @@ moderate_retrofitting:
   planning_horizon: "2030"
   time_resolution: "12H"
   sector_opts: "dist1.1-T-H-B-I"
+
+fix_retrofitting:
+  clusters: 48
+  planning_horizon: "2030"
+  scenario: ["flexible", "retro_tes", "flexible-moderate"]

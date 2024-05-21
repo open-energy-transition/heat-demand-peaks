@@ -395,3 +395,24 @@ rule set_moderate_retrofitting:
             "scripts/logs/set_moderate_retrofitting_{clusters}_{planning_horizon}.txt",
             **config["moderate_retrofitting"],
         ),
+
+
+rule fix_retrofitting:
+    params:
+        clusters=config["fix_retrofitting"]["clusters"],
+        planning_horizon=config["fix_retrofitting"]["planning_horizon"],
+        scenario=config["fix_retrofitting"]["scenario"],
+    output:
+        logs="scripts/logs/fix_retrofitting_{clusters}_{planning_horizon}_{scenario}.txt",
+    resources:
+        mem_mb=20000,
+    script:
+        "scripts/fix_retrofitting.py"
+
+
+rule fix_retrofittings:
+    input:
+        expand(
+            "scripts/logs/fix_retrofitting_{clusters}_{planning_horizon}_{scenario}.txt",
+            **config["fix_retrofitting"],
+        ),
