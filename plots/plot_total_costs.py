@@ -1,13 +1,8 @@
-import os
 import sys
 sys.path.append("../submodules/pypsa-eur")
-import pypsa
 import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
 import numpy as np
 import pandas as pd
-import geopandas as gpd
-import cartopy.crs as ccrs
 import logging
 import colors as c
 import warnings
@@ -20,7 +15,13 @@ logger = logging.getLogger(__name__)
 
 RESULTS_DIR = "plots/results"
 
-DONT_PLOT = []
+GAS_BOILERS = [
+    "Link:residential rural gas boiler",
+    "Link:residential urban decentral gas boiler",
+    "Link:services rural gas boiler",
+    "Link:services urban decentral gas boiler",
+    "Link:urban central gas boiler",
+]
 
 PREFIX_TO_REMOVE = [
     "residential ",
@@ -211,10 +212,6 @@ def plot_costs(cost_df, clusters, planning_horizon, plot_width=7):
         df.index.difference(PREFERRED_ORDER)
     )
 
-    for remove_tech in DONT_PLOT:
-        if remove_tech in new_index:
-            new_index = new_index.drop(remove_tech)
-
     new_columns = df.sum().sort_values().index  
 
 
@@ -238,7 +235,7 @@ def plot_costs(cost_df, clusters, planning_horizon, plot_width=7):
     ax.set_ylabel("System Cost [EUR billion per year]")
 
     ax.set_xlabel("")
-    ax.set_ylim([0,1200])
+    ax.set_ylim([0,1000])
     ax.set_yticks(np.arange(0, 1100, 100))
 
     # Turn off both horizontal and vertical grid lines
@@ -293,13 +290,7 @@ def plot_capacities(caps_df, clusters, planning_horizon, plot_width=7):
         df.index.difference(PREFERRED_ORDER)
     )
 
-    for remove_tech in DONT_PLOT:
-        if remove_tech in new_index:
-            new_index = new_index.drop(remove_tech)
-
-    new_columns = df.sum().sort_values().index  
-
-    fig, ax = plt.subplots(figsize=(plot_width, 9))
+    _, ax = plt.subplots(figsize=(plot_width, 9))
 
     df.loc[new_index].T.plot(
         kind="bar",
@@ -362,6 +353,7 @@ def get_common_index(list1, list2):
 
 def update_capital_cost(cap_costs_dict, p_nom_opt_dict, planning_horizon):
     delta_horizon = 10
+    planning_horizon_init = int(planning_horizon)
     planning_horizon = int(planning_horizon)
     full_cost = pd.DataFrame()
     missing_scenarios = []
@@ -369,7 +361,7 @@ def update_capital_cost(cap_costs_dict, p_nom_opt_dict, planning_horizon):
     while planning_horizon > 2030:
         # previous horizon's year
         previous_horizon = planning_horizon - delta_horizon
-        # delta p_nom_opt 
+        # delta p_nom_opt
         delta_p_nom_opt = p_nom_opt_dict[str(planning_horizon)] - p_nom_opt_dict[str(previous_horizon)]
         delta_p_nom_opt = delta_p_nom_opt.clip(lower=0)
         # built_fraction = delta(p_nom_opt) / p_nom_opt
@@ -391,6 +383,8 @@ def update_capital_cost(cap_costs_dict, p_nom_opt_dict, planning_horizon):
         # remove missing scenario
         full_cost = full_cost.loc[:, ~full_cost.columns.isin(missing_scenarios)]
 
+    # set gas boilers manually after finished
+    full_cost.loc[GAS_BOILERS] = cap_costs_dict[str(planning_horizon_init)].loc[GAS_BOILERS]
     return full_cost
 
 
@@ -433,7 +427,7 @@ if __name__ == "__main__":
     opts = config["plotting"]["sector_opts"]
 
     # define scenario namings
-    scenarios = {"flexible": "Optimal \nRenovation &\nHeating", 
+    scenarios = {"flexible": "Optimal \nRenovation &\nOptimal Heating", 
                 "retro_tes": "Optimal \nRenovation &\nGreen Heating", 
                 "flexible-moderate": "Limited \nRenovation &\nOptimal Heating", 
                 "rigid": "No \nRenovation &\nGreen Heating"}
