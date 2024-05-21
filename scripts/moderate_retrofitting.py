@@ -6,7 +6,7 @@ import warnings
 warnings.filterwarnings("ignore")
 from plots._helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                     change_path_to_pypsa_eur, change_path_to_base, load_unsolved_network, \
-                    save_unsolved_network, CO2L_LIMITS, LINE_LIMITS, get_config
+                    save_unsolved_network, get_config
 
 
 def set_moderate_retrofitting(n_solved, n_unsolved):
@@ -31,9 +31,6 @@ if __name__ == "__main__":
     # update config based on wildcards
     config = update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
-    # network parameters by year
-    co2l_limits = CO2L_LIMITS
-    line_limits = LINE_LIMITS
 
     # network parameters of unsolved network
     clusters = config["moderate_retrofitting"]["clusters"]
