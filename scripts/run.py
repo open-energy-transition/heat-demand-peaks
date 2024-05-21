@@ -352,7 +352,7 @@ if __name__ == "__main__":
             break
 
         # for Optimal and Limited retrofitting proceed with improved COP
-        if scenario in ["flexible", "flexible-moderate"]:
+        if scenario in ["flexible", "flexible-moderate", "retro_tes"]:
             # read heat saved
             heat_saved_ratio = get_heat_saved(scenario, horizon)
 
