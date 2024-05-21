@@ -200,6 +200,20 @@ def moderate_retrofitting(scenario, horizon):
     return error
 
 
+def fix_retrofitting(scenario, horizon):
+    error = []
+    try:
+        # get number of clusters
+        clusters = get_clusters(scenario, horizon)
+        command = f"snakemake -call scripts/logs/fix_retrofitting_{clusters}_{horizon}_{scenario}.txt --forceall"
+        subprocess.run(command, shell=True, check=True)
+        logging.info(f"Retrofitting capacities are fixed to {scenario} scenario in {horizon} horizon!")
+    except subprocess.CalledProcessError  as e:
+        logging.error(f"Error occurred during command execution: {e}")
+        error.append(e)
+    return error
+
+
 def solve_network(scenario, horizon):
     # get config path
     config_path = get_config_path(scenario, horizon)
@@ -303,7 +317,7 @@ def update_sink_T(scenario, horizon, sink_T):
     change_path_to_base()
 
 
-def run_workflow(scenario, horizon):
+def run_workflow(scenario, horizon, improved_cop=False):
     # increase biomass potential for 2050 by 1.2
     if horizon == 2050:
         increase_biomass_potential()
@@ -311,7 +325,7 @@ def run_workflow(scenario, horizon):
     prepare_prenetwork(scenario=scenario, horizon=horizon)
 
     # initialize error_capacities and error_moderate
-    error_capacities, error_moderate = [], []
+    error_capacities, error_moderate, error_fix_retro = [], [], []
     
     # set capacities if 2040 or 2050
     if not horizon == 2030:
@@ -321,8 +335,12 @@ def run_workflow(scenario, horizon):
     if scenario == "flexible-moderate":
         error_moderate = moderate_retrofitting(scenario=scenario, horizon=horizon)
 
+    # set retrofitting p_nom for improved COP
+    if improved_cop:
+        error_fix_retro = fix_retrofitting(scenario=scenario, horizon=horizon)
+
     # break if error happens
-    if error_capacities or error_moderate:
+    if error_capacities or error_moderate or error_fix_retro:
         if horizon == 2050:
             revert_biomass_potential()
         return None # return None is error happens
@@ -366,7 +384,7 @@ if __name__ == "__main__":
             update_sink_T(scenario, horizon, sink_T)
 
             # run full network preparation and solving workflow
-            run_status = run_workflow(scenario, horizon)
+            run_status = run_workflow(scenario, horizon, improved_cop=True)
 
             # revert heat_pump_sink_T to 55.0
             # update_sink_T(scenario, horizon, 55.0)
