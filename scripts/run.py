@@ -245,7 +245,7 @@ def get_heat_saved(scenario, horizon):
 
 def calculate_sink_T(heat_saved_ratio):
     # calculate heat_pump_sink_T
-    sink_T = (55-21)*heat_saved_ratio + 21
+    sink_T = (55-21)*(1-heat_saved_ratio) + 21
     return sink_T
 
 
