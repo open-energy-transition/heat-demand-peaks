@@ -164,7 +164,7 @@ def prepare_prenetwork(scenario, horizon):
     # get .nc filename
     filename = get_network_name(scenario, horizon)
     # run prenetwork
-    command = f"snakemake -call results/{scenario}/prenetworks/{filename} --configfile {config_path} --force"
+    command = f"snakemake -call results/{scenario}/prenetworks/{filename} --configfile {config_path} --force --ri"
     subprocess.run(command, shell=True)
     logging.info(f"Prenetwork was prepared for {scenario} scenario in {horizon} horizon!")
 
