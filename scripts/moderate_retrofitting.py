@@ -6,7 +6,7 @@ import warnings
 warnings.filterwarnings("ignore")
 from plots._helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                     change_path_to_pypsa_eur, change_path_to_base, load_unsolved_network, \
-                    save_unsolved_network, CO2L_LIMITS, LINE_LIMITS
+                    save_unsolved_network, CO2L_LIMITS, LINE_LIMITS, get_config
 
 
 def set_moderate_retrofitting(n_solved, n_unsolved):
@@ -38,10 +38,11 @@ if __name__ == "__main__":
     # network parameters of unsolved network
     clusters = config["moderate_retrofitting"]["clusters"]
     planning_horizon = config["moderate_retrofitting"]["planning_horizon"]
-    time_resolution = config["moderate_retrofitting"]["time_resolution"]
-    opts = config["moderate_retrofitting"]["sector_opts"]
-    lineex = line_limits[planning_horizon]
-    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-{opts}"
+    # get sector_opts and ll from scenario config file from EEE_study folder
+    scenario_config = get_config("flexible-moderate", planning_horizon)
+    sector_opts = scenario_config["scenario"]["sector_opts"][0]
+    lineex = scenario_config["scenario"]["ll"][0]
+
 
     # move to pypsa-eur directory
     change_path_to_pypsa_eur()
