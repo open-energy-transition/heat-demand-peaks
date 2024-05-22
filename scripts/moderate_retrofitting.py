@@ -14,9 +14,9 @@ def set_moderate_retrofitting(n_solved, n_unsolved):
     retro_opt = n_solved.generators.query("carrier in 'retrofitting'")[["p_nom_opt"]]
     retro_data = retro_opt / 2
     # set p_nom_max as half of p_nom_opt of flexible scenario
-    n_unsolved.generators.loc[retro_data.index, "p_nom_max"] = retro_data["p_nom_opt"].combine(n_unsolved.generators.loc[retro_data.index, "p_nom_min"], max)
+    n_unsolved.generators.loc[retro_data.index, "p_nom"] = retro_data["p_nom_opt"]
     # set retrofitting not extendable
-    n_unsolved.generators.loc[retro_data.index, "p_nom_extendable"] = True
+    n_unsolved.generators.loc[retro_data.index, "p_nom_extendable"] = False
 
     return n_unsolved
 
