@@ -19,6 +19,8 @@ def get_scenario():
                         choices=["2030", "2040", "2050"])
     parser.add_argument("-y", "--year", help="Specify a single horizon to simulate", 
                         choices=["2030", "2040", "2050"])
+    parser.add_argument("-i", "--improved_cop", help="Specify if improved COP calculation is needed",
+                        choices=["true", "false"])
     args = parser.parse_args()
 
     # Access the value of the scenario argument
@@ -30,6 +32,10 @@ def get_scenario():
     c = args.continue_horizon
     # Access the value of specific horizon to simulate
     y = args.year
+
+    # Access bool for improved COP
+    i = args.improved_cop
+    improved_cop = False if i == "false" else True
 
     # log scenario name
     if y:
@@ -43,7 +49,7 @@ def get_scenario():
         horizons = get_horizon_list(int(c))
         logging.info("No horizon specified. Starting from default horizon (2030)")
 
-    return scenario, horizons
+    return scenario, horizons, improved_cop
 
 
 def get_horizon_list(start_horizon):
@@ -357,7 +363,7 @@ def run_workflow(scenario, horizon, improved_cop=False):
 
 if __name__ == "__main__":
     # get scenario from argument
-    scenario, horizons = get_scenario()
+    scenario, horizons, improved_cop = get_scenario()
 
     # run model for given horizon
     for horizon in horizons:
@@ -370,7 +376,7 @@ if __name__ == "__main__":
             break
 
         # for Optimal and Limited retrofitting proceed with improved COP
-        if scenario in ["flexible", "flexible-moderate", "retro_tes"]:
+        if scenario in ["flexible", "flexible-moderate", "retro_tes"] and improved_cop:
             # read heat saved
             heat_saved_ratio = get_heat_saved(scenario, horizon)
 
@@ -384,7 +390,7 @@ if __name__ == "__main__":
             update_sink_T(scenario, horizon, sink_T)
 
             # run full network preparation and solving workflow
-            run_status = run_workflow(scenario, horizon, improved_cop=True)
+            run_status = run_workflow(scenario, horizon, improved_cop=improved_cop)
 
             # revert heat_pump_sink_T to 55.0
             # update_sink_T(scenario, horizon, 55.0)
