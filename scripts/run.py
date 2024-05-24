@@ -299,7 +299,7 @@ def update_sink_T(scenario, horizon, sink_T):
     config_path = "../../" + config_path
 
     # Define the line to be set
-    new_line = f'  heat_pump_sink_T: {sink_T:.2f}\n'
+    new_line = f'  heat_pump_sink_T: {sink_T:.1f}\n'
 
     # Read the contents of the file
     with open(config_path, 'r') as file:
@@ -367,6 +367,10 @@ if __name__ == "__main__":
 
     # run model for given horizon
     for horizon in horizons:
+        # ensure heat_pump_sink_T: 55.0 at the beginning of first run
+        if scenario in ["flexible", "flexible-moderate", "retro_tes"]:
+            update_sink_T(scenario, horizon, 55.0)
+
         # run full network preparation and solving workflow 
         run_status = run_workflow(scenario, horizon)
 
@@ -391,6 +395,3 @@ if __name__ == "__main__":
 
             # run full network preparation and solving workflow
             run_status = run_workflow(scenario, horizon, improved_cop=improved_cop)
-
-            # revert heat_pump_sink_T to 55.0
-            # update_sink_T(scenario, horizon, 55.0)
