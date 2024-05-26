@@ -21,7 +21,7 @@ The study is developed as an extension to the PyPSA-Eur model in this repository
 
 # Installation and Usage
 
-### 1. Installation
+## 1. Installation
 
 Clone the repository including its submodules:
 
@@ -39,19 +39,22 @@ Navigate into the main Snakemake workflow directory of `PyPSA-Eur`:
 
     cd submodules/pypsa-eur
 
-### 2. Running scenarios
+## 2. Running scenarios
 
-#### A. Running individual scenario
+Before running the scenarios, it is important to know their short working names used in the code. The table below provides the mapping between official scenario names and correspoding short names used in the code. Use the coding name to run the scenario.
 
-To run the scenarios of a particular configuration file (e.g. `configs/EEE_study/config.flexible-industry.yaml`), run:
+|Scenario name                                |Coding name      |
+|---------------------------------------------|-----------------|
+|Optimal Retrofitting & Optimal Heating (OROH)|flexible         |
+|Optimal Retrofitting & Green Heating (ORGH)  |retro_tes        |
+|Limited Retrofitting & Optimal Heating (LRPH)|flexible-moderate|
+|No Retrofitting & Green Heating (NRGH)       |rigid            |
 
-    snakemake -call solve_sector_networks --configfile ../../configs/EEE_study/config.flexible-industry_2030.yaml 
+### A. Running scenarios using **automated workflow** (the easy way)
 
 This call requires a high-performance computing environment, as well as a [Gurobi license](https://www.gurobi.com/downloads/gurobi-software/).
 
-Please follow the documentation of PyPSA-Eur for more details.
-
-#### B. Running scenario for several horizons
+#### B. Running scenario for several horizons using run.py script
 
 To run the scenario for several horizons at once (e.g. *Optimal Renovation & Heating* scenario), run:
 
@@ -60,15 +63,33 @@ To run the scenario for several horizons at once (e.g. *Optimal Renovation & Hea
 Using `-s` flag, the scenario is selected. `-c` flag (optional) speficies from which planning horizon the simulation should start. So if `-c 2040` is given, then 2040 and 2050 horizons will be simulated consequitively; if not specified, then 2030 is used as a starting year by default. `-c` flag is useful when simulation is interupted and it needs to be re-run from certain horizon.
 **Note!** To run *Limited Renovation & Optimal Heating* (`flexible-moderate`) scenario, *Optimal Renovation & Heating* (`flexible`) scenario needs to be run first.
 
-#### C. Setting nominal capacities of retrofitting for *Limited Renovation & Optimal Heating* scenario
+### 2.2. Running scenarios **manually** using `snakemake` (the hard way)
 
-The nominal capacities of retrofitting for *Limited Renovation & Optimal Heating* (flexible-moderate) scenario is set by running:
+#### A. Run the scenario
+
+To run the scenario of a particular configuration file (e.g. `configs/EEE_study/config.flexible-industry.yaml`), navigate to `pypsa-eur` directory using:
+
+    cd submodules/pypsa-eur
+
+Then, run the following comamnd to prepare the pre-network:
+
+    snakemake -call prepare_sector_networks --configfile ../../configs/EEE_study/config.flexible-industry_2030.yaml
+
+To solve the network, run:
+
+    snakemake -call solve_sector_networks --configfile ../../configs/EEE_study/config.flexible-industry_2030.yaml 
+
+Please follow the documentation of PyPSA-Eur for more details.
+
+#### B. Setting nominal capacities of retrofitting for *Limited Renovation & Optimal Heating (LROH)* scenario
+
+The nominal capacities of retrofitting for *Limited Renovation & Optimal Heating (LROH)* (flexible-moderate) scenario is set by running:
 
     snakemake -call set_moderate_retrofitting
 
-* Note! This and the following `snakemake` commands must be run in `heat-demands-peak` base directory (not `pypsa-eur` submodule).
+* Note! This and the following `snakemake` commands must be run in `heat-demands-peak` base directory (not `pypsa-eur` submodule). The command needs to be run after preparation of pre-network.
 
-This command will set `p_nom` for moderate retrofitting network as a half of `p_nom_opt` of solved *Optimal Renovation and Heating* (flexible) scenario. The network parameters, such as `clusters`, `planning_horizon`, and `time_resolution`, are defined in `moderate_retrofitting` section of `configs/config.plot.yaml`. 
+This command will set `p_nom` for moderate retrofitting network as a half of `p_nom_opt` of solved *Optimal Renovation and Heating* (flexible) scenario. The network parameters, such as `clusters` and `planning_horizon`, are defined in `moderate_retrofitting` section of `configs/config.plot.yaml`. 
 
 As an alternative, the nominal capacities for moderate retrofitting scenario can be set by running the command with wildcards (e.g. scenario for 2030 with 48 clusters):
 
@@ -76,11 +97,13 @@ As an alternative, the nominal capacities for moderate retrofitting scenario can
 
 The resultant file in `scripts/logs/set_moderate_retrofitting_48_2030.txt` contains `Success` parameter which indicates the success status of executed rule. Here, `--force` flag is used to forcefully re-execute the rule.
 
-#### D. Transfering optimal capacities to future horizons
+#### C. Transfering optimal capacities to future horizons
 
-After optimizing scenarios for one horizon, it is important to transfer optimal generation and store capacities into future horizons. To do so, configure `planning_horizon` in `set_capacities` section of `configs/config.plot.yaml`. By default, `2040` is set as `planning_horizon` in `set_capacities`, which helps to transfer `p_nom_opt` values from solved networks of 2030 into `p_nom_min` of corresponding generators and stores of unsolved network of 2040. The optimal capacities are transfered to corresponding scenarios. To set `p_nom_min` for all scenarios of 2040, run:
+After optimizing scenarios for one horizon, it is important to transfer optimal generation and store capacities into future horizons. To do so, configure `planning_horizon` in `set_capacities` section of `configs/config.plot.yaml` to horizon of interest. By default, `2040` is set as `planning_horizon` in `set_capacities`, which helps to transfer `p_nom_opt` values from solved networks of 2030 into `p_nom_min` of corresponding generators and stores of unsolved network of 2040. The optimal capacities are transfered to corresponding scenarios. To set `p_nom_min` for all scenarios of 2040, run:
 
     snakemake -call set_capacities
+
+* Note! The command needs to be run after preparation of pre-network, but before solving it.
 
 To set minimum capacities for specific scenario (e.g. flexible scenario of 2050 with 48 clusters), you can run run:
 
@@ -88,35 +111,50 @@ To set minimum capacities for specific scenario (e.g. flexible scenario of 2050 
 
 The resultant file in `scripts/logs/set_capacities_48_2050_flexible.txt` contains `Success` parameter which indicates the success status of executed rule.
 
+#### D. Utilizing improved COP for heat pumps in scenarios with building retrofitting
+
+To use the workflow of improved COP, solve the network regularly and determine the heat saved ratio by building retrofitting from the solved network. Use the ratio to compute sink temperature:
+
+    heat_pump_sink_T = (55 - 21) * (1 - heat_saved_ratio) + 21
+
+Update the `heat_pump_sink_T` parameter in corresponding configuration file. Then, prepare the pre-network and set capacities from previous horizon. To set retrofitting capacities from the first run to current run, execute:
+
+    snakemake -call fix_retrofitting
+
+Finally, the updated pre-network can be solved.
+
 ### 3. Plotting
 
-To plot the total system cost for all planning horizons (i.e. 2030, 2040, and 2050) specified in `config.plot.yaml`, run:
+To visualize the simulation results, the following list of `snakemake` rules can be used. 
+
+|Rule name                    |Description        |
+|-----------------------------|-------------------|
+|`plot_total_costs`           |Plots total costs and optimal capacities of technologies and provides the results in a tabular form|
+|`plot_electricity_bills`     |Plots electricity bills per household and energy price per MWh|
+|`plot_electricity_for_heats` |Plots electricity and gas consumption profiles to cover heat demands|
+|`plot_electricity_generations`|Plots electricity generation mix|
+|`plot_curtailments`          |Plots total curtailment and provides detailed curtailment for renewables in a tabular form|
+|`plot_hydrogen_productions`  |Plots hydrogen generation and electricity used for its production and provides the results in a tabular form|
+|`plot_heat_tech_ratios`      |Plots optimal capacities (GW<sub>el</sub>) of heat generation technologies, such as gas boilers, heat pumps, and resistive heaters|
+|`plot_COP`                   |Plots coefficient of performance (COP) for heat pumps|
+|`plot_co2_levels`            |Plots CO<sub>2</sub> balances and provides the results in a tabular form|
+|`plot_historic_generation`   |Plots historic electricity generation mix for 2022 from [1]|
+|`plot_transmission_congestions`|Plots transmission lines congestion|
+|`plot_all`                   |Plots all abovementioned figures|
+|`get_heat_pumps`             |Provodes estimated heat pumps amount in a tabualr form|
+|`get_infra_savings`          |Provides infrastructure savings interms of costs and capacities in a tabular form|
+
+[1] How is EU electricity produced and sold? URL: https://www.consilium.europa.eu/en/infographics/how-is-eu-electricity-produced-and-sold/
+
+To demonstrate how to use the plotting rules to visualize the total system cost for various planning horizons (e.g., 2030, 2040, and 2050) as specified in the `config.plot.yaml` file, run the following command:
 
     snakemake -call plot_total_costs
 
-**Note!** The total costs will be plotted only for scenarios where the solved networks are present.
+**Note!** The total costs will be plotted only for scenarios where the solved networks are present. `--forceall` flag can be used to regenerate and overwrite the already existing plots.
 
-To plot total costs for specific horizon (e.g. 2040) and number of clusters (e.g. 48), run:
-
-    snakemake -call plots/results/plot_total_costs_48_2040.png
-
-To plot electricity bills per household and electricity prices per country for all horizons (i.e. 2030, 2040, and 2050), run:
-
-    snakemake -call plot_electricity_bills
-
-**Note!** The electricity bills and prices will be computed only for scenarios with solved networks.
-
-To plot electricity bills separately for specific horizon (e.g. 2040) and number of clusters (e.g. 48), run:
-
-    snakemake -call plots/results/plot_bill_per_household_48_2040.png
-
-To estimate number of heat pumps and generate table for all horizons and clusters specified in `config.plot.yaml`, run:
+As another example, to estimate number of heat pumps and generate table for all horizons and clusters specified in `config.plot.yaml`, run:
 
     snakemake -call get_heat_pumps
-
-To estimate average grid congestion and generate table for all horizons and clusters specified in `config.plot.yaml`, run:
-
-    snakemake -call get_line_congestions
 
 To generate all aforementioned plots and tables at once, run:
 
