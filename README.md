@@ -41,29 +41,41 @@ Navigate into the main Snakemake workflow directory of `PyPSA-Eur`:
 
 ## 2. Running scenarios
 
-Before running the scenarios, it is important to know their short working names used in the code. The table below provides the mapping between official scenario names and correspoding short names used in the code. Use the coding name to run the scenario.
+Before running the scenarios, it is important to know their short working names used in the code. The table below provides the mapping between official scenario names and correspoding short names utilized in the code. To run the scenarios, refer to the coding names.
 
 |Scenario name                                |Coding name      |
 |---------------------------------------------|-----------------|
 |Optimal Retrofitting & Optimal Heating (OROH)|flexible         |
 |Optimal Retrofitting & Green Heating (ORGH)  |retro_tes        |
-|Limited Retrofitting & Optimal Heating (LRPH)|flexible-moderate|
+|Limited Retrofitting & Optimal Heating (LROH)|flexible-moderate|
 |No Retrofitting & Green Heating (NRGH)       |rigid            |
 
-### A. Running scenarios using **automated workflow** (the easy way)
+**Note!** Running the scenarios requires a high-performance computing environment, as well as a [Gurobi license](https://www.gurobi.com/downloads/gurobi-software/).
 
-This call requires a high-performance computing environment, as well as a [Gurobi license](https://www.gurobi.com/downloads/gurobi-software/).
+### A. Running scenarios using *automated workflow* (the easy way)
 
-#### B. Running scenario for several horizons using run.py script
-
-To run the scenario for several horizons at once (e.g. *Optimal Renovation & Heating* scenario), run:
+To run the simulations for specific scenario for several horizons at once (e.g. *Optimal Renovation & Optimal Heating (OROH)* scenario), run:
 
     python scripts/run.py -s flexible -c 2040
 
-Using `-s` flag, the scenario is selected. `-c` flag (optional) speficies from which planning horizon the simulation should start. So if `-c 2040` is given, then 2040 and 2050 horizons will be simulated consequitively; if not specified, then 2030 is used as a starting year by default. `-c` flag is useful when simulation is interupted and it needs to be re-run from certain horizon.
-**Note!** To run *Limited Renovation & Optimal Heating* (`flexible-moderate`) scenario, *Optimal Renovation & Heating* (`flexible`) scenario needs to be run first.
+where `-s` is a mandatory flag used for the scenario selection. Use the coding name of corresponding scenario from the table to trigger the execution. `-c` flag (optional) speficies from which planning horizon the simulations should start. So if `-c 2040` is given, then 2040 and 2050 horizons will be simulated consequitively; if not specified, then 2030 is used as a starting year by default. `-c` flag is useful when simulation is interupted and it needs to be re-run from certain horizon. 
 
-### 2.2. Running scenarios **manually** using `snakemake` (the hard way)
+To simulate a single horizon for the scenario (e.g. *Limited Retrofitting & Optimal Heating* scenario for 2050), use `-y` flag as follows:
+
+    python scripts/run.py -s flexible-moderate -y 2050
+
+* **Note!** To run *Limited Renovation & Optimal Heating* (`flexible-moderate`) scenario, the simulation results for *Optimal Renovation & Optimal Heating* (`flexible`) scenario must be present.
+
+The available flags and their details are presented in table below:
+
+|Flag                  |Default   |Description        |Status    |
+|----------------------|----------|-------------------|----------|
+|`-s`, `--scenario`    |n/a       |Selects scenario   |required  |
+|`-c`, `--continue`    |2030      |Selects horizon from which simulation starts (used in simulating multiple horizons). If 2030 is selected, then 2030, 2040, and 2050 is simulated consecutively. If 2040 is selected, then 2040 and 2050 is simulated.|optional  |
+|`-y`, `--year`        |n/a       |Selects a single horizon to be simulated. If both `-c` and `-y` are prodived occasionally, then priority is given to `-y`.|optional  |
+|`-i`, `--improved_cop`|true      |Enables/disables improved COP workflow. By default, improved COP for heat pumps is used.|optional  |
+
+### 2.2. Running scenarios *manually* using `snakemake` (the hard way)
 
 #### A. Run the scenario
 
@@ -87,7 +99,7 @@ The nominal capacities of retrofitting for *Limited Renovation & Optimal Heating
 
     snakemake -call set_moderate_retrofitting
 
-* Note! This and the following `snakemake` commands must be run in `heat-demands-peak` base directory (not `pypsa-eur` submodule). The command needs to be run after preparation of pre-network.
+* **Note!** This and the following `snakemake` commands must be run in `heat-demands-peak` base directory (not `pypsa-eur` submodule). The command needs to be run after preparation of pre-network.
 
 This command will set `p_nom` for moderate retrofitting network as a half of `p_nom_opt` of solved *Optimal Renovation and Heating* (flexible) scenario. The network parameters, such as `clusters` and `planning_horizon`, are defined in `moderate_retrofitting` section of `configs/config.plot.yaml`. 
 
@@ -103,7 +115,7 @@ After optimizing scenarios for one horizon, it is important to transfer optimal 
 
     snakemake -call set_capacities
 
-* Note! The command needs to be run after preparation of pre-network, but before solving it.
+* **Note!** The command needs to be run after preparation of pre-network, but before solving it.
 
 To set minimum capacities for specific scenario (e.g. flexible scenario of 2050 with 48 clusters), you can run run:
 
@@ -160,4 +172,4 @@ To generate all aforementioned plots and tables at once, run:
 
     snakemake -call plot_all --forceall
 
-**Note!** --forceall flag is used to force a rerun of rule.
+**Note!** `--forceall` flag is used to force a rerun of rule.
