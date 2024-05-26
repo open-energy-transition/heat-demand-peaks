@@ -240,7 +240,7 @@ rule get_heat_pumps:
         ),
 
 
-rule get_infra_savings:
+rule get_infra_saving:
     params:
         clusters=config["plotting"]["clusters"],
     output:
@@ -250,6 +250,20 @@ rule get_infra_savings:
         mem_mb=20000,
     script:
         "plots/table_infra_savings.py"
+
+
+rule get_infra_savings:
+    input:
+        expand(
+            RESULTS
+            + "table_infra_savings_caps_{clusters}.csv",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "table_infra_savings_costs_{clusters}.csv",
+            **config["plotting"],
+        ),
 
 
 rule plot_transmission_congestion:
@@ -352,6 +366,16 @@ rule plot_all:
         expand(
             RESULTS
             + "table_heat_tech_ratio_{clusters}.csv",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "table_infra_savings_caps_{clusters}.csv",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "table_infra_savings_costs_{clusters}.csv",
             **config["plotting"],
         ),
 
