@@ -11,7 +11,7 @@ scenario:
   clusters:
   - 48
   sector_opts:
-  - Co2L0.1-3H-dist1.05-T-H-B-I
+  - Co2L0.1-dist1.05-T-H-B-I
   planning_horizons:
   - 2040
 
@@ -53,6 +53,8 @@ sector:
   retrofitting:
     retro_endogen: false
     WWHR_endogen: false
+    weighting_by_building_types: true # true weights AB, SFH and MFH
+    cost_factor: 2
   tes: false #true
   boilers: false #true
   biomass_boiler: false
@@ -100,6 +102,11 @@ costs:
   lifetime:
     "central solar thermal": 30
     "decentral solar thermal": 30
+
+clustering:
+  temporal:
+    resolution_elec: false
+    resolution_sector: 3H
 
 adjustments:
   sector: {"p_nom_max": {"solar rooftop": 1.134}} # https://www.epj-pv.org/articles/epjpv/full_html/2024/01/pv230071/pv230071.html
