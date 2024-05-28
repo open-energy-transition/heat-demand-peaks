@@ -11,7 +11,7 @@ scenario:
   clusters:
   - 48
   sector_opts:
-  - Co2L0.45-3H-dist1.05-T-H-B-I
+  - Co2L0.45-dist1.05-T-H-B-I
   planning_horizons:
   - 2030
 
@@ -55,6 +55,8 @@ sector:
   retrofitting:
     retro_endogen: true
     WWHR_endogen: true
+    weighting_by_building_types: true # true weights AB, SFH and MFH
+    cost_factor: 2
   tes: true
   boilers: true
   biomass_boiler: false
@@ -101,6 +103,11 @@ costs:
   lifetime:
     "central solar thermal": 30
     "decentral solar thermal": 30
+
+clustering:
+  temporal:
+    resolution_elec: false
+    resolution_sector: 3H
 
 adjustments:
   sector: {"p_nom_max": {"solar rooftop": 1.095}}
