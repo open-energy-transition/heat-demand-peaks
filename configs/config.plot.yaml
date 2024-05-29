@@ -22,7 +22,7 @@ moderate_retrofitting:
   clusters: 48
   planning_horizon: "2030"
 
-fix_retrofitting:
+improve_cops_after_renovation:
   clusters: 48
   planning_horizon: "2030"
   scenario: ["flexible", "retro_tes", "flexible-moderate"]

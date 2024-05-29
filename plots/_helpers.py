@@ -155,17 +155,17 @@ def update_config_from_wildcards(config, w):
         config["plotting"]["planning_horizon"] = planning_horizon
         config["set_capacities"]["planning_horizon"] = planning_horizon
         config["moderate_retrofitting"]["planning_horizon"] = planning_horizon
-        config["fix_retrofitting"]["planning_horizon"] = planning_horizon
+        config["improve_cops_after_renovation"]["planning_horizon"] = planning_horizon
     if w.get("clusters"):
         clusters = w.clusters
         config["plotting"]["clusters"] = clusters
         config["set_capacities"]["clusters"] = clusters
         config["moderate_retrofitting"]["clusters"] = clusters
-        config["fix_retrofitting"]["clusters"] = clusters
+        config["improve_cops_after_renovation"]["clusters"] = clusters
     if w.get("scenario"):
         scenario = w.scenario
         config["set_capacities"]["scenario"] = scenario
-        config["fix_retrofitting"]["scenario"] = scenario
+        config["improve_cops_after_renovation"]["scenario"] = scenario
     return config
 
 
