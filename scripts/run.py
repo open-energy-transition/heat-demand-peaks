@@ -206,12 +206,12 @@ def moderate_retrofitting(scenario, horizon):
     return error
 
 
-def fix_retrofitting(scenario, horizon):
+def improve_cops_after_renovation(scenario, horizon):
     error = []
     try:
         # get number of clusters
         clusters = get_clusters(scenario, horizon)
-        command = f"snakemake -call scripts/logs/fix_retrofitting_{clusters}_{horizon}_{scenario}.txt --forceall"
+        command = f"snakemake -call scripts/logs/improve_cops_after_renovation_{clusters}_{horizon}_{scenario}.txt --forceall"
         subprocess.run(command, shell=True, check=True)
         logging.info(f"Retrofitting capacities are fixed to {scenario} scenario in {horizon} horizon!")
     except subprocess.CalledProcessError  as e:
@@ -331,7 +331,7 @@ def run_workflow(scenario, horizon, improved_cop=False):
     prepare_prenetwork(scenario=scenario, horizon=horizon)
 
     # initialize error_capacities and error_moderate
-    error_capacities, error_moderate, error_fix_retro = [], [], []
+    error_capacities, error_moderate, error_improve_cop = [], [], []
     
     # set capacities if 2040 or 2050
     if not horizon == 2030:
@@ -343,10 +343,10 @@ def run_workflow(scenario, horizon, improved_cop=False):
 
     # set retrofitting p_nom for improved COP
     if improved_cop:
-        error_fix_retro = fix_retrofitting(scenario=scenario, horizon=horizon)
+        error_improve_cop = improve_cops_after_renovation(scenario=scenario, horizon=horizon)
 
     # break if error happens
-    if error_capacities or error_moderate or error_fix_retro:
+    if error_capacities or error_moderate or error_improve_cop:
         if horizon == 2050:
             revert_biomass_potential()
         return None # return None is error happens

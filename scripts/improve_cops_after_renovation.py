@@ -9,7 +9,7 @@ from plots._helpers import mock_snakemake, update_config_from_wildcards, load_ne
                     save_unsolved_network, get_config
 
 
-def fix_retrofitting(n_solved, n_unsolved):
+def improve_cops_after_renovation(n_solved, n_unsolved):
     # get optimal retrofitting from the solved network
     retro_data = n_solved.generators.query("carrier in 'retrofitting'")[["p_nom_opt"]]
     # set p_nom as p_nom_opt of previous run with sink_T are defined 
@@ -23,7 +23,7 @@ def fix_retrofitting(n_solved, n_unsolved):
 if __name__ == "__main__":
     if "snakemake" not in globals():
         snakemake = mock_snakemake(
-            "fix_retrofitting", 
+            "improve_cops_after_renovation", 
             clusters="48",
             planning_horizon="2030",
             scenario="flexible"
@@ -33,9 +33,9 @@ if __name__ == "__main__":
 
 
     # network parameters of unsolved network
-    clusters = config["fix_retrofitting"]["clusters"]
-    planning_horizon = config["fix_retrofitting"]["planning_horizon"]
-    scenario = config["fix_retrofitting"]["scenario"]
+    clusters = config["improve_cops_after_renovation"]["clusters"]
+    planning_horizon = config["improve_cops_after_renovation"]["planning_horizon"]
+    scenario = config["improve_cops_after_renovation"]["scenario"]
     # get sector_opts and ll from scenario config file from EEE_study folder
     scenario_config = get_config(scenario, planning_horizon)
     sector_opts = scenario_config["scenario"]["sector_opts"][0]
@@ -52,7 +52,7 @@ if __name__ == "__main__":
 
     if not n_solved is None and not n_unsolved is None:
         # update the network by setting p_nom_opt of previous run (when cop is defined) as p_nom for the next run
-        n_updated = fix_retrofitting(n_solved, n_unsolved)
+        n_updated = improve_cops_after_renovation(n_solved, n_unsolved)
 
         # save updated network
         try:
