@@ -101,7 +101,7 @@ costs:
     "central solar thermal": 30
     "decentral solar thermal": 30
 
-  clustering:
+clustering:
   temporal:
     resolution_elec: false
     resolution_sector: 3H
