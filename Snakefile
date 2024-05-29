@@ -421,22 +421,22 @@ rule set_moderate_retrofitting:
         ),
 
 
-rule fix_retrofitting:
+rule improve_cops_after_renovation:
     params:
-        clusters=config["fix_retrofitting"]["clusters"],
-        planning_horizon=config["fix_retrofitting"]["planning_horizon"],
-        scenario=config["fix_retrofitting"]["scenario"],
+        clusters=config["improve_cops_after_renovation"]["clusters"],
+        planning_horizon=config["improve_cops_after_renovation"]["planning_horizon"],
+        scenario=config["improve_cops_after_renovation"]["scenario"],
     output:
-        logs="scripts/logs/fix_retrofitting_{clusters}_{planning_horizon}_{scenario}.txt",
+        logs="scripts/logs/improve_cops_after_renovation_{clusters}_{planning_horizon}_{scenario}.txt",
     resources:
         mem_mb=20000,
     script:
-        "scripts/fix_retrofitting.py"
+        "scripts/improve_cops_after_renovation.py"
 
 
-rule fix_retrofittings:
+rule improve_cops_after_renovations:
     input:
         expand(
-            "scripts/logs/fix_retrofitting_{clusters}_{planning_horizon}_{scenario}.txt",
-            **config["fix_retrofitting"],
+            "scripts/logs/improve_cops_after_renovation_{clusters}_{planning_horizon}_{scenario}.txt",
+            **config["improve_cops_after_renovation"],
         ),

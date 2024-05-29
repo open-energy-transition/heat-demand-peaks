@@ -131,7 +131,7 @@ To use the workflow of improved COP, solve the network regularly and determine t
 
 Update the `heat_pump_sink_T` parameter in corresponding configuration file. Then, prepare the pre-network and set capacities from previous horizon. To set retrofitting capacities from the first run to current run, execute:
 
-    snakemake -call fix_retrofitting
+    snakemake -call improve_cops_after_renovation
 
 Finally, the updated pre-network can be solved.
 
