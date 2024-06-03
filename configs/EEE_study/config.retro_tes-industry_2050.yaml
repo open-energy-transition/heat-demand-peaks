@@ -84,6 +84,7 @@ sector:
     lignite: lignite
     nuclear: uranium
   keep_existing_capacities: True
+  heat_pump_sink_T: 55.0
 
 costs:
   year: 2045
