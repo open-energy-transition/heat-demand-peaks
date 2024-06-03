@@ -64,7 +64,6 @@ if __name__ == "__main__":
     co2l_limits = CO2L_LIMITS
     line_limits = LINE_LIMITS
     clusters = config["plotting"]["clusters"]
-    time_resolution = config["plotting"]["time_resolution"]
     planning_horizons = config["plotting"]["planning_horizon"]
     planning_horizons = [str(x) for x in planning_horizons if not str(x) == BAU_HORIZON]
     opts = config["plotting"]["sector_opts"]
@@ -90,7 +89,7 @@ if __name__ == "__main__":
     # heat pumps estimation
     for planning_horizon in planning_horizons:
         lineex = line_limits[planning_horizon]
-        sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-{opts}"
+        sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{opts}"
 
         for scenario, nice_name in scenarios.items():
             # load networks
@@ -98,7 +97,7 @@ if __name__ == "__main__":
 
             if n is None:
                 # Skip further computation for this scenario if network is not loaded
-                print(f"Network is not found for scenario '{scenario}', planning year '{planning_horizon}', and time resolution of '{time_resolution}'. Skipping...")
+                print(f"Network is not found for scenario '{scenario}', planning year '{planning_horizon}'. Skipping...")
                 continue
 
             # compute heat pump capacities
