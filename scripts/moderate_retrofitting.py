@@ -38,10 +38,9 @@ if __name__ == "__main__":
     # network parameters of unsolved network
     clusters = config["moderate_retrofitting"]["clusters"]
     planning_horizon = config["moderate_retrofitting"]["planning_horizon"]
-    time_resolution = config["moderate_retrofitting"]["time_resolution"]
     opts = config["moderate_retrofitting"]["sector_opts"]
     lineex = line_limits[planning_horizon]
-    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-{opts}"
+    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{opts}"
 
     # move to pypsa-eur directory
     change_path_to_pypsa_eur()

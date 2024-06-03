@@ -106,16 +106,15 @@ if __name__ == "__main__":
     # network parameters of unsolved network
     clusters = config["set_capacities"]["clusters"]
     planning_horizon = config["set_capacities"]["planning_horizon"]
-    time_resolution = config["set_capacities"]["time_resolution"]
     scenario = config["set_capacities"]["scenario"]
     opts = config["set_capacities"]["sector_opts"]
     lineex = line_limits[planning_horizon]
-    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-{opts}"
+    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{opts}"
 
     # network parameters of solved network
     previous_horizon = previous_horizons[planning_horizon]
     previous_lineex = line_limits[previous_horizon]
-    previous_sector_opts = f"Co2L{co2l_limits[previous_horizon]}-{time_resolution}-{opts}"
+    previous_sector_opts = f"Co2L{co2l_limits[previous_horizon]}-{opts}"
 
     # move to pypsa-eur directory
     change_path_to_pypsa_eur()
