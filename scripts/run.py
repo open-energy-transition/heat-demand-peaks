@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.INFO)
 
 def get_scenario():
     parser = argparse.ArgumentParser(description="Running the scenario")
-    parser.add_argument("-s", "--scenario", help="Specify the scenario.", required=True, 
+    parser.add_argument("-s", "--scenario", help="Specify the scenario.", required=False, 
                         choices=["flexible", "flexible-moderate", "retro_tes", "rigid"])
     parser.add_argument("-c", "--continue_horizon", help="Specify the horizon to continue simulations", 
                         choices=["2030", "2040", "2050"])
@@ -24,9 +24,13 @@ def get_scenario():
     args = parser.parse_args()
 
     # Access the value of the scenario argument
-    scenario = args.scenario
+    scenarios = args.scenario
+    if scenarios == None:
+        scenarios = ["flexible", "flexible-moderate", "retro_tes", "rigid"]
+    else:
+        scenarios = [scenarios]
     # log scenario name
-    logging.info(f"Scenario: {scenario}")
+    logging.info(f"Scenarios: {scenarios}")
 
     # Access the value of horizon from which simulation is continued
     c = args.continue_horizon
@@ -40,16 +44,16 @@ def get_scenario():
     # log scenario name
     if y:
         horizons = [int(y)]
-        logging.info(f"Start simulating {scenario} scenario for {y}")
+        logging.info(f"Start simulating {scenarios} scenario for {y}")
     elif c:
         horizons = get_horizon_list(int(c))
-        logging.info(f"Start simulating {scenario} scenario for {horizons}")
+        logging.info(f"Start simulating {scenarios} scenario for {horizons}")
     else:
         c = 2030
         horizons = get_horizon_list(int(c))
         logging.info("No horizon specified. Starting from default horizon (2030)")
 
-    return scenario, horizons, improved_cop
+    return scenarios, horizons, improved_cop
 
 
 def get_horizon_list(start_horizon):
@@ -170,7 +174,7 @@ def prepare_prenetwork(scenario, horizon):
     # get .nc filename
     filename = get_network_name(scenario, horizon)
     # run prenetwork
-    command = f"snakemake -call results/{scenario}/prenetworks/{filename} --configfile {config_path} --force --ri"
+    command = f"snakemake -call results/{scenario}/prenetworks/{filename} --configfile {config_path} --force --rerun-incomplete"
     subprocess.run(command, shell=True)
     logging.info(f"Prenetwork was prepared for {scenario} scenario in {horizon} horizon!")
 
@@ -363,35 +367,36 @@ def run_workflow(scenario, horizon, improved_cop=False):
 
 if __name__ == "__main__":
     # get scenario from argument
-    scenario, horizons, improved_cop = get_scenario()
+    scenarios, horizons, improved_cop = get_scenario()
 
     # run model for given horizon
     for horizon in horizons:
-        # ensure heat_pump_sink_T: 55.0 at the beginning of first run
-        if scenario in ["flexible", "flexible-moderate", "retro_tes"]:
-            update_sink_T(scenario, horizon, 55.0)
+        for scenario in scenarios:
+            # ensure heat_pump_sink_T: 55.0 at the beginning of first run
+            if scenario in ["flexible", "flexible-moderate", "retro_tes"]:
+                update_sink_T(scenario, horizon, 55.0)
 
-        # run full network preparation and solving workflow 
-        run_status = run_workflow(scenario, horizon)
+            # run full network preparation and solving workflow 
+            run_status = run_workflow(scenario, horizon)
 
-        # stop further execution if workflow did not succeed
-        if run_workflow is None:
-            logging.error("Workflow broke!")
-            break
+            # stop further execution if workflow did not succeed
+            if run_workflow is None:
+                logging.error("Workflow broke!")
+                break
 
-        # for Optimal and Limited retrofitting proceed with improved COP
-        if scenario in ["flexible", "flexible-moderate", "retro_tes"] and improved_cop:
-            # read heat saved
-            heat_saved_ratio = get_heat_saved(scenario, horizon)
+            # for Optimal and Limited retrofitting proceed with improved COP
+            if scenario in ["flexible", "flexible-moderate", "retro_tes"] and improved_cop:
+                # read heat saved
+                heat_saved_ratio = get_heat_saved(scenario, horizon)
 
-            # calculate heat_pump_sink_T
-            sink_T = calculate_sink_T(heat_saved_ratio)
+                # calculate heat_pump_sink_T
+                sink_T = calculate_sink_T(heat_saved_ratio)
 
-            # delete config.yaml
-            delete_config_yaml()
+                # delete config.yaml
+                delete_config_yaml()
 
-            # update heat_pump_sink_T
-            update_sink_T(scenario, horizon, sink_T)
+                # update heat_pump_sink_T
+                update_sink_T(scenario, horizon, sink_T)
 
-            # run full network preparation and solving workflow
-            run_status = run_workflow(scenario, horizon, improved_cop=improved_cop)
+                # run full network preparation and solving workflow
+                run_status = run_workflow(scenario, horizon, improved_cop=improved_cop)

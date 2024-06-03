@@ -94,7 +94,6 @@ if __name__ == "__main__":
     line_limits = LINE_LIMITS
     clusters = config["plotting"]["clusters"]
     planning_horizon = config["plotting"]["planning_horizon"]
-    time_resolution = config["plotting"]["time_resolution"]
     opts = config["plotting"]["sector_opts"]
 
     # define scenario namings
@@ -106,7 +105,7 @@ if __name__ == "__main__":
     table = pd.Series(index=scenarios.values(), data=0)
     if planning_horizon != BAU_HORIZON:
         lineex = line_limits[planning_horizon]
-        sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-{opts}"
+        sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{opts}"
 
         # move to submodules/pypsa-eur
         change_path_to_pypsa_eur()
@@ -124,7 +123,7 @@ if __name__ == "__main__":
 
             if n is None:
                 # Skip further computation for this scenario if network is not loaded
-                print(f"Network is not found for scenario '{scenario}', planning year '{planning_horizon}', and time resolution of '{time_resolution}'. Skipping...")
+                print(f"Network is not found for scenario '{scenario}', planning year '{planning_horizon}'. Skipping...")
                 continue
 
             line_widths, link_widths, line_color, link_color = get_congestion_spatial(n)
@@ -168,7 +167,7 @@ if __name__ == "__main__":
     if BAU_horizon in config["plotting"]["planning_horizon"]:
         scenario, short_name = "BAU", "BAU"
         lineex = line_limits[BAU_horizon]
-        sector_opts = f"Co2L{co2l_limits[BAU_horizon]}-{time_resolution}-{opts}"
+        sector_opts = f"Co2L{co2l_limits[BAU_horizon]}-{opts}"
         
         # move to submodules/pypsa-eur
         change_path_to_pypsa_eur()
@@ -180,7 +179,7 @@ if __name__ == "__main__":
 
         if n is None:
             # Skip further computation for this scenario if network is not loaded
-            print(f"Network is not found for scenario '{scenario}', BAU year '{BAU_horizon}', and time resolution of '{time_resolution}'. Skipping...")
+            print(f"Network is not found for scenario '{scenario}', BAU year '{BAU_horizon}'. Skipping...")
         else:
             _, ax = plt.subplots(subplot_kw={"projection":ccrs.EqualEarth()})
 
