@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO)
 
 def get_scenario():
     parser = argparse.ArgumentParser(description="Running the scenario")
-    parser.add_argument("-s", "--scenario", help="Specify the scenario.", required=True, 
+    parser.add_argument("-s", "--scenario", help="Specify the scenario.", required=False, 
                         choices=["flexible", "flexible-moderate", "retro_tes", "rigid"])
     parser.add_argument("-c", "--continue_horizon", help="Specify the horizon to continue simulations", 
                         choices=["2030", "2040", "2050"])
@@ -20,9 +20,13 @@ def get_scenario():
     args = parser.parse_args()
 
     # Access the value of the scenario argument
-    scenario = args.scenario
+    scenarios = args.scenario
+    if scenarios == None:
+        scenarios = ["flexible", "flexible-moderate", "retro_tes", "rigid"]
+    else:
+        scenarios = [scenarios]
     # log scenario name
-    logging.info(f"Scenario: {scenario}")
+    logging.info(f"Scenarios: {scenarios}")
 
     # Access the value of horizon from which simulation is continued
     c = args.continue_horizon
@@ -32,16 +36,16 @@ def get_scenario():
     # log scenario name
     if y:
         horizons = [int(y)]
-        logging.info(f"Start simulating {scenario} scenario for {y}")
+        logging.info(f"Start simulating {scenarios} scenario for {y}")
     elif c:
         horizons = get_horizon_list(int(c))
-        logging.info(f"Start simulating {scenario} scenario for {horizons}")
+        logging.info(f"Start simulating {scenarios} scenario for {horizons}")
     else:
         c = 2030
         horizons = get_horizon_list(int(c))
         logging.info("No horizon specified. Starting from default horizon (2030)")
 
-    return scenario, horizons
+    return scenarios, horizons
 
 
 def get_horizon_list(start_horizon):
@@ -162,7 +166,7 @@ def prepare_prenetwork(scenario, horizon):
     # get .nc filename
     filename = get_network_name(scenario, horizon)
     # run prenetwork
-    command = f"snakemake -call results/{scenario}/prenetworks/{filename} --configfile {config_path} --force"
+    command = f"snakemake -call results/{scenario}/prenetworks/{filename} --configfile {config_path} --force --rerun-incomplete"
     subprocess.run(command, shell=True)
     logging.info(f"Prenetwork was prepared for {scenario} scenario in {horizon} horizon!")
 
@@ -218,35 +222,36 @@ def solve_network(scenario, horizon):
 
 if __name__ == "__main__":
     # get scenario from argument
-    scenario, horizons = get_scenario()
+    scenarios, horizons = get_scenario()
 
     # run model for given horizon
     for horizon in horizons:
-        if horizon == 2050:
-            increase_biomass_potential()
-        # run prenetwork
-        prepare_prenetwork(scenario=scenario, horizon=horizon)
+        for scenario in scenarios:
+            if horizon == 2050:
+                increase_biomass_potential()
+            # run prenetwork
+            prepare_prenetwork(scenario=scenario, horizon=horizon)
 
-        # initialize error_capacities and error_moderate
-        error_capacities, error_moderate = [], []
-        
-        # set capacities if 2040 or 2050
-        if not horizon == 2030:
-            error_capacities = set_capacities(scenario=scenario, horizon=horizon)
+            # initialize error_capacities and error_moderate
+            error_capacities, error_moderate = [], []
 
-        # set moderate retrofitting
-        if scenario == "flexible-moderate":
-            error_moderate = moderate_retrofitting(scenario=scenario, horizon=horizon)
+            # set capacities if 2040 or 2050
+            if not horizon == 2030:
+                error_capacities = set_capacities(scenario=scenario, horizon=horizon)
 
-        # break if error happens
-        if error_capacities or error_moderate:
+            # set moderate retrofitting
+            if scenario == "flexible-moderate":
+                error_moderate = moderate_retrofitting(scenario=scenario, horizon=horizon)
+
+            # break if error happens
+            if error_capacities or error_moderate:
+                if horizon == 2050:
+                    revert_biomass_potential()
+                break
+
+            # solve the network
+            solve_network(scenario, horizon)
+
+            # revert biomass potential
             if horizon == 2050:
                 revert_biomass_potential()
-            break
-
-        # solve the network
-        solve_network(scenario, horizon)
-
-        # revert biomass potential
-        if horizon == 2050:
-            revert_biomass_potential()
