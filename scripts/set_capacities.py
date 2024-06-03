@@ -8,7 +8,7 @@ import warnings
 warnings.filterwarnings("ignore")
 from plots._helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                     change_path_to_pypsa_eur, change_path_to_base, load_unsolved_network, \
-                    save_unsolved_network, LINE_LIMITS, CO2L_LIMITS
+                    save_unsolved_network, get_config
 
 
 class CustomError(Exception):
@@ -99,22 +99,22 @@ if __name__ == "__main__":
     config = update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     # network parameters by year
-    co2l_limits = CO2L_LIMITS
-    line_limits = LINE_LIMITS
     previous_horizons = {"2040":"2030", "2050":"2040"} 
 
     # network parameters of unsolved network
     clusters = config["set_capacities"]["clusters"]
     planning_horizon = config["set_capacities"]["planning_horizon"]
     scenario = config["set_capacities"]["scenario"]
-    opts = config["set_capacities"]["sector_opts"]
-    lineex = line_limits[planning_horizon]
-    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{opts}"
+    # get current sector_opts and ll from scenario config file from EEE_study folder
+    current_scenario_config = get_config(scenario, planning_horizon)
+    sector_opts = current_scenario_config["scenario"]["sector_opts"][0]
+    lineex = current_scenario_config["scenario"]["ll"][0]
 
     # network parameters of solved network
     previous_horizon = previous_horizons[planning_horizon]
-    previous_lineex = line_limits[previous_horizon]
-    previous_sector_opts = f"Co2L{co2l_limits[previous_horizon]}-{opts}"
+    previous_scenario_config = get_config(scenario, previous_horizon)
+    previous_sector_opts = previous_scenario_config["scenario"]["sector_opts"][0]
+    previous_lineex = previous_scenario_config["scenario"]["ll"][0]
 
     # move to pypsa-eur directory
     change_path_to_pypsa_eur()

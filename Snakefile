@@ -240,7 +240,7 @@ rule get_heat_pumps:
         ),
 
 
-rule get_infra_savings:
+rule get_infra_saving:
     params:
         clusters=config["plotting"]["clusters"],
     output:
@@ -250,6 +250,20 @@ rule get_infra_savings:
         mem_mb=20000,
     script:
         "plots/table_infra_savings.py"
+
+
+rule get_infra_savings:
+    input:
+        expand(
+            RESULTS
+            + "table_infra_savings_caps_{clusters}.csv",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "table_infra_savings_costs_{clusters}.csv",
+            **config["plotting"],
+        ),
 
 
 rule plot_transmission_congestion:
@@ -354,6 +368,16 @@ rule plot_all:
             + "table_heat_tech_ratio_{clusters}.csv",
             **config["plotting"],
         ),
+        expand(
+            RESULTS
+            + "table_infra_savings_caps_{clusters}.csv",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "table_infra_savings_costs_{clusters}.csv",
+            **config["plotting"],
+        ),
 
 
 rule set_capacity:
@@ -394,4 +418,25 @@ rule set_moderate_retrofitting:
         expand(
             "scripts/logs/set_moderate_retrofitting_{clusters}_{planning_horizon}.txt",
             **config["moderate_retrofitting"],
+        ),
+
+
+rule improve_cops_after_renovation:
+    params:
+        clusters=config["improve_cops_after_renovation"]["clusters"],
+        planning_horizon=config["improve_cops_after_renovation"]["planning_horizon"],
+        scenario=config["improve_cops_after_renovation"]["scenario"],
+    output:
+        logs="scripts/logs/improve_cops_after_renovation_{clusters}_{planning_horizon}_{scenario}.txt",
+    resources:
+        mem_mb=20000,
+    script:
+        "scripts/improve_cops_after_renovation.py"
+
+
+rule improve_cops_after_renovations:
+    input:
+        expand(
+            "scripts/logs/improve_cops_after_renovation_{clusters}_{planning_horizon}_{scenario}.txt",
+            **config["improve_cops_after_renovation"],
         ),

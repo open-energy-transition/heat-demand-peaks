@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import pypsa
 import logging
+import yaml
 
 # get the base working directory
 BASE_PATH = os.path.abspath(os.path.join(__file__ ,"../.."))
@@ -154,14 +155,17 @@ def update_config_from_wildcards(config, w):
         config["plotting"]["planning_horizon"] = planning_horizon
         config["set_capacities"]["planning_horizon"] = planning_horizon
         config["moderate_retrofitting"]["planning_horizon"] = planning_horizon
+        config["improve_cops_after_renovation"]["planning_horizon"] = planning_horizon
     if w.get("clusters"):
         clusters = w.clusters
         config["plotting"]["clusters"] = clusters
         config["set_capacities"]["clusters"] = clusters
         config["moderate_retrofitting"]["clusters"] = clusters
+        config["improve_cops_after_renovation"]["clusters"] = clusters
     if w.get("scenario"):
         scenario = w.scenario
         config["set_capacities"]["scenario"] = scenario
+        config["improve_cops_after_renovation"]["scenario"] = scenario
     return config
 
 
@@ -209,3 +213,21 @@ def change_path_to_base():
     os.chdir(BASE_PATH)
     # create folder to store images
     os.makedirs(PATH_PLOTS, exist_ok=True)
+
+
+def get_config_path(scenario, horizon):
+    configname_dict = {"flexible": "flexible-industry",
+                       "flexible-moderate": "flexible-moderate",
+                       "retro_tes": "retro_tes-industry",
+                       "rigid": "rigid-industry"}
+    configname = f"config.{configname_dict[scenario]}_{horizon}.yaml"
+    configpath = "configs/EEE_study/"
+    return configpath + configname
+
+
+def get_config(scenario, horizon):
+    config_path = get_config_path(scenario, horizon)
+    # read config file
+    with open(config_path, 'r') as file:
+        config = yaml.safe_load(file)
+    return config
