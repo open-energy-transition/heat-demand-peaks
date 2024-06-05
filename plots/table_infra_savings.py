@@ -9,7 +9,7 @@ import warnings
 warnings.filterwarnings("ignore")
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                      change_path_to_pypsa_eur, change_path_to_base, \
-                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON
+                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON, replace_multiindex_values
                      
 from plot_total_costs import compute_costs
 
@@ -35,7 +35,7 @@ if __name__ == "__main__":
     opts = config["plotting"]["sector_opts"]
 
     # define scenario namings
-    scenarios = {"flexible": "Optimal Renovation and Heating", 
+    scenarios = {"flexible": "Optimal Renovation and Optimal Heating", 
                  "retro_tes": "Optimal Renovation and Green Heating", 
                  "flexible-moderate": "Limited Renovation and Optimal Heating", 
                  }
@@ -121,6 +121,8 @@ if __name__ == "__main__":
     change_path_to_base()
 
     # save the heat pumps data in Excel format
+    df_savings.index = ["Limited Renovation and Optimal/Green Heating" if s == "Limited Renovation and Optimal Heating" else s for s in df_savings.index]
     df_savings.to_csv(snakemake.output.table_cap)
+    cost_savings.index = ["Limited Renovation and Optimal/Green Heating" if s == "Limited Renovation and Optimal Heating" else s for s in cost_savings.index]
     cost_savings.to_csv(snakemake.output.table_costs)
 
