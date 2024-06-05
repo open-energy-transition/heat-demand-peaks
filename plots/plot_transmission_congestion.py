@@ -145,12 +145,14 @@ if __name__ == "__main__":
                 line_colors=line_color, link_colors=link_color,
                 link_widths=scaled_link_widths, line_widths=scaled_line_widths
             )
-            ax.set_title(short_name)
+            # set LRGH for LR for 2040 and 2050
+            label_name = "LRGH" if short_name == "LROH" and planning_horizon in ["2040", "2050"] else short_name
+            ax.set_title(label_name)
             # total congestion
             ax.text(0, 1, "Avg", ha='left', va='top', 
                     transform=ax.transAxes, fontsize='x-small',
                     bbox=dict(facecolor='white', edgecolor='none', pad=3))
-            ax.text(0, 0.93, f"{table[short_name].round(2)}x", ha='left', va='top', 
+            ax.text(0, 0.92, f"{table[short_name].round(2)}x", ha='left', va='top', 
                     transform=ax.transAxes, fontsize='x-small',
                     bbox=dict(facecolor='white', edgecolor='none', pad=3))
 
@@ -160,6 +162,9 @@ if __name__ == "__main__":
         # move to base directory
         change_path_to_base()
         plt.savefig(snakemake.output.plot, bbox_inches="tight", dpi=200)
+        # rename LROH to LRGH for 2040 and 2050
+        table.index = ["LRGH" if s == "LROH" and planning_horizon in ["2040", "2050"] else s for s in table.index]
+        table.name = None
         table.to_csv(snakemake.output.table)
 
     # add BAU
