@@ -142,7 +142,11 @@ def plot_electricity_cost(df_prices, name):
     sorted_df_prices.T.plot.bar(ax=ax, width=0.7, color=color_codes)
     # define plot parameters
     ax.set_facecolor("white")
-    ax.legend(loc="upper left", facecolor="white", fontsize='x-small')
+    # modify the name for LR in legend for 2040 and 2050
+    handles, labels = ax.get_legend_handles_labels()
+    if planning_horizon in ["2040", "2050"]:
+        labels = ["Limited Renovation and Green Heating" if label == "Limited Renovation and Optimal Heating" else label for label in labels]
+    ax.legend(handles, labels, loc="upper left", facecolor="white", fontsize='x-small')
     xlabel = ax.set_xlabel("countries")
     ax.spines['left'].set_color('black')
     ax.spines['bottom'].set_color('black')
@@ -154,12 +158,12 @@ def plot_electricity_cost(df_prices, name):
     if name == "bills":
         ax.set_title("Electricity bills")
         ylabel = ax.set_ylabel("EUR/household")
-        ax.set_ylim([0,2500])
+        ax.set_ylim([0,4500])
         plt.savefig(snakemake.output.figure_bills, bbox_inches='tight', dpi=600)
     elif name == "prices":
         ax.set_title("Energy price per country")
         ylabel = ax.set_ylabel("EUR/MWh")
-        ax.set_ylim([0, 140])
+        ax.set_ylim([0, 200])
         plt.savefig(snakemake.output.figure_price, bbox_inches='tight', dpi=600)
 
 
