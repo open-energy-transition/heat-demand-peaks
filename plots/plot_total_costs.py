@@ -9,7 +9,7 @@ import warnings
 warnings.filterwarnings("ignore")
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                      change_path_to_pypsa_eur, change_path_to_base, \
-                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON
+                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON, replace_multiindex_values
 
 logger = logging.getLogger(__name__)
 
@@ -235,8 +235,15 @@ def plot_costs(cost_df, clusters, planning_horizon, plot_width=7):
     ax.set_ylabel("System Cost [EUR billion per year]")
 
     ax.set_xlabel("")
-    ax.set_ylim([0,1000])
-    ax.set_yticks(np.arange(0, 1100, 100))
+    ax.set_ylim([0,1100])
+    ax.set_yticks(np.arange(0, 1200, 100))
+
+    x_ticks = list(df.columns)
+    if planning_horizon in ["2040", "2050"] and "Limited \nRenovation &\nOptimal Heating" in x_ticks:
+        # replace name for Limited Renovation scenario for 2030 to be LROH
+        x_ticks[x_ticks.index("Limited \nRenovation &\nOptimal Heating")] = "Limited \nRenovation &\nGreen Heating"
+
+    ax.set_xticklabels(x_ticks)
 
     # Turn off both horizontal and vertical grid lines
     ax.grid(False, which='both')
@@ -310,8 +317,15 @@ def plot_capacities(caps_df, clusters, planning_horizon, plot_width=7):
     ax.set_ylabel("Installed capacities [GW]")
 
     ax.set_xlabel("")
-    ax.set_ylim([0,19000])
-    ax.set_yticks(np.arange(0, 19000, 2000))
+    ax.set_ylim([0,20000])
+    ax.set_yticks(np.arange(0, 21000, 2000))
+
+    x_ticks = list(df.columns)
+    if planning_horizon in ["2040", "2050"] and "Limited \nRenovation &\nOptimal Heating" in x_ticks:
+        # replace name for Limited Renovation scenario for 2030 to be LROH
+        x_ticks[x_ticks.index("Limited \nRenovation &\nOptimal Heating")] = "Limited \nRenovation &\nGreen Heating"
+
+    ax.set_xticklabels(x_ticks)
 
     # Turn off both horizontal and vertical grid lines
     ax.grid(False, which='both')
@@ -411,7 +425,7 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "plot_total_costs", 
             clusters="48",
-            planning_horizon="2030",
+            planning_horizon=["2030"],
         )
     # update config based on wildcards
     config = update_config_from_wildcards(snakemake.config, snakemake.wildcards)
@@ -538,9 +552,23 @@ if __name__ == "__main__":
     # save all costs to csv
     if not table_cost_df.empty:
         table_cost_df.index.name = "System cost [EUR billion per year]"
+        table_cost_df.columns = replace_multiindex_values(table_cost_df.columns, 
+                                                          ("2040", "Limited \nRenovation &\nOptimal Heating"),
+                                                          ("2040","Limited \nRenovation &\nGreen Heating"))
+        table_cost_df.columns = replace_multiindex_values(table_cost_df.columns, 
+                                                          ("2050", "Limited \nRenovation &\nOptimal Heating"),
+                                                          ("2050","Limited \nRenovation &\nGreen Heating"))
+
         table_cost_df.to_csv(snakemake.output.costs)
 
     # save all capacities to csv
     if not table_cap_df.empty:
         table_cap_df.index.name = "Installed capacity [GW]"
+        table_cap_df.columns = replace_multiindex_values(table_cap_df.columns, 
+                                                         ("2040", "Limited \nRenovation &\nOptimal Heating"),
+                                                         ("2040","Limited \nRenovation &\nGreen Heating"))
+        table_cap_df.columns = replace_multiindex_values(table_cap_df.columns, 
+                                                         ("2050", "Limited \nRenovation &\nOptimal Heating"),
+                                                         ("2050","Limited \nRenovation &\nGreen Heating"))
+
         table_cap_df.to_csv(snakemake.output.capacities) 
