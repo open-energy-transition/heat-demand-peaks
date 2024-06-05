@@ -97,6 +97,8 @@ def plot_elec_consumption_for_heat(dict_elec):
         plt.yticks(fontsize=10)
 
         ax.set_xlim([where[0], where[1]-1])
+        # change name to LR for 2040 and 2050
+        name = "Limited Renovation and Green Heating" if name == "Limited Renovation and Optimal Heating" and planning_horizon in ["2040", "2050"] else name
         ax.set_title(name, fontsize=10)
         i+= 1
 
