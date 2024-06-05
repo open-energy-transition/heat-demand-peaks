@@ -3,6 +3,7 @@ from pathlib import Path
 import pypsa
 import logging
 import yaml
+import pandas as pd
 
 # get the base working directory
 BASE_PATH = os.path.abspath(os.path.join(__file__ ,"../.."))
@@ -10,7 +11,7 @@ BASE_PATH = os.path.abspath(os.path.join(__file__ ,"../.."))
 PATH_PLOTS = "plots/results/"
 
 # Co2L limits
-CO2L_LIMITS = {"2020": "0.725",
+CO2L_LIMITS = {"2020": "0.75",
                "2030": "0.45", 
                "2040": "0.1", 
                "2050": "0.0"}
@@ -231,3 +232,9 @@ def get_config(scenario, horizon):
     with open(config_path, 'r') as file:
         config = yaml.safe_load(file)
     return config
+
+
+def replace_multiindex_values(multiindex, old_value, new_value):
+    # Create a new MultiIndex with replaced values
+    new_tuples = [new_value if item == old_value else item for item in multiindex]
+    return pd.MultiIndex.from_tuples(new_tuples, names=multiindex.names)
