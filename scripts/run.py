@@ -174,7 +174,7 @@ def prepare_prenetwork(scenario, horizon):
     # get .nc filename
     filename = get_network_name(scenario, horizon)
     # run prenetwork
-    command = f"snakemake -call results/{scenario}/prenetworks/{filename} --configfile {config_path} --force --rerun-incomplete"
+    command = f"snakemake --cores 2 results/{scenario}/prenetworks/{filename} --configfile {config_path} --force --rerun-incomplete"
     subprocess.run(command, shell=True)
     logging.info(f"Prenetwork was prepared for {scenario} scenario in {horizon} horizon!")
 
@@ -234,7 +234,7 @@ def solve_network(scenario, horizon):
     change_path_to_pypsa_eur()
 
     # solve the network
-    command = f"snakemake -call solve_sector_networks --configfile {config_path}"
+    command = f"snakemake --cores 2 solve_sector_networks --configfile {config_path}"
     subprocess.run(command, shell=True)
     logging.info(f"Network was solved for {scenario} scenario in {horizon} horizon!")
 
@@ -364,6 +364,8 @@ def read_sink_T(scenario, horizon):
 
 
 def run_workflow(scenario, horizon, improved_cop=False):
+    # remove biomass potential increase if present
+    revert_biomass_potential()
     # increase biomass potential for 2050 by 1.2
     if horizon == 2050:
         increase_biomass_potential()
