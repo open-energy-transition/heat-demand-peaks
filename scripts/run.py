@@ -174,7 +174,7 @@ def prepare_prenetwork(scenario, horizon):
     # get .nc filename
     filename = get_network_name(scenario, horizon)
     # run prenetwork
-    command = f"snakemake -call results/{scenario}/prenetworks/{filename} --configfile {config_path} --force --rerun-incomplete"
+    command = f"snakemake --cores 2 results/{scenario}/prenetworks/{filename} --configfile {config_path} --force --rerun-incomplete"
     subprocess.run(command, shell=True)
     logging.info(f"Prenetwork was prepared for {scenario} scenario in {horizon} horizon!")
 
@@ -234,7 +234,7 @@ def solve_network(scenario, horizon):
     change_path_to_pypsa_eur()
 
     # solve the network
-    command = f"snakemake -call solve_sector_networks --configfile {config_path}"
+    command = f"snakemake --cores 2 solve_sector_networks --configfile {config_path}"
     subprocess.run(command, shell=True)
     logging.info(f"Network was solved for {scenario} scenario in {horizon} horizon!")
 
@@ -327,7 +327,45 @@ def update_sink_T(scenario, horizon, sink_T):
     change_path_to_base()
 
 
+def read_sink_T(scenario, horizon):
+    # change path to pypsa-eur
+    change_path_to_pypsa_eur()
+
+    # Define the file path
+    config_path = get_config_path(scenario, horizon)
+    config_path = "../../" + config_path
+
+    # Read the contents of the file
+    with open(config_path, 'r') as file:
+        lines = file.readlines()
+
+    # Find the index of the line containing the specified text
+    index = next((i for i, line in enumerate(lines) if '  heat_pump_sink_T:' in line), None)
+
+    # Insert the new line after the specified line
+    if index is not None:
+        # Extract the line
+        line = lines[index]
+        
+        # Split the line by the specified text and take the part after it
+        value_str = line.split('  heat_pump_sink_T:')[-1].strip()
+
+        # Convert the extracted part to float
+        value = float(value_str)
+        
+        logging.info("The extracted heat_pump_sink_T value is:", value)
+    else:
+        logging.info("The specified heat_pump_sink_T was not found in any line.")
+
+    # move to base directory
+    change_path_to_base()
+
+    return value
+
+
 def run_workflow(scenario, horizon, improved_cop=False):
+    # remove biomass potential increase if present
+    revert_biomass_potential()
     # increase biomass potential for 2050 by 1.2
     if horizon == 2050:
         increase_biomass_potential()
@@ -373,8 +411,12 @@ if __name__ == "__main__":
     for horizon in horizons:
         for scenario in scenarios:
             # ensure heat_pump_sink_T: 55.0 at the beginning of first run
-            if scenario in ["flexible", "flexible-moderate", "retro_tes"]:
+            if scenario in ["flexible", "flexible-moderate", "retro_tes"] and not improved_cop:
                 update_sink_T(scenario, horizon, 55.0)
+            elif scenario == "flexible-moderate" and improved_cop:
+                # read sink_T from flexible scenario for improved COP runs
+                sink_T = read_sink_T("flexible", horizon)
+                update_sink_T(scenario, horizon, sink_T)
 
             # run full network preparation and solving workflow 
             run_status = run_workflow(scenario, horizon)
@@ -385,7 +427,7 @@ if __name__ == "__main__":
                 break
 
             # for Optimal and Limited retrofitting proceed with improved COP
-            if scenario in ["flexible", "flexible-moderate", "retro_tes"] and improved_cop:
+            if scenario in ["flexible", "retro_tes"] and improved_cop:
                 # read heat saved
                 heat_saved_ratio = get_heat_saved(scenario, horizon)
 

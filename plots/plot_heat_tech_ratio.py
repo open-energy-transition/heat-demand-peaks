@@ -9,7 +9,7 @@ warnings.filterwarnings("ignore")
 import colors as c
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                      change_path_to_pypsa_eur, change_path_to_base, \
-                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON, PATH_PLOTS
+                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON, PATH_PLOTS, replace_multiindex_values
 
 
 def get_heat_capacities(n, nice_name):
@@ -57,7 +57,14 @@ def plot_capacities(capacities_df, clusters, planning_horizon, plot_width=7):
     plt.xticks(rotation=0, fontsize=10)
     ax.set_ylabel("Capacity [$\mathrm{GW_{el}}$]")
     ax.set_xlabel("")
-    ax.set_ylim([0, 1300])
+    ax.set_ylim([0, 1700])
+    x_ticks = list(df.columns)
+    if planning_horizon in ["2040", "2050"] and "Limited \nRenovation &\nOptimal Heating" in x_ticks:
+        # replace name for Limited Renovation scenario for 2030 to be LROH
+        x_ticks[x_ticks.index("Limited \nRenovation &\nOptimal Heating")] = "Limited \nRenovation &\nGreen Heating"
+
+    ax.set_xticklabels(x_ticks)
+
     # Turn off both horizontal and vertical grid lines
     ax.grid(False, which='both')
     ax.legend(
@@ -95,7 +102,7 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "plot_heat_tech_ratio", 
             clusters="48",
-            planning_horizon="2030",
+            planning_horizon=["2030"],
         )
     # update config based on wildcards
     config = update_config_from_wildcards(snakemake.config, snakemake.wildcards)
@@ -164,5 +171,11 @@ if __name__ == "__main__":
     if not table_cap_df.empty:
         # save to csv
         table_cap_df.index.name = "Capacity [MW_el]"
+        table_cap_df.columns = replace_multiindex_values(table_cap_df.columns, 
+                                                         ("2040", "Limited \nRenovation &\nOptimal Heating"),
+                                                         ("2040","Limited \nRenovation &\nGreen Heating"))
+        table_cap_df.columns = replace_multiindex_values(table_cap_df.columns, 
+                                                         ("2050", "Limited \nRenovation &\nOptimal Heating"),
+                                                         ("2050","Limited \nRenovation &\nGreen Heating"))
         table_cap_df.to_csv(snakemake.output.table)
         

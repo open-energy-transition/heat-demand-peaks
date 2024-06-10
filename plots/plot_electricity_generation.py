@@ -163,6 +163,8 @@ if __name__ == "__main__":
 
 
         ax.set(aspect="equal")
+        # set nice_name to LRGH for LR in 2040 and 2050
+        nice_name = "LRGH" if nice_name == "LROH" and planning_horizon in ["2040", "2050"] else nice_name
         ax.set_title(nice_name, fontsize=6)
     
     nuclear_patch = mpatches.Patch(color='#ff8c00', label='Nuclear')

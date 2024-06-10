@@ -14,7 +14,7 @@ import warnings
 warnings.filterwarnings("ignore")
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                      change_path_to_pypsa_eur, change_path_to_base, \
-                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON
+                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON, replace_multiindex_values
 
 logger = logging.getLogger(__name__)
 
@@ -42,10 +42,10 @@ def get_curtailment(n, nice_name):
 
 def plot_curtailment(df_curtailment):
     # color codes for legend
-    color_codes = {"Optimal Renovation and Heating":"purple", 
-                   "Optimal Renovation and Green Heating":"limegreen", 
-                   "Limited Renovation and Optimal Heating":"royalblue", 
-                   "No Renovation and Green Heating":"#f4b609",
+    color_codes = {"OROH":"purple", 
+                   "ORGH":"limegreen", 
+                   "LROH":"royalblue", 
+                   "NRGH":"#f4b609",
                    "BAU": "grey"}
     
     # MWh to TWh
@@ -55,9 +55,15 @@ def plot_curtailment(df_curtailment):
 
     fig, ax = plt.subplots(figsize=(7, 3))
     for nice_name, color_code in color_codes.items():
+        # set name for Limited retrofitting for 2040 and 2050
+        if planning_horizon in ["2040", "2050"] and nice_name == 'LROH':
+            label_name = "LROH/LRGH"
+        else:
+            label_name = nice_name
+
         if not nice_name == "BAU":
             df_curtailment.loc["Total", (slice(None), nice_name)].plot(ax=ax, color=color_code, 
-                                                                       linewidth=2, marker='o', label=nice_name, zorder=5)
+                                                                       linewidth=2, marker='o', label=label_name, zorder=5)
         elif nice_name == "BAU" and not BAU_year.empty:
             ax.axhline(y=df_curtailment.loc["Total", (BAU_year, nice_name)].values, 
                        color=color_code, linestyle='--', label=nice_name, zorder=1)
@@ -110,10 +116,10 @@ if __name__ == "__main__":
     planning_horizons = [str(x) for x in planning_horizons if not str(x) == BAU_HORIZON]
 
     # define scenario namings
-    scenarios = {"flexible": "Optimal Renovation and Heating", 
-                "retro_tes": "Optimal Renovation and Green Heating", 
-                "flexible-moderate": "Limited Renovation and Optimal Heating", 
-                "rigid": "No Renovation and Green Heating"}
+    scenarios = {"flexible": "OROH", 
+                "retro_tes": "ORGH", 
+                "flexible-moderate": "LROH", 
+                "rigid": "NRGH"}
 
 
     # initialize df for storing curtailment information
@@ -155,7 +161,13 @@ if __name__ == "__main__":
 
     # store to csv and png
     if not curtailment_df.empty:
-        # save to csv
-        curtailment_df.to_csv(snakemake.output.table)
         # make plot
         plot_curtailment(curtailment_df)
+        # save to csv
+        curtailment_df.columns = replace_multiindex_values(curtailment_df.columns, 
+                                                           ("2040", "LROH"),
+                                                           ("2040", "LRGH"))
+        curtailment_df.columns = replace_multiindex_values(curtailment_df.columns, 
+                                                           ("2050", "LROH"),
+                                                           ("2050", "LRGH"))
+        curtailment_df.to_csv(snakemake.output.table)

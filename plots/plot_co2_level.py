@@ -14,7 +14,7 @@ import warnings
 warnings.filterwarnings("ignore")
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                      change_path_to_pypsa_eur, change_path_to_base, \
-                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON
+                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON, replace_multiindex_values
 
 logger = logging.getLogger(__name__)
 
@@ -224,8 +224,15 @@ def plot_co2_balance(co2_df, clusters, planning_horizon, plot_width=7):
     plt.xticks(rotation=0, fontsize=10)
     ax.set_ylabel("CO$_2$ emissions [tCO$_{2-eq}$]")
     ax.set_xlabel("")
-    ax.set_ylim([-3e9,3e9])
-    ax.set_yticks(np.arange(-3e9, 3e9, 5e8))
+    ax.set_ylim([-4e9,4e9])
+    ax.set_yticks(np.arange(-4.0e9, 4.0e9, 5e8))
+    x_ticks = list(co2_df.columns)
+    if planning_horizon in ["2040", "2050"] and "Limited \nRenovation &\nOptimal Heating" in x_ticks:
+        # replace name for Limited Renovation scenario for 2030 to be LROH
+        x_ticks[x_ticks.index("Limited \nRenovation &\nOptimal Heating")] = "Limited \nRenovation &\nGreen Heating"
+
+    ax.set_xticklabels(x_ticks)
+
     # Turn off both horizontal and vertical grid lines
     ax.grid(False, which='both')
     ax.legend(
@@ -277,7 +284,7 @@ if __name__ == "__main__":
     planning_horizons = [str(x) for x in planning_horizons if not str(x) == BAU_HORIZON]
 
     # define scenario namings
-    scenarios = {"flexible": "Optimal \nRenovation &\nHeating", 
+    scenarios = {"flexible": "Optimal \nRenovation &\nOptimal Heating", 
                 "retro_tes": "Optimal \nRenovation &\nGreen Heating", 
                 "flexible-moderate": "Limited \nRenovation &\nOptimal Heating", 
                 "rigid": "No \nRenovation &\nGreen Heating"}
@@ -350,4 +357,10 @@ if __name__ == "__main__":
     if not table_co2_df.empty:
         # save to csv
         table_co2_df.index.name = "CO2 emissions [tCO2_eq]"
+        table_co2_df.columns = replace_multiindex_values(table_co2_df.columns, 
+                                                         ("2040", "Limited \nRenovation &\nOptimal Heating"),
+                                                         ("2040","Limited \nRenovation &\nGreen Heating"))
+        table_co2_df.columns = replace_multiindex_values(table_co2_df.columns, 
+                                                         ("2050", "Limited \nRenovation &\nOptimal Heating"),
+                                                         ("2050","Limited \nRenovation &\nGreen Heating"))
         table_co2_df.to_csv(snakemake.output.table)
