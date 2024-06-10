@@ -54,7 +54,6 @@ sector:
     retro_endogen: false
     WWHR_endogen: false
     weighting_by_building_types: true # true weights AB, SFH and MFH
-    cost_factor: 2
   tes: false # true
   boilers: false #true
   biomass_boiler: false
