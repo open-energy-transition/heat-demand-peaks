@@ -76,6 +76,7 @@ RENAME = {
     "solid biomass for industry CC": "solid biomass for industry",
     "electricity distribution grid": "distribution lines",
     "Open-Cycle Gas":"OCGT",
+    "Combined-Cycle Gas":"CCGT",
     "gas": "gas storage",
     'gas pipeline new': 'gas pipeline',
     "gas for industry CC": "gas for industry",
@@ -137,6 +138,7 @@ PREFERRED_ORDER = pd.Index(
         
         "hydroelectricity",
         "OCGT",
+        "CCGT",
         "onshore wind",
         "offshore wind",
         "solar PV",
