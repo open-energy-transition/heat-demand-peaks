@@ -193,7 +193,7 @@ def get_co2_balance(n, nice_name):
 def plot_co2_balance(co2_df, clusters, planning_horizon, plot_width=7):
     # filter out technologies with very small emission
     max_emissions = co2_df.abs().sum().max() / 2
-    co2_threshold = max_emissions / 100
+    co2_threshold = max_emissions / 100 # 1% of max
     to_drop = co2_df.index[co2_df.abs().max(axis=1) < co2_threshold]
     logger.info(
         f"Dropping technology with co2 balance below {co2_threshold} ton CO2_eq per year"
