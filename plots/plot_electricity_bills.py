@@ -131,10 +131,10 @@ def plot_electricity_cost(df_prices, name):
     sorted_df_prices = df_prices.sort_values(by=df_prices.index[0], axis=1)
 
     # color codes for legend
-    color_codes = {"Optimal Renovation and Heating":"purple", 
-                   "Optimal Renovation and Green Heating":"limegreen", 
-                   "Limited Renovation and Optimal Heating":"royalblue", 
-                   "No Renovation and Green Heating":"#f4b609",
+    color_codes = {"Optimal Renovation and Cost-Optimal Heating":"purple", 
+                   "Optimal Renovation and Electric Heating":"limegreen", 
+                   "Limited Renovation and Cost-Optimal Heating":"royalblue", 
+                   "No Renovation and Electric Heating":"#f4b609",
                    "BAU": "grey"}
 
     # plot as bar plot
@@ -145,7 +145,7 @@ def plot_electricity_cost(df_prices, name):
     # modify the name for LR in legend for 2040 and 2050
     handles, labels = ax.get_legend_handles_labels()
     if planning_horizon in ["2040", "2050"]:
-        labels = ["Limited Renovation and Green Heating" if label == "Limited Renovation and Optimal Heating" else label for label in labels]
+        labels = ["Limited Renovation and Electric Heating" if label == "Limited Renovation and Cost-Optimal Heating" else label for label in labels]
     ax.legend(handles, labels, loc="upper left", facecolor="white", fontsize='x-small')
     xlabel = ax.set_xlabel("countries")
     ax.spines['left'].set_color('black')
@@ -225,10 +225,10 @@ if __name__ == "__main__":
     if planning_horizon == BAU_HORIZON:
         scenarios = {"BAU": "BAU"}
     else:
-        scenarios = {"flexible": "Optimal Renovation and Heating", 
-                     "retro_tes": "Optimal Renovation and Green Heating", 
-                     "flexible-moderate": "Limited Renovation and Optimal Heating", 
-                     "rigid": "No Renovation and Green Heating"}
+        scenarios = {"flexible": "Optimal Renovation and Cost-Optimal Heating", 
+                     "retro_tes": "Optimal Renovation and Electric Heating", 
+                     "flexible-moderate": "Limited Renovation and Cost-Optimal Heating", 
+                     "rigid": "No Renovation and Electric Heating"}
 
     # load networks
     networks = {}
