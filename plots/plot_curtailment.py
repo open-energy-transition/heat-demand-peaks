@@ -43,9 +43,9 @@ def get_curtailment(n, nice_name):
 def plot_curtailment(df_curtailment):
     # color codes for legend
     color_codes = {"OROH":"purple", 
-                   "ORGH":"limegreen", 
+                   "OREH":"limegreen", 
                    "LROH":"royalblue", 
-                   "NRGH":"#f4b609",
+                   "NREH":"#f4b609",
                    "BAU": "grey"}
     
     # MWh to TWh
@@ -57,7 +57,7 @@ def plot_curtailment(df_curtailment):
     for nice_name, color_code in color_codes.items():
         # set name for Limited retrofitting for 2040 and 2050
         if planning_horizon in ["2040", "2050"] and nice_name == 'LROH':
-            label_name = "LROH/LRGH"
+            label_name = "LROH/LREH"
         else:
             label_name = nice_name
 
@@ -117,9 +117,9 @@ if __name__ == "__main__":
 
     # define scenario namings
     scenarios = {"flexible": "OROH", 
-                "retro_tes": "ORGH", 
+                "retro_tes": "OREH", 
                 "flexible-moderate": "LROH", 
-                "rigid": "NRGH"}
+                "rigid": "NREH"}
 
 
     # initialize df for storing curtailment information
@@ -166,8 +166,8 @@ if __name__ == "__main__":
         # save to csv
         curtailment_df.columns = replace_multiindex_values(curtailment_df.columns, 
                                                            ("2040", "LROH"),
-                                                           ("2040", "LRGH"))
+                                                           ("2040", "LREH"))
         curtailment_df.columns = replace_multiindex_values(curtailment_df.columns, 
                                                            ("2050", "LROH"),
-                                                           ("2050", "LRGH"))
+                                                           ("2050", "LREH"))
         curtailment_df.to_csv(snakemake.output.table)
