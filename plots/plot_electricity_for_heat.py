@@ -98,7 +98,7 @@ def plot_elec_consumption_for_heat(dict_elec):
 
         ax.set_xlim([where[0], where[1]-1])
         # change name to LR for 2040 and 2050
-        name = "Limited Renovation and Green Heating" if name == "Limited Renovation and Optimal Heating" and planning_horizon in ["2040", "2050"] else name
+        name = "Limited Renovation and Electric Heating" if name == "Limited Renovation and Cost-Optimal Heating" and planning_horizon in ["2040", "2050"] else name
         ax.set_title(name, fontsize=10)
         i+= 1
 
@@ -143,10 +143,10 @@ if __name__ == "__main__":
     change_path_to_pypsa_eur()
 
     # define scenario namings
-    scenarios = {"flexible": "Optimal Renovation and Heating", 
-                 "retro_tes": "Optimal Renovation and Green Heating", 
-                 "flexible-moderate": "Limited Renovation and Optimal Heating", 
-                 "rigid": "No Renovation and Green Heating"}
+    scenarios = {"flexible": "Optimal Renovation and Cost-Optimal Heating", 
+                 "retro_tes": "Optimal Renovation and Electric Heating", 
+                 "flexible-moderate": "Limited Renovation and Cost-Optimal Heating", 
+                 "rigid": "No Renovation and Electric Heating"}
 
     # load networks
     networks = {}
