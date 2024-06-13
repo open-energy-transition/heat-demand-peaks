@@ -24,7 +24,7 @@ lines:
 
 electricity:
   extendable_carriers:
-    Generator: [OCGT]
+    Generator: [CCGT]
   powerplants_filter: DateOut >= 2024 and not Fueltype.isin(['Nuclear', 'Hard Coal', 'Lignite'])
   custom_powerplants: DateIn <= 2024 and DateOut >= 2024
 
@@ -76,7 +76,7 @@ sector:
   reduce_hot_water_factor:
     2030: 0 # no retrofitting allowed
   conventional_generation:
-    OCGT: gas
+    CCGT: gas
     coal: coal
     lignite: lignite
     nuclear: uranium

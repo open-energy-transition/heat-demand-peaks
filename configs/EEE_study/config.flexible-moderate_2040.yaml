@@ -78,7 +78,7 @@ sector:
   reduce_hot_water_factor:
     2040: 0.1
   conventional_generation:
-    OCGT: gas
+    CCGT: gas
     coal: coal
     lignite: lignite
     nuclear: uranium

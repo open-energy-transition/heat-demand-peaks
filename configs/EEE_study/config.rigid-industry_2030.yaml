@@ -77,7 +77,7 @@ sector:
   reduce_hot_water_factor:
     2030: 0 # no retrofitting allowed
   conventional_generation:
-    OCGT: gas
+    CCGT: gas
     coal: coal
     lignite: lignite
     nuclear: uranium

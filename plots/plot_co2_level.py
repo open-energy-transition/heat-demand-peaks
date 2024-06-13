@@ -76,6 +76,7 @@ RENAME = {
     "solid biomass for industry CC": "solid biomass for industry",
     "electricity distribution grid": "distribution lines",
     "Open-Cycle Gas":"OCGT",
+    "Combined-Cycle Gas":"CCGT",
     "gas": "gas storage",
     'gas pipeline new': 'gas pipeline',
     "gas for industry CC": "gas for industry",
@@ -137,6 +138,7 @@ PREFERRED_ORDER = pd.Index(
         
         "hydroelectricity",
         "OCGT",
+        "CCGT",
         "onshore wind",
         "offshore wind",
         "solar PV",
@@ -190,7 +192,8 @@ def get_co2_balance(n, nice_name):
 
 def plot_co2_balance(co2_df, clusters, planning_horizon, plot_width=7):
     # filter out technologies with very small emission
-    co2_threshold = 20e6 # 1% of 2e9
+    max_emissions = co2_df.abs().sum().max() / 2
+    co2_threshold = max_emissions / 100 # 1% of max
     to_drop = co2_df.index[co2_df.abs().max(axis=1) < co2_threshold]
     logger.info(
         f"Dropping technology with co2 balance below {co2_threshold} ton CO2_eq per year"

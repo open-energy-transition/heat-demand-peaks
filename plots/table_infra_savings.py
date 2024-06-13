@@ -87,10 +87,10 @@ if __name__ == "__main__":
                 n.generators.query("carrier in @wind_carriers").p_nom_opt.sum() -
                 b.generators.query("carrier in @wind_carriers").p_nom_opt.sum()
             )/1e3
-            OCGT_carriers = ["OCGT"]
+            CCGT_carriers = ["CCGT"]
             gas = (
-                n.links.query("carrier in @OCGT_carriers").p_nom_opt.multiply(n.links.efficiency).sum() -
-                b.links.query("carrier in @OCGT_carriers").p_nom_opt.multiply(b.links.efficiency).sum()
+                n.links.query("carrier in @CCGT_carriers").p_nom_opt.multiply(n.links.efficiency).sum() -
+                b.links.query("carrier in @CCGT_carriers").p_nom_opt.multiply(b.links.efficiency).sum()
             )/1e3
 
             df_savings.loc[nice_name, (planning_horizon, "solar")] = solar
