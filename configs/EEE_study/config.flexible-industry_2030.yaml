@@ -11,7 +11,7 @@ scenario:
   clusters:
   - 48
   sector_opts:
-  - Co2L0.45-3H-dist1.05-T-H-B-I
+  - Co2L0.45-dist1.05-T-H-B-I
 
   planning_horizons:
   - 2030
@@ -50,11 +50,13 @@ sector:
       2030: 0.3
   residential_heat_dsm: true
   residential_heat_restriction_value: 0.27
+  residential_heat_restriction_time: [10, 22] # 9am and 9pm
   cluster_heat_buses: false
   reduce_space_heat_exogenously: false
   retrofitting:
     retro_endogen: true
     WWHR_endogen: true
+    weighting_by_building_types: true # true weights AB, SFH and MFH
   tes: true
   boilers: true
   biomass_boiler: false
@@ -77,11 +79,12 @@ sector:
   reduce_hot_water_factor:
     2030: 0.05
   conventional_generation:
-    OCGT: gas
+    CCGT: gas
     coal: coal
     lignite: lignite
     nuclear: uranium
   keep_existing_capacities: True
+  heat_pump_sink_T: 55.0
 
 costs:
   year: 2025
@@ -101,6 +104,11 @@ costs:
   lifetime:
     "central solar thermal": 30
     "decentral solar thermal": 30
+
+clustering:
+  temporal:
+    resolution_elec: false
+    resolution_sector: 3H
 
 adjustments:
   sector: {"p_nom_max": {"solar rooftop": 1.095}} # https://joint-research-centre.ec.europa.eu/jrc-news-and-updates/pv-rooftops-and-beyond-can-surpass-targets-while-preserving-environment-2024-02-14_en

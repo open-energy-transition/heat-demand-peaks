@@ -94,10 +94,9 @@ if __name__ == "__main__":
     line_limits = LINE_LIMITS
     clusters = config["plotting"]["clusters"]
     planning_horizon = config["plotting"]["planning_horizon"]
-    time_resolution = config["plotting"]["time_resolution"]
     opts = config["plotting"]["sector_opts"]
     lineex = line_limits[planning_horizon]
-    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-{opts}"
+    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{opts}"
 
     # move to submodules/pypsa-eur
     change_path_to_pypsa_eur()
@@ -107,9 +106,9 @@ if __name__ == "__main__":
         scenarios = {"BAU": "BAU"}
     else:
         scenarios = {"flexible": "OROH", 
-                     "retro_tes": "ORGH", 
+                     "retro_tes": "OREH", 
                      "flexible-moderate": "LROH", 
-                     "rigid": "NROH"}
+                     "rigid": "NREH"}
 
     # define figure
     count_scenarios = len(scenarios.keys())
@@ -125,7 +124,7 @@ if __name__ == "__main__":
 
         if n is None:
             # Skip further computation for this scenario if network is not loaded
-            print(f"Network is not found for scenario '{scenario}', planning year '{planning_horizon}', and time resolution of '{time_resolution}'. Skipping...")
+            print(f"Network is not found for scenario '{scenario}', planning year '{planning_horizon}'. Skipping...")
             continue
 
         # definde elec buses
@@ -168,6 +167,8 @@ if __name__ == "__main__":
 
 
         ax.set(aspect="equal")
+        # set nice_name to LRGH for LR in 2040 and 2050
+        nice_name = "LREH" if nice_name == "LROH" and planning_horizon in ["2040", "2050"] else nice_name
         ax.set_title(nice_name, fontsize=6)
     
     nuclear_patch = mpatches.Patch(color='#ff8c00', label='Nuclear')

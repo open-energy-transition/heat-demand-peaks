@@ -18,7 +18,7 @@ import warnings
 warnings.filterwarnings("ignore")
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                      change_path_to_pypsa_eur, change_path_to_base, \
-                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON
+                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON, replace_multiindex_values
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +80,7 @@ RENAME = {
     "solid biomass for industry CC": "solid biomass for industry",
     "electricity distribution grid": "distribution lines",
     "Open-Cycle Gas":"OCGT",
+    "Combined-Cycle Gas":"CCGT",
     "gas": "gas storage",
     'gas pipeline new': 'gas pipeline',
     "gas for industry CC": "gas for industry",
@@ -141,6 +142,7 @@ PREFERRED_ORDER = pd.Index(
         
         "hydroelectricity",
         "OCGT",
+        "CCGT",
         "onshore wind",
         "offshore wind",
         "solar PV",
@@ -194,7 +196,8 @@ def get_co2_balance(n, nice_name):
 
 def plot_co2_balance(co2_df, clusters, planning_horizon, plot_width=7):
     # filter out technologies with very small emission
-    co2_threshold = 20e6 # 1% of 2e9
+    max_emissions = co2_df.abs().sum().max() / 2
+    co2_threshold = max_emissions / 100 # 1% of max
     to_drop = co2_df.index[co2_df.abs().max(axis=1) < co2_threshold]
     logger.info(
         f"Dropping technology with co2 balance below {co2_threshold} ton CO2_eq per year"
@@ -228,8 +231,15 @@ def plot_co2_balance(co2_df, clusters, planning_horizon, plot_width=7):
     plt.xticks(rotation=0, fontsize=10)
     ax.set_ylabel("CO$_2$ emissions [tCO$_{2-eq}$]")
     ax.set_xlabel("")
-    ax.set_ylim([-3e9,3e9])
-    ax.set_yticks(np.arange(-3e9, 3e9, 5e8))
+    ax.set_ylim([-4e9,4e9])
+    ax.set_yticks(np.arange(-4.0e9, 4.0e9, 5e8))
+    x_ticks = list(co2_df.columns)
+    if planning_horizon in ["2040", "2050"] and "Limited \nRenovation &\nOptimal Heating" in x_ticks:
+        # replace name for Limited Renovation scenario for 2030 to be LROH
+        x_ticks[x_ticks.index("Limited \nRenovation &\nCost-Optimal Heating")] = "Limited \nRenovation &\nElectric Heating"
+
+    ax.set_xticklabels(x_ticks)
+
     # Turn off both horizontal and vertical grid lines
     ax.grid(False, which='both')
     ax.legend(
@@ -279,13 +289,12 @@ if __name__ == "__main__":
     opts = config["plotting"]["sector_opts"]
     planning_horizons = config["plotting"]["planning_horizon"]
     planning_horizons = [str(x) for x in planning_horizons if not str(x) == BAU_HORIZON]
-    time_resolution = config["plotting"]["time_resolution"]
 
     # define scenario namings
-    scenarios = {"flexible": "Optimal \nRenovation &\nHeating", 
-                "retro_tes": "Optimal \nRenovation &\nGreen Heating", 
-                "flexible-moderate": "Limited \nRenovation &\nOptimal Heating", 
-                "rigid": "No \nRenovation &\nGreen Heating"}
+    scenarios = {"flexible": "Optimal \nRenovation &\nCost-Optimal Heating", 
+                "retro_tes": "Optimal \nRenovation &\nElectric Heating", 
+                "flexible-moderate": "Limited \nRenovation &\nCost-Optimal Heating", 
+                "rigid": "No \nRenovation &\nElectric Heating"}
 
 
     # initialize df for storing co2 balance information
@@ -293,7 +302,7 @@ if __name__ == "__main__":
 
     for planning_horizon in planning_horizons:
         lineex = line_limits[planning_horizon]
-        sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-{opts}"
+        sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{opts}"
 
         # move to submodules/pypsa-eur
         change_path_to_pypsa_eur()
@@ -305,7 +314,7 @@ if __name__ == "__main__":
 
             if n is None:
                 # Skip further computation for this scenario if network is not loaded
-                print(f"Network is not found for scenario '{scenario}', planning year '{planning_horizon}', and time resolution of '{time_resolution}'. Skipping...")
+                print(f"Network is not found for scenario '{scenario}', planning year '{planning_horizon}'. Skipping...")
                 continue
             
             co2_balance = get_co2_balance(n, nice_name)
@@ -325,7 +334,7 @@ if __name__ == "__main__":
     BAU_horizon = BAU_HORIZON
     scenario = "BAU"
     lineex = line_limits[BAU_horizon]
-    sector_opts = f"Co2L{co2l_limits[BAU_horizon]}-{time_resolution}-{opts}"
+    sector_opts = f"Co2L{co2l_limits[BAU_horizon]}-{opts}"
 
     # move to submodules/pypsa-eur
     change_path_to_pypsa_eur()
@@ -337,7 +346,7 @@ if __name__ == "__main__":
 
     if n is None:
         # Skip further computation for this scenario if network is not loaded
-        print(f"Network is not found for scenario '{scenario}', planning year '{BAU_horizon}', and time resolution of '{time_resolution}'. Skipping...")
+        print(f"Network is not found for scenario '{scenario}', planning year '{BAU_horizon}'. Skipping...")
     else:
         # get co2 balance for BAU and group technologies
         co2_BAU = get_co2_balance(n, "BAU")
@@ -355,4 +364,10 @@ if __name__ == "__main__":
     if not table_co2_df.empty:
         # save to csv
         table_co2_df.index.name = "CO2 emissions [tCO2_eq]"
+        table_co2_df.columns = replace_multiindex_values(table_co2_df.columns, 
+                                                         ("2040", "Limited \nRenovation &\nCost-Optimal Heating"),
+                                                         ("2040","Limited \nRenovation &\nElectric Heating"))
+        table_co2_df.columns = replace_multiindex_values(table_co2_df.columns, 
+                                                         ("2050", "Limited \nRenovation &\nCost-Optimal Heating"),
+                                                         ("2050","Limited \nRenovation &\nElectric Heating"))
         table_co2_df.to_csv(snakemake.output.table)

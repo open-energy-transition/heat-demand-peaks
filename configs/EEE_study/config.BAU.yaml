@@ -11,7 +11,7 @@ scenario:
   clusters:
   - 48
   sector_opts:
-  - Co2L0.725-3H-dist1.05-T-H-B-I
+  - Co2L0.75-dist1.05-T-H-B-I
   planning_horizons:
   - 2020
 
@@ -24,9 +24,9 @@ lines:
 
 electricity:
   extendable_carriers:
-    Generator: [OCGT]
-  powerplants_filter: DateOut >= 2020 and not Fueltype.isin(['Nuclear', 'Hard Coal', 'Lignite'])
-  custom_powerplants: DateIn <= 2020 and DateOut >= 2020
+    Generator: [CCGT]
+  powerplants_filter: DateOut >= 2024 and not Fueltype.isin(['Nuclear', 'Hard Coal', 'Lignite'])
+  custom_powerplants: DateIn <= 2024 and DateOut >= 2024
 
 energy:
   energy_totals_year: 2013
@@ -70,13 +70,13 @@ sector:
   land_transport_fuel_cell_share:
     2020: 0.0
   land_transport_electric_share:
-    2020: 0.0
+    2020: 0.025
   land_transport_ice_share:
-    2030: 1.0
+    2030: 0.975
   reduce_hot_water_factor:
     2030: 0 # no retrofitting allowed
   conventional_generation:
-    OCGT: gas
+    CCGT: gas
     coal: coal
     lignite: lignite
     nuclear: uranium
@@ -100,6 +100,11 @@ costs:
   lifetime:
     "central solar thermal": 30
     "decentral solar thermal": 30
+
+clustering:
+  temporal:
+    resolution_elec: false
+    resolution_sector: 3H
 
 adjustments:
   sector: {"p_nom_max": {"solar rooftop": 1.095}}

@@ -18,7 +18,7 @@ import warnings
 warnings.filterwarnings("ignore")
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                      change_path_to_pypsa_eur, change_path_to_base, \
-                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON
+                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON, replace_multiindex_values
 
 logger = logging.getLogger(__name__)
 
@@ -40,10 +40,10 @@ def get_hydrogen_production(n, param_dict):
 
 def plot_hydrogen_production(df_hydrogen, figure_dict):
     # color codes for legend
-    color_codes = {"Optimal Renovation and Heating":"purple", 
-                   "Optimal Renovation and Green Heating":"limegreen", 
-                   "Limited Renovation and Optimal Heating":"royalblue", 
-                   "No Renovation and Green Heating":"#f4b609",
+    color_codes = {"OROH":"purple", 
+                   "OREH":"limegreen", 
+                   "LROH":"royalblue", 
+                   "NREH":"#f4b609",
                    "BAU": "grey"}
     
     # get BAU year
@@ -52,9 +52,15 @@ def plot_hydrogen_production(df_hydrogen, figure_dict):
     for idx, output in figure_dict.items():
         _, ax = plt.subplots(figsize=(7, 3))
         for nice_name, color_code in color_codes.items():
+            # set name for Limited retrofitting for 2040 and 2050
+            if planning_horizon in ["2040", "2050"] and nice_name == 'LROH':
+                label_name = "LROH/LREH"
+            else:
+                label_name = nice_name
+
             if not nice_name == "BAU":
                 df_hydrogen.loc[idx, (slice(None), nice_name)].plot(ax=ax, color=color_code, 
-                                                                        linewidth=2, marker='o', label=nice_name, zorder=5)
+                                                                        linewidth=2, marker='o', label=label_name, zorder=5)
             elif nice_name == "BAU" and not BAU_year.empty:
                 ax.axhline(y=df_hydrogen.loc[idx, (BAU_year, nice_name)].values, 
                         color=color_code, linestyle='--', label=nice_name, zorder=1)
@@ -104,13 +110,12 @@ if __name__ == "__main__":
     opts = config["plotting"]["sector_opts"]
     planning_horizons = config["plotting"]["planning_horizon"]
     planning_horizons = [str(x) for x in planning_horizons if not str(x) == BAU_HORIZON]
-    time_resolution = config["plotting"]["time_resolution"]
 
     # define scenario namings
-    scenarios = {"flexible": "Optimal Renovation and Heating", 
-                "retro_tes": "Optimal Renovation and Green Heating", 
-                "flexible-moderate": "Limited Renovation and Optimal Heating", 
-                "rigid": "No Renovation and Green Heating"}
+    scenarios = {"flexible": "OROH", 
+                "retro_tes": "OREH", 
+                "flexible-moderate": "LROH", 
+                "rigid": "NREH"}
 
     # define dictionary to map to links buses
     param_dict = {"Electricity used [TWh]": "p0",
@@ -125,7 +130,7 @@ if __name__ == "__main__":
 
     for planning_horizon in planning_horizons:
         lineex = line_limits[planning_horizon]
-        sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-{opts}"
+        sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{opts}"
     
         # load networks
         for scenario, nice_name in scenarios.items():
@@ -133,7 +138,7 @@ if __name__ == "__main__":
 
             if n is None:
                 # Skip further computation for this scenario if network is not loaded
-                print(f"Network is not found for scenario '{scenario}', planning year '{planning_horizon}', and time resolution of '{time_resolution}'. Skipping...")
+                print(f"Network is not found for scenario '{scenario}', planning year '{planning_horizon}'. Skipping...")
                 continue
             
             hydrogen_dict = get_hydrogen_production(n, param_dict=param_dict)
@@ -143,13 +148,13 @@ if __name__ == "__main__":
     BAU_horizon = BAU_HORIZON
     scenario = "BAU"
     lineex = line_limits[BAU_horizon]
-    sector_opts = f"Co2L{co2l_limits[BAU_horizon]}-{time_resolution}-{opts}"
+    sector_opts = f"Co2L{co2l_limits[BAU_horizon]}-{opts}"
 
     n = load_network(lineex, clusters, sector_opts, BAU_horizon, scenario)
 
     if n is None:
         # Skip further computation for this scenario if network is not loaded
-        print(f"Network is not found for scenario '{scenario}', planning year '{BAU_horizon}', and time resolution of '{time_resolution}'. Skipping...")
+        print(f"Network is not found for scenario '{scenario}', planning year '{BAU_horizon}'. Skipping...")
     else:
         hydrogen_dict = get_hydrogen_production(n, param_dict=param_dict)
         hydrogen_df.loc[:, (BAU_horizon, scenario)] = pd.Series(hydrogen_dict)
@@ -159,7 +164,13 @@ if __name__ == "__main__":
 
     # store to csv and png
     if not hydrogen_df.empty:
-        # save to csv
-        hydrogen_df.to_csv(snakemake.output.table)
         # make plot
         plot_hydrogen_production(hydrogen_df, figure_dict=figure_dict)
+        # save to csv
+        hydrogen_df.columns = replace_multiindex_values(hydrogen_df.columns, 
+                                                        ("2040", "LROH"),
+                                                        ("2040", "LREH"))
+        hydrogen_df.columns = replace_multiindex_values(hydrogen_df.columns, 
+                                                        ("2050", "LROH"),
+                                                        ("2050", "LREH"))
+        hydrogen_df.to_csv(snakemake.output.table)

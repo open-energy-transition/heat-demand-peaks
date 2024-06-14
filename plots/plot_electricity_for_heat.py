@@ -102,6 +102,8 @@ def plot_elec_consumption_for_heat(dict_elec):
         plt.yticks(fontsize=10)
 
         ax.set_xlim([where[0], where[1]-1])
+        # change name to LR for 2040 and 2050
+        name = "Limited Renovation and Electric Heating" if name == "Limited Renovation and Cost-Optimal Heating" and planning_horizon in ["2040", "2050"] else name
         ax.set_title(name, fontsize=10)
         i+= 1
 
@@ -138,19 +140,18 @@ if __name__ == "__main__":
     line_limits = LINE_LIMITS
     clusters = config["plotting"]["clusters"]
     planning_horizon = config["plotting"]["planning_horizon"]
-    time_resolution = config["plotting"]["time_resolution"]
     opts = config["plotting"]["sector_opts"]
     lineex = line_limits[planning_horizon]
-    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-{opts}"
+    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{opts}"
 
     # move to submodules/pypsa-eur
     change_path_to_pypsa_eur()
 
     # define scenario namings
-    scenarios = {"flexible": "Optimal Renovation and Heating", 
-                 "retro_tes": "Optimal Renovation and Green Heating", 
-                 "flexible-moderate": "Limited Renovation and Optimal Heating", 
-                 "rigid": "No Renovation and Green Heating"}
+    scenarios = {"flexible": "Optimal Renovation and Cost-Optimal Heating", 
+                 "retro_tes": "Optimal Renovation and Electric Heating", 
+                 "flexible-moderate": "Limited Renovation and Cost-Optimal Heating", 
+                 "rigid": "No Renovation and Electric Heating"}
 
     # load networks
     networks = {}
@@ -158,7 +159,7 @@ if __name__ == "__main__":
         n = load_network(lineex, clusters, sector_opts, planning_horizon, scenario)
         if n is None:
             # Skip further computation for this scenario if network is not loaded
-            print(f"Network is not found for scenario '{scenario}', planning year '{planning_horizon}', and time resolution of '{time_resolution}'. Skipping...")
+            print(f"Network is not found for scenario '{scenario}', planning year '{planning_horizon}'. Skipping...")
             continue
         
         add_new_carriers(n)
@@ -171,7 +172,7 @@ if __name__ == "__main__":
     for name, network in networks.items():
         if network is None:
             # Skip further computation for this scenario if network is not loaded
-            print(f"Network is not found for scenario '{scenario}', planning year '{planning_horizon}', and time resolution of '{time_resolution}'. Skipping...")
+            print(f"Network is not found for scenario '{scenario}', planning year '{planning_horizon}'. Skipping...")
             continue
         elec_consumption_for_heat = get_elec_consumption_for_heat(network)
         total_elec_consumption_for_heat[name] = elec_consumption_for_heat

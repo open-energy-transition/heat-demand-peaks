@@ -13,7 +13,7 @@ warnings.filterwarnings("ignore")
 import colors as c
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                      change_path_to_pypsa_eur, change_path_to_base, \
-                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON, PATH_PLOTS
+                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON, PATH_PLOTS, replace_multiindex_values
 
 
 def get_heat_capacities(n, nice_name):
@@ -62,6 +62,13 @@ def plot_capacities(capacities_df, clusters, planning_horizon, plot_width=7):
     ax.set_ylabel("Capacity [$\mathrm{GW_{el}}$]")
     ax.set_xlabel("")
     ax.set_ylim([0, 1700])
+    x_ticks = list(df.columns)
+    if planning_horizon in ["2040", "2050"] and "Limited \nRenovation &\nCost-Optimal Heating" in x_ticks:
+        # replace name for Limited Renovation scenario for 2030 to be LROH
+        x_ticks[x_ticks.index("Limited \nRenovation &\nCost-Optimal Heating")] = "Limited \nRenovation &\nElectric Heating"
+
+    ax.set_xticklabels(x_ticks)
+
     # Turn off both horizontal and vertical grid lines
     ax.grid(False, which='both')
     ax.legend(
@@ -99,7 +106,7 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "plot_heat_tech_ratio", 
             clusters="48",
-            planning_horizon="2030",
+            planning_horizon=["2030"],
         )
     # update config based on wildcards
     config = update_config_from_wildcards(snakemake.config, snakemake.wildcards)
@@ -109,32 +116,31 @@ if __name__ == "__main__":
     co2l_limits = CO2L_LIMITS
     line_limits = LINE_LIMITS
     clusters = config["plotting"]["clusters"]
-    time_resolution = config["plotting"]["time_resolution"]
     planning_horizons = config["plotting"]["planning_horizon"]
     planning_horizons = [str(x) for x in planning_horizons]
     opts = config["plotting"]["sector_opts"]
 
     # define scenario namings
-    scenarios = {"flexible": "Optimal \nRenovation &\nHeating", 
-                 "retro_tes": "Optimal \nRenovation &\nGreen Heating", 
-                 "flexible-moderate": "Limited \nRenovation &\nOptimal Heating", 
-                 "rigid": "No \nRenovation &\nGreen Heating"}
+    scenarios = {"flexible": "Optimal \nRenovation &\nCost-Optimal Heating", 
+                 "retro_tes": "Optimal \nRenovation &\nElectric Heating", 
+                 "flexible-moderate": "Limited \nRenovation &\nCost-Optimal Heating", 
+                 "rigid": "No \nRenovation &\nElectric Heating"}
 
     # initialize df for storing table information
     table_cap_df = define_table_df(scenarios)
     
     for planning_horizon in planning_horizons:
         lineex = line_limits[planning_horizon]
-        sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-{opts}"
+        sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{opts}"
 
         # if planning_horizon is 2020
         if planning_horizon == BAU_HORIZON:
             scenarios = {"BAU": "BAU"}
         else:
-            scenarios = {"flexible": "Optimal \nRenovation &\nHeating", 
-                         "retro_tes": "Optimal \nRenovation &\nGreen Heating", 
-                         "flexible-moderate": "Limited \nRenovation &\nOptimal Heating", 
-                         "rigid": "No \nRenovation &\nGreen Heating"}
+            scenarios = {"flexible": "Optimal \nRenovation &\nCost-Optimal Heating", 
+                         "retro_tes": "Optimal \nRenovation &\nElectric Heating", 
+                         "flexible-moderate": "Limited \nRenovation &\nCost-Optimal Heating", 
+                         "rigid": "No \nRenovation &\nElectric Heating"}
 
         # move to submodules/pypsa-eur
         change_path_to_pypsa_eur()
@@ -149,7 +155,7 @@ if __name__ == "__main__":
 
             if n is None:
                 # Skip further computation for this scenario if network is not loaded
-                print(f"Network is not found for scenario '{scenario}', planning year '{planning_horizon}', and time resolution of '{time_resolution}'. Skipping...")
+                print(f"Network is not found for scenario '{scenario}', planning year '{planning_horizon}'. Skipping...")
                 continue
 
             # get heat tech capacities
@@ -169,5 +175,11 @@ if __name__ == "__main__":
     if not table_cap_df.empty:
         # save to csv
         table_cap_df.index.name = "Capacity [MW_el]"
+        table_cap_df.columns = replace_multiindex_values(table_cap_df.columns, 
+                                                         ("2040", "Limited \nRenovation &\nCost-Optimal Heating"),
+                                                         ("2040","Limited \nRenovation &\nElectric Heating"))
+        table_cap_df.columns = replace_multiindex_values(table_cap_df.columns, 
+                                                         ("2050", "Limited \nRenovation &\nCost-Optimal Heating"),
+                                                         ("2050","Limited \nRenovation &\nElectric Heating"))
         table_cap_df.to_csv(snakemake.output.table)
         

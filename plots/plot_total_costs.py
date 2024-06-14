@@ -6,26 +6,28 @@
 import os
 import sys
 sys.path.append("../submodules/pypsa-eur")
-import pypsa
 import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
 import numpy as np
 import pandas as pd
-import geopandas as gpd
-import cartopy.crs as ccrs
 import logging
 import colors as c
 import warnings
 warnings.filterwarnings("ignore")
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                      change_path_to_pypsa_eur, change_path_to_base, \
-                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON
+                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON, replace_multiindex_values
 
 logger = logging.getLogger(__name__)
 
 RESULTS_DIR = "plots/results"
 
-DONT_PLOT = []
+GAS_BOILERS = [
+    "Link:residential rural gas boiler",
+    "Link:residential urban decentral gas boiler",
+    "Link:services rural gas boiler",
+    "Link:services urban decentral gas boiler",
+    "Link:urban central gas boiler",
+]
 
 PREFIX_TO_REMOVE = [
     "residential ",
@@ -83,6 +85,7 @@ RENAME = {
     "solid biomass for industry CC": "solid biomass",
     "electricity distribution grid": "distribution lines",
     "Open-Cycle Gas":"OCGT",
+    "Combined-Cycle Gas":"CCGT",
     "gas": "gas storage",
     'gas pipeline new': 'gas pipeline',
     "gas for industry CC": "gas for industry",
@@ -136,6 +139,7 @@ PREFERRED_ORDER = pd.Index(
         
         "hydroelectricity",
         "OCGT",
+        "CCGT",
         "onshore wind",
         "offshore wind",
         "solar PV",
@@ -216,10 +220,6 @@ def plot_costs(cost_df, clusters, planning_horizon, plot_width=7):
         df.index.difference(PREFERRED_ORDER)
     )
 
-    for remove_tech in DONT_PLOT:
-        if remove_tech in new_index:
-            new_index = new_index.drop(remove_tech)
-
     new_columns = df.sum().sort_values().index  
 
 
@@ -243,8 +243,15 @@ def plot_costs(cost_df, clusters, planning_horizon, plot_width=7):
     ax.set_ylabel("System Cost [EUR billion per year]")
 
     ax.set_xlabel("")
-    ax.set_ylim([0,1200])
-    ax.set_yticks(np.arange(0, 1100, 100))
+    ax.set_ylim([0,1100])
+    ax.set_yticks(np.arange(0, 1200, 100))
+
+    x_ticks = list(df.columns)
+    if planning_horizon in ["2040", "2050"] and "Limited \nRenovation &\nCost-Optimal Heating" in x_ticks:
+        # replace name for Limited Renovation scenario for 2030 to be LROH
+        x_ticks[x_ticks.index("Limited \nRenovation &\nCost-Optimal Heating")] = "Limited \nRenovation &\nElectric Heating"
+
+    ax.set_xticklabels(x_ticks)
 
     # Turn off both horizontal and vertical grid lines
     ax.grid(False, which='both')
@@ -298,13 +305,7 @@ def plot_capacities(caps_df, clusters, planning_horizon, plot_width=7):
         df.index.difference(PREFERRED_ORDER)
     )
 
-    for remove_tech in DONT_PLOT:
-        if remove_tech in new_index:
-            new_index = new_index.drop(remove_tech)
-
-    new_columns = df.sum().sort_values().index  
-
-    fig, ax = plt.subplots(figsize=(plot_width, 9))
+    _, ax = plt.subplots(figsize=(plot_width, 9))
 
     df.loc[new_index].T.plot(
         kind="bar",
@@ -324,8 +325,15 @@ def plot_capacities(caps_df, clusters, planning_horizon, plot_width=7):
     ax.set_ylabel("Installed capacities [GW]")
 
     ax.set_xlabel("")
-    ax.set_ylim([0,19000])
-    ax.set_yticks(np.arange(0, 19000, 2000))
+    ax.set_ylim([0,20000])
+    ax.set_yticks(np.arange(0, 21000, 2000))
+
+    x_ticks = list(df.columns)
+    if planning_horizon in ["2040", "2050"] and "Limited \nRenovation &\nCost-Optimal Heating" in x_ticks:
+        # replace name for Limited Renovation scenario for 2030 to be LROH
+        x_ticks[x_ticks.index("Limited \nRenovation &\nCost-Optimal Heating")] = "Limited \nRenovation &\nElectric Heating"
+
+    ax.set_xticklabels(x_ticks)
 
     # Turn off both horizontal and vertical grid lines
     ax.grid(False, which='both')
@@ -367,6 +375,7 @@ def get_common_index(list1, list2):
 
 def update_capital_cost(cap_costs_dict, p_nom_opt_dict, planning_horizon):
     delta_horizon = 10
+    planning_horizon_init = int(planning_horizon)
     planning_horizon = int(planning_horizon)
     full_cost = pd.DataFrame()
     missing_scenarios = []
@@ -374,7 +383,7 @@ def update_capital_cost(cap_costs_dict, p_nom_opt_dict, planning_horizon):
     while planning_horizon > 2030:
         # previous horizon's year
         previous_horizon = planning_horizon - delta_horizon
-        # delta p_nom_opt 
+        # delta p_nom_opt
         delta_p_nom_opt = p_nom_opt_dict[str(planning_horizon)] - p_nom_opt_dict[str(previous_horizon)]
         delta_p_nom_opt = delta_p_nom_opt.clip(lower=0)
         # built_fraction = delta(p_nom_opt) / p_nom_opt
@@ -396,6 +405,8 @@ def update_capital_cost(cap_costs_dict, p_nom_opt_dict, planning_horizon):
         # remove missing scenario
         full_cost = full_cost.loc[:, ~full_cost.columns.isin(missing_scenarios)]
 
+    # set gas boilers manually after finished
+    full_cost.loc[GAS_BOILERS] = cap_costs_dict[str(planning_horizon_init)].loc[GAS_BOILERS]
     return full_cost
 
 
@@ -422,7 +433,7 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "plot_total_costs", 
             clusters="48",
-            planning_horizon="2030",
+            planning_horizon=["2030"],
         )
     # update config based on wildcards
     config = update_config_from_wildcards(snakemake.config, snakemake.wildcards)
@@ -434,14 +445,13 @@ if __name__ == "__main__":
     clusters = config["plotting"]["clusters"]
     planning_horizons = config["plotting"]["planning_horizon"]
     planning_horizons = [str(x) for x in planning_horizons if not str(x) == BAU_HORIZON]
-    time_resolution = config["plotting"]["time_resolution"]
     opts = config["plotting"]["sector_opts"]
 
     # define scenario namings
-    scenarios = {"flexible": "Optimal \nRenovation &\nHeating", 
-                "retro_tes": "Optimal \nRenovation &\nGreen Heating", 
-                "flexible-moderate": "Limited \nRenovation &\nOptimal Heating", 
-                "rigid": "No \nRenovation &\nGreen Heating"}
+    scenarios = {"flexible": "Optimal \nRenovation &\nCost-Optimal Heating", 
+                "retro_tes": "Optimal \nRenovation &\nElectric Heating", 
+                "flexible-moderate": "Limited \nRenovation &\nCost-Optimal Heating", 
+                "rigid": "No \nRenovation &\nElectric Heating"}
 
     # initialize capital cost and p_nom_opt storing dictionary for different horizons
     cap_costs_dict = {}
@@ -452,7 +462,7 @@ if __name__ == "__main__":
 
     for planning_horizon in planning_horizons:
         lineex = line_limits[planning_horizon]
-        sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-{opts}"
+        sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{opts}"
 
         # move to submodules/pypsa-eur
         change_path_to_pypsa_eur()
@@ -469,7 +479,7 @@ if __name__ == "__main__":
 
             if n is None:
                 # Skip further computation for this scenario if network is not loaded
-                print(f"Network is not found for scenario '{scenario}', planning year '{planning_horizon}', and time resolution of '{time_resolution}'. Skipping...")
+                print(f"Network is not found for scenario '{scenario}', planning year '{planning_horizon}'. Skipping...")
                 continue
 
             # calculate capital costs for scenario
@@ -520,7 +530,7 @@ if __name__ == "__main__":
     BAU_horizon = BAU_HORIZON
     scenario = "BAU"
     lineex = line_limits[BAU_horizon]
-    sector_opts = f"Co2L{co2l_limits[BAU_horizon]}-{time_resolution}-{opts}"
+    sector_opts = f"Co2L{co2l_limits[BAU_horizon]}-{opts}"
     
     # move to submodules/pypsa-eur
     change_path_to_pypsa_eur()
@@ -532,7 +542,7 @@ if __name__ == "__main__":
 
     if n is None:
         # Skip further computation for this scenario if network is not loaded
-        print(f"Network is not found for scenario '{scenario}', BAU year '{BAU_horizon}', and time resolution of '{time_resolution}'. Skipping...")
+        print(f"Network is not found for scenario '{scenario}', BAU year '{BAU_horizon}'. Skipping...")
     else:
         cap_costs = compute_costs(n, "BAU", "Capital")
         op_costs = compute_costs(n, "BAU", "Operational")
@@ -550,9 +560,23 @@ if __name__ == "__main__":
     # save all costs to csv
     if not table_cost_df.empty:
         table_cost_df.index.name = "System cost [EUR billion per year]"
+        table_cost_df.columns = replace_multiindex_values(table_cost_df.columns, 
+                                                          ("2040", "Limited \nRenovation &\nCost-Optimal Heating"),
+                                                          ("2040","Limited \nRenovation &\nElectric Heating"))
+        table_cost_df.columns = replace_multiindex_values(table_cost_df.columns, 
+                                                          ("2050", "Limited \nRenovation &\nCost-Optimal Heating"),
+                                                          ("2050","Limited \nRenovation &\nElectric Heating"))
+
         table_cost_df.to_csv(snakemake.output.costs)
 
     # save all capacities to csv
     if not table_cap_df.empty:
         table_cap_df.index.name = "Installed capacity [GW]"
+        table_cap_df.columns = replace_multiindex_values(table_cap_df.columns, 
+                                                         ("2040", "Limited \nRenovation &\nCost-Optimal Heating"),
+                                                         ("2040","Limited \nRenovation &\nElectric Heating"))
+        table_cap_df.columns = replace_multiindex_values(table_cap_df.columns, 
+                                                         ("2050", "Limited \nRenovation &\nCost-Optimal Heating"),
+                                                         ("2050","Limited \nRenovation &\nElectric Heating"))
+
         table_cap_df.to_csv(snakemake.output.capacities) 

@@ -137,10 +137,10 @@ def plot_electricity_cost(df_prices, name):
     sorted_df_prices = df_prices.sort_values(by=df_prices.index[0], axis=1)
 
     # color codes for legend
-    color_codes = {"Optimal Renovation and Heating":"purple", 
-                   "Optimal Renovation and Green Heating":"limegreen", 
-                   "Limited Renovation and Optimal Heating":"royalblue", 
-                   "No Renovation and Green Heating":"#f4b609",
+    color_codes = {"Optimal Renovation and Cost-Optimal Heating":"purple", 
+                   "Optimal Renovation and Electric Heating":"limegreen", 
+                   "Limited Renovation and Cost-Optimal Heating":"royalblue", 
+                   "No Renovation and Electric Heating":"#f4b609",
                    "BAU": "grey"}
 
     # plot as bar plot
@@ -148,7 +148,11 @@ def plot_electricity_cost(df_prices, name):
     sorted_df_prices.T.plot.bar(ax=ax, width=0.7, color=color_codes)
     # define plot parameters
     ax.set_facecolor("white")
-    ax.legend(loc="upper left", facecolor="white", fontsize='x-small')
+    # modify the name for LR in legend for 2040 and 2050
+    handles, labels = ax.get_legend_handles_labels()
+    if planning_horizon in ["2040", "2050"]:
+        labels = ["Limited Renovation and Electric Heating" if label == "Limited Renovation and Cost-Optimal Heating" else label for label in labels]
+    ax.legend(handles, labels, loc="upper left", facecolor="white", fontsize='x-small')
     xlabel = ax.set_xlabel("countries")
     ax.spines['left'].set_color('black')
     ax.spines['bottom'].set_color('black')
@@ -160,10 +164,12 @@ def plot_electricity_cost(df_prices, name):
     if name == "bills":
         ax.set_title("Electricity bills")
         ylabel = ax.set_ylabel("EUR/household")
+        ax.set_ylim([0,4500])
         plt.savefig(snakemake.output.figure_bills, bbox_inches='tight', dpi=600)
     elif name == "prices":
         ax.set_title("Energy price per country")
         ylabel = ax.set_ylabel("EUR/MWh")
+        ax.set_ylim([0, 200])
         plt.savefig(snakemake.output.figure_price, bbox_inches='tight', dpi=600)
 
 
@@ -214,10 +220,9 @@ if __name__ == "__main__":
     line_limits = LINE_LIMITS
     clusters = config["plotting"]["clusters"]
     planning_horizon = config["plotting"]["planning_horizon"]
-    time_resolution = config["plotting"]["time_resolution"]
     opts = config["plotting"]["sector_opts"]
     lineex = line_limits[planning_horizon]
-    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-{opts}"
+    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{opts}"
 
     # move to submodules/pypsa-eur
     change_path_to_pypsa_eur()
@@ -226,10 +231,10 @@ if __name__ == "__main__":
     if planning_horizon == BAU_HORIZON:
         scenarios = {"BAU": "BAU"}
     else:
-        scenarios = {"flexible": "Optimal Renovation and Heating", 
-                     "retro_tes": "Optimal Renovation and Green Heating", 
-                     "flexible-moderate": "Limited Renovation and Optimal Heating", 
-                     "rigid": "No Renovation and Green Heating"}
+        scenarios = {"flexible": "Optimal Renovation and Cost-Optimal Heating", 
+                     "retro_tes": "Optimal Renovation and Electric Heating", 
+                     "flexible-moderate": "Limited Renovation and Cost-Optimal Heating", 
+                     "rigid": "No Renovation and Electric Heating"}
 
     # load networks
     networks = {}
@@ -249,7 +254,7 @@ if __name__ == "__main__":
     for name, network in networks.items():
         if network is None:
             # Skip further computation for this scenario if network is not loaded
-            print(f"Network is not found for scenario '{scenario}', planning year '{planning_horizon}', and time resolution of '{time_resolution}'. Skipping...")
+            print(f"Network is not found for scenario '{scenario}', planning year '{planning_horizon}'. Skipping...")
             continue
         # get electricity bills
         elec_bills_household = electricity_bills(network, households)

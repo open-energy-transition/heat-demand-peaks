@@ -7,45 +7,57 @@ import argparse
 import logging
 import yaml
 import sys
+import os
+import pypsa
 sys.path.append("plots")
-from _helpers import change_path_to_pypsa_eur, change_path_to_base
+from _helpers import change_path_to_pypsa_eur, change_path_to_base, load_network
 
 # Set up logging configuration
 logging.basicConfig(level=logging.INFO)
 
 def get_scenario():
     parser = argparse.ArgumentParser(description="Running the scenario")
-    parser.add_argument("-s", "--scenario", help="Specify the scenario.", required=True, 
+    parser.add_argument("-s", "--scenario", help="Specify the scenario.", required=False, 
                         choices=["flexible", "flexible-moderate", "retro_tes", "rigid"])
     parser.add_argument("-c", "--continue_horizon", help="Specify the horizon to continue simulations", 
                         choices=["2030", "2040", "2050"])
     parser.add_argument("-y", "--year", help="Specify a single horizon to simulate", 
                         choices=["2030", "2040", "2050"])
+    parser.add_argument("-i", "--improved_cop", help="Specify if improved COP calculation is needed",
+                        choices=["true", "false"])
     args = parser.parse_args()
 
     # Access the value of the scenario argument
-    scenario = args.scenario
+    scenarios = args.scenario
+    if scenarios == None:
+        scenarios = ["flexible", "flexible-moderate", "retro_tes", "rigid"]
+    else:
+        scenarios = [scenarios]
     # log scenario name
-    logging.info(f"Scenario: {scenario}")
+    logging.info(f"Scenarios: {scenarios}")
 
     # Access the value of horizon from which simulation is continued
     c = args.continue_horizon
     # Access the value of specific horizon to simulate
     y = args.year
 
+    # Access bool for improved COP
+    i = args.improved_cop
+    improved_cop = False if i == "false" else True
+
     # log scenario name
     if y:
         horizons = [int(y)]
-        logging.info(f"Start simulating {scenario} scenario for {y}")
+        logging.info(f"Start simulating {scenarios} scenario for {y}")
     elif c:
         horizons = get_horizon_list(int(c))
-        logging.info(f"Start simulating {scenario} scenario for {horizons}")
+        logging.info(f"Start simulating {scenarios} scenario for {horizons}")
     else:
         c = 2030
         horizons = get_horizon_list(int(c))
         logging.info("No horizon specified. Starting from default horizon (2030)")
 
-    return scenario, horizons
+    return scenarios, horizons, improved_cop
 
 
 def get_horizon_list(start_horizon):
@@ -166,7 +178,7 @@ def prepare_prenetwork(scenario, horizon):
     # get .nc filename
     filename = get_network_name(scenario, horizon)
     # run prenetwork
-    command = f"snakemake -call results/{scenario}/prenetworks/{filename} --configfile {config_path} --force"
+    command = f"snakemake -call results/{scenario}/prenetworks/{filename} --configfile {config_path} --force --rerun-incomplete"
     subprocess.run(command, shell=True)
     logging.info(f"Prenetwork was prepared for {scenario} scenario in {horizon} horizon!")
 
@@ -202,6 +214,20 @@ def moderate_retrofitting(scenario, horizon):
     return error
 
 
+def improve_cops_after_renovation(scenario, horizon):
+    error = []
+    try:
+        # get number of clusters
+        clusters = get_clusters(scenario, horizon)
+        command = f"snakemake -call scripts/logs/improve_cops_after_renovation_{clusters}_{horizon}_{scenario}.txt --forceall"
+        subprocess.run(command, shell=True, check=True)
+        logging.info(f"Retrofitting capacities are fixed to {scenario} scenario in {horizon} horizon!")
+    except subprocess.CalledProcessError  as e:
+        logging.error(f"Error occurred during command execution: {e}")
+        error.append(e)
+    return error
+
+
 def solve_network(scenario, horizon):
     # get config path
     config_path = get_config_path(scenario, horizon)
@@ -220,37 +246,203 @@ def solve_network(scenario, horizon):
     change_path_to_base()
 
 
+def get_heat_saved(scenario, horizon):
+    # change path to pypsa-eur
+    change_path_to_pypsa_eur()
+
+    # get .nc filename
+    filename = get_network_name(scenario, horizon)
+
+    # load solved network
+    n = None
+    try:
+        n = pypsa.Network(os.path.join(f"results/{scenario}/postnetworks", filename))
+        logging.info(f"Loading {filename} for {scenario}")
+    except FileNotFoundError as e:
+        print(f"Error: {e}")
+
+    # move to base directory
+    change_path_to_base()
+
+    # calculate saved heat ratio
+    retrofitting = n.generators_t.p.filter(like="retrofitting").multiply(n.snapshot_weightings.objective, axis=0).sum().sum()
+    heat_demand = n.loads_t.p_set.filter(like="heat").multiply(n.snapshot_weightings.objective, axis=0).sum().sum()
+    heat_saved_ratio = retrofitting / heat_demand
+    return heat_saved_ratio
+
+
+def calculate_sink_T(heat_saved_ratio):
+    # calculate heat_pump_sink_T
+    sink_T = (55-21)*(1-heat_saved_ratio) + 21
+    return sink_T
+
+
+def delete_config_yaml():
+    # change path to pypsa-eur
+    change_path_to_pypsa_eur()
+
+    # Define the path to the config.yaml file
+    config_file_path = os.path.join('config', 'config.yaml')
+
+    # Check if the file exists before attempting to delete it
+    if os.path.exists(config_file_path):
+        os.remove(config_file_path)
+        print(f"Deleted {config_file_path}")
+    else:
+        print(f"{config_file_path} does not exist") 
+
+    # log changes
+    logging.info("config/config.yaml was deleted.")
+    
+    # move to base directory
+    change_path_to_base()
+    
+
+def update_sink_T(scenario, horizon, sink_T):
+    # change path to pypsa-eur
+    change_path_to_pypsa_eur()
+
+    # Define the file path
+    config_path = get_config_path(scenario, horizon)
+    config_path = "../../" + config_path
+
+    # Define the line to be set
+    new_line = f'  heat_pump_sink_T: {sink_T:.1f}\n'
+
+    # Read the contents of the file
+    with open(config_path, 'r') as file:
+        lines = file.readlines()
+
+    # Find the index of the line containing the specified text
+    index = next((i for i, line in enumerate(lines) if '  heat_pump_sink_T:' in line), None)
+
+    # Insert the new line after the specified line
+    if index is not None:
+        lines[index] = new_line
+
+    # Write the modified contents back to the file
+    with open(config_path, 'w') as file:
+        file.writelines(lines)
+
+    # log changes
+    logging.info(f"Changed heat_pump_sink_T to {sink_T}")
+
+    # move to base directory
+    change_path_to_base()
+
+
+def read_sink_T(scenario, horizon):
+    # change path to pypsa-eur
+    change_path_to_pypsa_eur()
+
+    # Define the file path
+    config_path = get_config_path(scenario, horizon)
+    config_path = "../../" + config_path
+
+    # Read the contents of the file
+    with open(config_path, 'r') as file:
+        lines = file.readlines()
+
+    # Find the index of the line containing the specified text
+    index = next((i for i, line in enumerate(lines) if '  heat_pump_sink_T:' in line), None)
+
+    # Insert the new line after the specified line
+    if index is not None:
+        # Extract the line
+        line = lines[index]
+        
+        # Split the line by the specified text and take the part after it
+        value_str = line.split('  heat_pump_sink_T:')[-1].strip()
+
+        # Convert the extracted part to float
+        value = float(value_str)
+        
+        logging.info("The extracted heat_pump_sink_T value is:", value)
+    else:
+        logging.info("The specified heat_pump_sink_T was not found in any line.")
+
+    # move to base directory
+    change_path_to_base()
+
+    return value
+
+
+def run_workflow(scenario, horizon, improved_cop=False):
+    # remove biomass potential increase if present
+    revert_biomass_potential()
+    # increase biomass potential for 2050 by 1.2
+    if horizon == 2050:
+        increase_biomass_potential()
+    # run prenetwork
+    prepare_prenetwork(scenario=scenario, horizon=horizon)
+
+    # initialize error_capacities and error_moderate
+    error_capacities, error_moderate, error_improve_cop = [], [], []
+    
+    # set capacities if 2040 or 2050
+    if not horizon == 2030:
+        error_capacities = set_capacities(scenario=scenario, horizon=horizon)
+
+    # set moderate retrofitting
+    if scenario == "flexible-moderate":
+        error_moderate = moderate_retrofitting(scenario=scenario, horizon=horizon)
+
+    # set retrofitting p_nom for improved COP
+    if improved_cop:
+        error_improve_cop = improve_cops_after_renovation(scenario=scenario, horizon=horizon)
+
+    # break if error happens
+    if error_capacities or error_moderate or error_improve_cop:
+        if horizon == 2050:
+            revert_biomass_potential()
+        return None # return None is error happens
+
+    # solve the network
+    solve_network(scenario, horizon)
+
+    # revert biomass potential
+    if horizon == 2050:
+        revert_biomass_potential()
+
+    return True # return True if success
+
+
 if __name__ == "__main__":
     # get scenario from argument
-    scenario, horizons = get_scenario()
+    scenarios, horizons, improved_cop = get_scenario()
 
     # run model for given horizon
     for horizon in horizons:
-        if horizon == 2050:
-            increase_biomass_potential()
-        # run prenetwork
-        prepare_prenetwork(scenario=scenario, horizon=horizon)
+        for scenario in scenarios:
+            # ensure heat_pump_sink_T: 55.0 at the beginning of first run
+            if scenario in ["flexible", "flexible-moderate", "retro_tes"] and not improved_cop:
+                update_sink_T(scenario, horizon, 55.0)
+            elif scenario == "flexible-moderate" and improved_cop:
+                # read sink_T from flexible scenario for improved COP runs
+                sink_T = read_sink_T("flexible", horizon)
+                update_sink_T(scenario, horizon, sink_T)
 
-        # initialize error_capacities and error_moderate
-        error_capacities, error_moderate = [], []
-        
-        # set capacities if 2040 or 2050
-        if not horizon == 2030:
-            error_capacities = set_capacities(scenario=scenario, horizon=horizon)
+            # run full network preparation and solving workflow 
+            run_status = run_workflow(scenario, horizon)
 
-        # set moderate retrofitting
-        if scenario == "flexible-moderate":
-            error_moderate = moderate_retrofitting(scenario=scenario, horizon=horizon)
+            # stop further execution if workflow did not succeed
+            if run_workflow is None:
+                logging.error("Workflow broke!")
+                break
 
-        # break if error happens
-        if error_capacities or error_moderate:
-            if horizon == 2050:
-                revert_biomass_potential()
-            break
+            # for Optimal and Limited retrofitting proceed with improved COP
+            if scenario in ["flexible", "retro_tes"] and improved_cop:
+                # read heat saved
+                heat_saved_ratio = get_heat_saved(scenario, horizon)
 
-        # solve the network
-        solve_network(scenario, horizon)
+                # calculate heat_pump_sink_T
+                sink_T = calculate_sink_T(heat_saved_ratio)
 
-        # revert biomass potential
-        if horizon == 2050:
-            revert_biomass_potential()
+                # delete config.yaml
+                delete_config_yaml()
+
+                # update heat_pump_sink_T
+                update_sink_T(scenario, horizon, sink_T)
+
+                # run full network preparation and solving workflow
+                run_status = run_workflow(scenario, horizon, improved_cop=improved_cop)

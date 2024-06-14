@@ -13,7 +13,7 @@ import warnings
 warnings.filterwarnings("ignore")
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                      change_path_to_pypsa_eur, change_path_to_base, \
-                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON
+                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON, replace_multiindex_values
                      
 from plot_total_costs import compute_costs
 
@@ -34,15 +34,14 @@ if __name__ == "__main__":
     co2l_limits = CO2L_LIMITS
     line_limits = LINE_LIMITS
     clusters = config["plotting"]["clusters"]
-    time_resolution = config["plotting"]["time_resolution"]
     planning_horizons = config["plotting"]["planning_horizon"]
     planning_horizons = [str(x) for x in planning_horizons if not str(x) == BAU_HORIZON]
     opts = config["plotting"]["sector_opts"]
 
     # define scenario namings
-    scenarios = {"flexible": "Optimal Renovation and Heating", 
-                 "retro_tes": "Optimal Renovation and Green Heating", 
-                 "flexible-moderate": "Limited Renovation and Optimal Heating", 
+    scenarios = {"flexible": "Optimal Renovation and Cost-Optimal Heating", 
+                 "retro_tes": "Optimal Renovation and Electric Heating", 
+                 "flexible-moderate": "Limited Renovation and Cost-Optimal Heating", 
                  }
 
     # define dataframe to store infra savings
@@ -67,7 +66,7 @@ if __name__ == "__main__":
 
     for planning_horizon in planning_horizons:
         lineex = line_limits[planning_horizon]
-        sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{time_resolution}-{opts}"
+        sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{opts}"
 
         # benchmark network
         b = load_network(lineex, clusters, sector_opts, planning_horizon, "rigid")
@@ -78,7 +77,7 @@ if __name__ == "__main__":
 
             if n is None:
                 # Skip further computation for this scenario if network is not loaded
-                print(f"Network is not found for scenario '{scenario}', planning year '{planning_horizon}', and time resolution of '{time_resolution}'. Skipping...")
+                print(f"Network is not found for scenario '{scenario}', planning year '{planning_horizon}'. Skipping...")
                 continue
 
             # estimate upper and lower limits of congestion of grid
@@ -92,10 +91,10 @@ if __name__ == "__main__":
                 n.generators.query("carrier in @wind_carriers").p_nom_opt.sum() -
                 b.generators.query("carrier in @wind_carriers").p_nom_opt.sum()
             )/1e3
-            OCGT_carriers = ["OCGT"]
+            CCGT_carriers = ["CCGT"]
             gas = (
-                n.links.query("carrier in @OCGT_carriers").p_nom_opt.multiply(n.links.efficiency).sum() -
-                b.links.query("carrier in @OCGT_carriers").p_nom_opt.multiply(b.links.efficiency).sum()
+                n.links.query("carrier in @CCGT_carriers").p_nom_opt.multiply(n.links.efficiency).sum() -
+                b.links.query("carrier in @CCGT_carriers").p_nom_opt.multiply(b.links.efficiency).sum()
             )/1e3
 
             df_savings.loc[nice_name, (planning_horizon, "solar")] = solar
@@ -126,6 +125,8 @@ if __name__ == "__main__":
     change_path_to_base()
 
     # save the heat pumps data in Excel format
+    df_savings.index = ["Limited Renovation and Cost-Optimal/Electric Heating" if s == "Limited Renovation and Cost-Optimal Heating" else s for s in df_savings.index]
     df_savings.to_csv(snakemake.output.table_cap)
+    cost_savings.index = ["Limited Renovation and Cost-Optimal/Electric Heating" if s == "Limited Renovation and Cost-Optimal Heating" else s for s in cost_savings.index]
     cost_savings.to_csv(snakemake.output.table_costs)
 
