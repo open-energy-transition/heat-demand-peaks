@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+# SPDX-FileCopyrightText:  Open Energy Transition gGmbH
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 import os
 import sys
 sys.path.append("../submodules/pypsa-eur")
@@ -13,7 +18,8 @@ from _helpers import mock_snakemake, update_config_from_wildcards, load_network,
 
 
 def get_households():
-    household_data = pd.read_csv("data/Households.csv")
+    household_filepath = "submodules/pypsa-eur/data/retro/households.csv"
+    household_data = pd.read_csv(household_filepath)
     households = household_data.set_index("Country")[ "Households (thousands)"]
     households.index.name=""
     return households

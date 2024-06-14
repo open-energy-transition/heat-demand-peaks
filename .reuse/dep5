@@ -1,0 +1,18 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: heat-demand-peaks
+Upstream-Contact: Open Energy Transition gGmbH <martha.frysztacki@openenergytransition.org>
+Source: https://github.com/open-energy-transition/heat-demand-peaks
+
+# Sample paragraph, commented out:
+#
+Files: data/*
+Copyright:  Open Energy Transition gGmbH
+License: CC-BY-4.0
+
+Files: plots/EEE_plots.ipynb
+Copyright:  Open Energy Transition gGmbH
+License: AGPL-3.0-or-later
+
+Files: .gitmodules
+Copyright: Open Energy Transition gGmbH
+License: AGPL-3.0-or-later
