@@ -37,9 +37,9 @@ def get_hydrogen_production(n, param_dict):
 def plot_hydrogen_production(df_hydrogen, figure_dict):
     # color codes for legend
     color_codes = {"OROH":"purple", 
-                   "ORGH":"limegreen", 
+                   "OREH":"limegreen", 
                    "LROH":"royalblue", 
-                   "NRGH":"#f4b609",
+                   "NREH":"#f4b609",
                    "BAU": "grey"}
     
     # get BAU year
@@ -50,7 +50,7 @@ def plot_hydrogen_production(df_hydrogen, figure_dict):
         for nice_name, color_code in color_codes.items():
             # set name for Limited retrofitting for 2040 and 2050
             if planning_horizon in ["2040", "2050"] and nice_name == 'LROH':
-                label_name = "LROH/LRGH"
+                label_name = "LROH/LREH"
             else:
                 label_name = nice_name
 
@@ -109,9 +109,9 @@ if __name__ == "__main__":
 
     # define scenario namings
     scenarios = {"flexible": "OROH", 
-                "retro_tes": "ORGH", 
+                "retro_tes": "OREH", 
                 "flexible-moderate": "LROH", 
-                "rigid": "NRGH"}
+                "rigid": "NREH"}
 
     # define dictionary to map to links buses
     param_dict = {"Electricity used [TWh]": "p0",
@@ -165,8 +165,8 @@ if __name__ == "__main__":
         # save to csv
         hydrogen_df.columns = replace_multiindex_values(hydrogen_df.columns, 
                                                         ("2040", "LROH"),
-                                                        ("2040", "LRGH"))
+                                                        ("2040", "LREH"))
         hydrogen_df.columns = replace_multiindex_values(hydrogen_df.columns, 
                                                         ("2050", "LROH"),
-                                                        ("2050", "LRGH"))
+                                                        ("2050", "LREH"))
         hydrogen_df.to_csv(snakemake.output.table)
