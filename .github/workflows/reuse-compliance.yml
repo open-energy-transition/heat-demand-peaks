@@ -1,0 +1,26 @@
+# SPDX-FileCopyrightText:  Open Energy Transition gGmbH
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+name: REUSE Compliance Check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  schedule:
+    - cron: "0 3 * * SUN"
+
+jobs:
+  reuse:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: REUSE Compliance Check
+        uses: fsfe/reuse-action@v3.0.0
