@@ -7,10 +7,12 @@ name: REUSE Compliance Check
 on:
   push:
     branches:
-      - main
+      - reuse_badge
   pull_request:
     branches:
       - main
+  schedule:
+    - cron: "0 6 * * TUE"
 
 jobs:
   reuse:
