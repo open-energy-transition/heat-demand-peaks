@@ -7,7 +7,7 @@ name: REUSE Compliance Check
 on:
   push:
     branches:
-      - reuse_badge
+      - main
   pull_request:
     branches:
       - main
