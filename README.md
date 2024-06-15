@@ -14,6 +14,8 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 <br>
 <br>
 
+[![REUSE status](https://api.reuse.software/badge/git.fsfe.org/reuse/api)](https://api.reuse.software/info/git.fsfe.org/reuse/api)
+
 The project, commissioned by the EEE consortium  and supported by Open Energy Transition (OET), aims to assess the impact of various energy efficiency measures on the European energy system. This study focuses on energy affordability, social and household impacts, and industry considerations in the context of the EU's target of 90-95% emissions reduction by 2040. Utilizing the PyPSA-Eur integrated energy system planning tool, the project evaluates the effectiveness of different renovation scenarios, energy management measures, and demand-side flexibility measures in reducing energy generation needs, flattening the peak demand curve, and influencing energy prices. The results provide insights into the benefits of isolated and combined efficiency measures, contributing to data-driven decision-making in energy policy and planning. The project commenced in January 2024 and is expected to conclude by July 2024.
 
 The study is developed as an extension to the PyPSA-Eur model in this repository.
