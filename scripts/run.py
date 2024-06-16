@@ -357,7 +357,7 @@ def read_sink_T(scenario, horizon):
         # Convert the extracted part to float
         value = float(value_str)
         
-        logging.info("The extracted heat_pump_sink_T value is:", value)
+        logging.info(f"The extracted heat_pump_sink_T value is: {value:.1f}")
     else:
         logging.info("The specified heat_pump_sink_T was not found in any line.")
 
@@ -421,7 +421,7 @@ if __name__ == "__main__":
                 # read sink_T from flexible scenario for improved COP runs
                 sink_T = read_sink_T("flexible", horizon)
                 update_sink_T(scenario, horizon, sink_T)
-
+            jjhhjsd
             # run full network preparation and solving workflow 
             run_status = run_workflow(scenario, horizon)
 
