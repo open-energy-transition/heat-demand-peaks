@@ -197,5 +197,5 @@ if __name__ == "__main__":
     # move to base directory
     change_path_to_base()
 
-    plt.savefig(snakemake.output.figure, dpi=300, bbox_inches="tight")
+    plt.savefig(snakemake.output.figure, dpi=600, bbox_inches="tight")
 
