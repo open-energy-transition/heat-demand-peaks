@@ -421,7 +421,7 @@ if __name__ == "__main__":
                 # read sink_T from flexible scenario for improved COP runs
                 sink_T = read_sink_T("flexible", horizon)
                 update_sink_T(scenario, horizon, sink_T)
-            jjhhjsd
+
             # run full network preparation and solving workflow 
             run_status = run_workflow(scenario, horizon)
 
