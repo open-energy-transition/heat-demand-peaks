@@ -74,9 +74,9 @@ def plot_pies(ax, elec_mix_array):
     )
     
     # Calculate total generated electricity
-    total_electricity = np.sum(vals)
+    total_electricity = total_elec
     # Add total generated electricity to the center of the pie chart
-    ax.text(0, 0, f"{total_electricity/1e6:.2f}"+"\nTWh", ha='center', va='center', fontsize=4)
+    ax.text(0, 0, f"{total_electricity:.2f}"+"\nTWh", ha='center', va='center', fontsize=4)
     ax.set(aspect="equal")
 
 
@@ -123,5 +123,5 @@ if __name__ == "__main__":
     loc="lower center", ncol=5, fontsize=4, bbox_to_anchor=(0.5, -0.15)
     )
 
-    plt.savefig(PATH_PLOTS+"plot_historic_generation.png", dpi=300, bbox_inches="tight")
+    plt.savefig(PATH_PLOTS+"plot_historic_generation.png", dpi=600, bbox_inches="tight")
     logger.info("Saved plot of historic electricity generation mix for 2022!")

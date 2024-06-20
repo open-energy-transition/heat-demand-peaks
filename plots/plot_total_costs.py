@@ -223,7 +223,7 @@ def plot_costs(cost_df, clusters, planning_horizon, plot_width=7):
     new_columns = df.sum().sort_values().index  
 
 
-    fig, ax = plt.subplots(figsize=(plot_width, 8))
+    fig, ax = plt.subplots(figsize=(plot_width, 9))
 
     df.loc[new_index].T.plot(
         kind="bar",
