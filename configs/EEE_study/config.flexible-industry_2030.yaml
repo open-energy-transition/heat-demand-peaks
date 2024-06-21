@@ -84,7 +84,7 @@ sector:
     lignite: lignite
     nuclear: uranium
   keep_existing_capacities: True
-  heat_pump_sink_T: 54.0
+  heat_pump_sink_T: 55.0
 
 costs:
   year: 2025
@@ -110,7 +110,7 @@ costs:
 clustering:
   temporal:
     resolution_elec: false
-    resolution_sector: 24H
+    resolution_sector: 3H
 
 adjustments:
   sector: {"p_nom_max": {"solar rooftop": 1.095}} # https://joint-research-centre.ec.europa.eu/jrc-news-and-updates/pv-rooftops-and-beyond-can-surpass-targets-while-preserving-environment-2024-02-14_en
