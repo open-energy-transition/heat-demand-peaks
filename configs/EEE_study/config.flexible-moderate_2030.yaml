@@ -108,7 +108,7 @@ costs:
 clustering:
   temporal:
     resolution_elec: false
-    resolution_sector: 3H
+    resolution_sector: 1H
 
 adjustments:
   sector: {"p_nom_max": {"solar rooftop": 1.095}}

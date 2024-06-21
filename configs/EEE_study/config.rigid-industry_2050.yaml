@@ -106,7 +106,7 @@ costs:
 clustering:
   temporal:
     resolution_elec: false
-    resolution_sector: 3H
+    resolution_sector: 1H
 
 adjustments:
   sector: {"p_nom_max": {"solar rooftop": 1.134}} # https://www.epj-pv.org/articles/epjpv/full_html/2024/01/pv230071/pv230071.html
