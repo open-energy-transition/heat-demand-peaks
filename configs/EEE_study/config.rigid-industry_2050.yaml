@@ -53,7 +53,6 @@ sector:
   retrofitting:
     retro_endogen: false
     WWHR_endogen: false
-    weighting_by_building_types: true # true weights AB, SFH and MFH
   tes: false # true
   boilers: false #true
   biomass_boiler: false
