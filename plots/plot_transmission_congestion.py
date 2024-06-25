@@ -147,7 +147,12 @@ if __name__ == "__main__":
             n.plot(
                 ax=ax, color_geomap={"land": "ghostwhite"},
                 line_colors=line_color, link_colors=link_color,
-                link_widths=scaled_link_widths, line_widths=scaled_line_widths
+                link_widths=0, line_widths=scaled_line_widths
+            )
+            n.plot(
+                ax=ax, color_geomap={"land": "ghostwhite"},
+                line_colors=line_color, link_colors=link_color,
+                link_widths=scaled_link_widths, line_widths=0
             )
             # set LRGH for LR for 2040 and 2050
             label_name = "LREH" if short_name == "LROH" and planning_horizon in ["2040", "2050"] else short_name
@@ -209,7 +214,12 @@ if __name__ == "__main__":
             n.plot(
                 ax=ax, color_geomap={"land": "ghostwhite"},
                 line_colors=line_color, link_colors=link_color,
-                link_widths=scaled_link_widths, line_widths=scaled_line_widths
+                link_widths=0, line_widths=scaled_line_widths
+            )
+            n.plot(
+                ax=ax, color_geomap={"land": "ghostwhite"},
+                line_colors=line_color, link_colors=link_color,
+                link_widths=scaled_link_widths, line_widths=0
             )
 
             ax.set_title(short_name)
