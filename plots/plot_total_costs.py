@@ -260,6 +260,11 @@ def plot_costs(cost_df, clusters, planning_horizon, plot_width=7):
         handles, labels, ncol=1, loc="upper left", bbox_to_anchor=[1, 1], frameon=False
     )
     
+    if planning_horizon == BAU_HORIZON:
+        ax.set_title("BAU", fontsize=12)
+    else:
+        ax.set_title(planning_horizon, fontsize=12)
+    
     ax.set_facecolor('white')
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
@@ -341,6 +346,11 @@ def plot_capacities(caps_df, clusters, planning_horizon, plot_width=7):
     ax.legend(
         handles, labels, ncol=1, loc="upper left", bbox_to_anchor=[1, 1], frameon=False
     )
+
+    if planning_horizon == BAU_HORIZON:
+        ax.set_title("BAU", fontsize=12)
+    else:
+        ax.set_title(planning_horizon, fontsize=12)
     
     ax.set_facecolor('white')
     ax.spines['top'].set_visible(False)
