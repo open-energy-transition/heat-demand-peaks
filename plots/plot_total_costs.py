@@ -265,6 +265,35 @@ def plot_costs(cost_df, clusters, planning_horizon, plot_width=7):
     else:
         ax.set_title(planning_horizon, fontsize=12)
     
+    # Percentage drop for renovation scenarios
+    if scenarios["rigid"] in df.columns:
+        total_cost_rigid = df.sum(axis=0)[scenarios["rigid"]]
+        percentage_lower = 100 * (df.sum(axis=0) - total_cost_rigid) / total_cost_rigid
+     
+        # Calculate x-coordinates for the groups
+        unique_x_coords = sorted(list(set([bar.get_x() + bar.get_width() / 2 for bar in ax.patches])))
+        
+        # Add arrows and percentage texts with corrected positions
+        arrowprops = dict(facecolor='red', shrink=0.05, width=1, headwidth=8)
+        
+        # Annotate each group
+        for i, x in enumerate(unique_x_coords[:-1]):
+            plt.annotate(
+                f'{percentage_lower[i]:.2f}%', 
+                xy=(x, df.iloc[:,i].sum()), 
+                xytext=(x, total_cost_rigid+10), 
+                arrowprops=arrowprops, 
+                fontsize=12, 
+                color='red', 
+                ha='center'
+            )
+
+        # add horizontal line
+        bar_width = unique_x_coords[1] - unique_x_coords[0]
+        line_start = unique_x_coords[0] - bar_width * 0.25
+        line_end = unique_x_coords[-1] + bar_width * 0.25
+        ax.plot([line_start, line_end], [total_cost_rigid, total_cost_rigid], color='red', linestyle='--', linewidth=2)
+
     ax.set_facecolor('white')
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
