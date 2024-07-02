@@ -221,7 +221,7 @@ def plot_capacities(caps_df, clusters, planning_horizon, plot_width=7):
         df.index.difference(PREFERRED_ORDER)
     )
 
-    _, ax = plt.subplots(figsize=(plot_width, 9))
+    _, ax = plt.subplots(figsize=(plot_width, 10))
 
     df.loc[new_index].T.plot(
         kind="bar",
@@ -241,8 +241,8 @@ def plot_capacities(caps_df, clusters, planning_horizon, plot_width=7):
     ax.set_ylabel("Capacity expansion [GW]")
 
     ax.set_xlabel("")
-    ax.set_ylim([0,20000])
-    ax.set_yticks(np.arange(0, 21000, 2000))
+    ax.set_ylim([0,16000])
+    ax.set_yticks(np.arange(0, 17000, 2000))
 
     x_ticks = list(df.columns)
     if planning_horizon in ["2040", "2050"] and "Limited \nRenovation &\nCost-Optimal Heating" in x_ticks:
