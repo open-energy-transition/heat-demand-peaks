@@ -37,7 +37,7 @@ def plot_pies(ax, elec_mix_array):
     inner_colors = [
         "#ff8c00", "#ff8c00", "#ff8c00", "#ff8c00", "#ff8c00", # all Nuclear
         "#6895dd", "#235ebc", "#3dbfb0", "#f9d002", '#ffea80', # different VRES
-        "#545454", "#826837", "#db6a25", "#db6a25", "#db6a25" # coal, lignite, rest gas
+        "#545454", "#db6a25", "#db6a25", "#db6a25", "#db6a25" # coal, rest gas
     ]
 
     outer_labels = ["Nuclear", "VRES", "Fossil"]
@@ -160,7 +160,7 @@ if __name__ == "__main__":
                 elec_mix.loc[["solar"]].sum(), 
                 elec_mix.loc[["solar rooftop"]].sum(),
             ],
-            [elec_mix_coal.loc["coal"].sum(), elec_mix_coal.loc["lignite"].sum(), elec_mix_gas.sum(), 0, 0]
+            [elec_mix_coal.sum().sum(), elec_mix_gas.sum(), 0, 0, 0]
         ]
 
         plot_pies(ax, elec_mix_array)
@@ -180,18 +180,17 @@ if __name__ == "__main__":
     gas_patch = mpatches.Patch(color='#db6a25', label='Gas')
     vres_patch = mpatches.Patch(color='#0fa101', label='VRES')
     coal_patch = mpatches.Patch(color='#545454', label='Hard Coal')
-    lignite_patch = mpatches.Patch(color='#826837', label='Lignite')
     fossil_patch = mpatches.Patch(color='#A18181', label='Fossil Fuel')
 
     if isinstance(axes, np.ndarray):
         axes[1].legend(
-        handles=[nuclear_patch, vres_patch, gas_patch, coal_patch, lignite_patch, fossil_patch, onwind_patch, offwind_patch, ror_patch, solar_patch, solar_rooftop_patch],
-        loc="lower center", ncol=6, fontsize=4, bbox_to_anchor=(1.1, -0.15)
+        handles=[nuclear_patch, vres_patch, gas_patch, coal_patch, fossil_patch, onwind_patch, offwind_patch, ror_patch, solar_patch, solar_rooftop_patch],
+        loc="lower center", ncol=5, fontsize=4, bbox_to_anchor=(1.1, -0.15)
         )
     else:
         axes.legend(
-        handles=[nuclear_patch, vres_patch, gas_patch, coal_patch, lignite_patch, fossil_patch, onwind_patch, offwind_patch, ror_patch, solar_patch, solar_rooftop_patch],
-        loc="lower center", ncol=6, fontsize=4, bbox_to_anchor=(0.5, -0.15)
+        handles=[nuclear_patch, vres_patch, gas_patch, coal_patch, fossil_patch, onwind_patch, offwind_patch, ror_patch, solar_patch, solar_rooftop_patch],
+        loc="lower center", ncol=5, fontsize=4, bbox_to_anchor=(0.5, -0.15)
         )
     
     # move to base directory
