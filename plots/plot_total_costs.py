@@ -294,7 +294,7 @@ def plot_capacities(caps_df, clusters, planning_horizon, plot_width=7):
     df = df / 1e3
     df = df.groupby(df.index.map(rename_techs)).sum()
 
-    caps_threshold = 10
+    caps_threshold = 20
     to_drop = df.index[df.max(axis=1) < caps_threshold]  #df <
 
     logger.info(
@@ -310,7 +310,7 @@ def plot_capacities(caps_df, clusters, planning_horizon, plot_width=7):
         df.index.difference(PREFERRED_ORDER)
     )
 
-    _, ax = plt.subplots(figsize=(plot_width, 9))
+    _, ax = plt.subplots(figsize=(plot_width, 10))
 
     df.loc[new_index].T.plot(
         kind="bar",
