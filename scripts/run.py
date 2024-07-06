@@ -18,7 +18,7 @@ logging.basicConfig(level=logging.INFO)
 def get_scenario():
     parser = argparse.ArgumentParser(description="Running the scenario")
     parser.add_argument("-s", "--scenario", help="Specify the scenario.", required=False, 
-                        choices=["flexible", "flexible-moderate", "retro_tes", "rigid"])
+                        choices=["flexible", "flexible-moderate", "retro_tes", "rigid", "BAU"])
     parser.add_argument("-c", "--continue_horizon", help="Specify the horizon to continue simulations", 
                         choices=["2030", "2040", "2050"])
     parser.add_argument("-y", "--year", help="Specify a single horizon to simulate", 
@@ -30,7 +30,7 @@ def get_scenario():
     # Access the value of the scenario argument
     scenarios = args.scenario
     if scenarios == None:
-        scenarios = ["flexible", "flexible-moderate", "retro_tes", "rigid"]
+        scenarios = ["flexible", "flexible-moderate", "retro_tes", "rigid", "BAU"]
     else:
         scenarios = [scenarios]
     # log scenario name
@@ -82,7 +82,10 @@ def get_config_path(scenario, horizon):
                        "flexible-moderate": "flexible-moderate",
                        "retro_tes": "retro_tes-industry",
                        "rigid": "rigid-industry"}
-    configname = f"config.{configname_dict[scenario]}_{horizon}.yaml"
+    if scenario in configname_dict.keys():
+        configname = f"config.{configname_dict[scenario]}_{horizon}.yaml"
+    elif scenario == "BAU":
+        configname = f"config.BAU.yaml"
     configpath = "configs/EEE_study/"
     return configpath + configname
 
@@ -411,6 +414,11 @@ if __name__ == "__main__":
     # get scenario from argument
     scenarios, horizons, improved_cop = get_scenario()
 
+    # remove BAU scenario from scenarios list if present (BAU is simulated separately)
+    scenario_BAU = "BAU" in scenarios
+    if scenario_BAU:
+        scenarios.remove("BAU")
+
     # run model for given horizon
     for horizon in horizons:
         for scenario in scenarios:
@@ -446,3 +454,12 @@ if __name__ == "__main__":
 
                 # run full network preparation and solving workflow
                 run_status = run_workflow(scenario, horizon, improved_cop=improved_cop)
+
+
+    # run BAU scenario
+    if scenario_BAU:
+        # remove biomass potential increase if present
+        revert_biomass_potential()
+
+        # solve the network
+        solve_network("BAU", 2020)
