@@ -426,9 +426,9 @@ if __name__ == "__main__":
             run_status = run_workflow(scenario, horizon)
 
             # stop further execution if workflow did not succeed
-            if run_workflow is None:
-                logging.error("Workflow broke!")
-                break
+            if run_status is None:
+                logging.error(f"Workflow of {scenario} scenario for {horizon} broke!")
+                continue
 
             # for Optimal and Limited retrofitting proceed with improved COP
             if scenario in ["flexible", "retro_tes"] and improved_cop:
