@@ -58,16 +58,21 @@ Before running the scenarios, it is important to know their short working names 
 |Optimal Retrofitting & Green Heating (ORGH)  |retro_tes        |
 |Limited Retrofitting & Optimal Heating (LROH)|flexible-moderate|
 |No Retrofitting & Green Heating (NRGH)       |rigid            |
+|Business as Usual (BAU)                      |BAU              |
 
 **Note!** Running the scenarios requires a high-performance computing environment, as well as a [Gurobi license](https://www.gurobi.com/downloads/gurobi-software/).
 
 ### A. Running scenarios using *automated workflow* (the easy way)
 
+To run all scenarios for all horizons, run:
+
+    python scripts/run.py 
+
 To run the simulations for specific scenario for several horizons at once (e.g. *Optimal Renovation & Optimal Heating (OROH)* scenario), run:
 
     python scripts/run.py -s flexible -c 2040
 
-where `-s` is a mandatory flag used for the scenario selection. Use the coding name of corresponding scenario from the table to trigger the execution. `-c` flag (optional) speficies from which planning horizon the simulations should start. So if `-c 2040` is given, then 2040 and 2050 horizons will be simulated consequitively; if not specified, then 2030 is used as a starting year by default. `-c` flag is useful when simulation is interupted and it needs to be re-run from certain horizon. 
+where `-s` is a mandatory flag used for the scenario selection. Use the coding name of corresponding scenario from the table to trigger the execution. `-c` flag (optional) speficies from which planning horizon the simulations should start. So if `-c 2040` is given, then 2040 and 2050 horizons will be simulated consequitively; if not specified, then 2030 is used as a starting year by default. `-c` flag is useful when simulation is interupted and it needs to be re-run from certain horizon. For *BAU* scenario, using only `-s BAU` without horizon definition is sufficient.
 
 To simulate a single horizon for the scenario (e.g. *Limited Retrofitting & Optimal Heating* scenario for 2050), use `-y` flag as follows:
 
