@@ -311,6 +311,26 @@ rule plot_transmission_congestions:
         ),
 
 
+rule get_res_share:
+    params:
+        clusters=config["plotting"]["clusters"],
+    output:
+        table=RESULTS+"table_res_share_{clusters}.csv",
+    resources:
+        mem_mb=20000,
+    script:
+        "plots/table_res_share.py"
+
+
+rule get_res_shares:
+    input:
+        expand(
+            RESULTS
+            + "table_res_share_{clusters}.csv",
+            **config["plotting"],
+        ),
+
+
 rule plot_all:
     input:
         expand(RESULTS
@@ -403,6 +423,11 @@ rule plot_all:
         expand(
             RESULTS
             + "table_infra_savings_costs_{clusters}.csv",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "table_res_share_{clusters}.csv",
             **config["plotting"],
         ),
 
