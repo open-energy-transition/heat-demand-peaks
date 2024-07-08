@@ -164,7 +164,7 @@ def plot_electricity_cost(df_prices, name):
     if name == "bills":
         ax.set_title("Electricity bills")
         ylabel = ax.set_ylabel("EUR/household")
-        ax.set_ylim([0,4500])
+        ax.set_ylim([0,5000])
         plt.savefig(snakemake.output.figure_bills, bbox_inches='tight', dpi=600)
     elif name == "prices":
         ax.set_title("Energy price per country")
