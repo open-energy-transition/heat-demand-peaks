@@ -423,12 +423,12 @@ if __name__ == "__main__":
     for horizon in horizons:
         for scenario in scenarios:
             # ensure heat_pump_sink_T: 55.0 at the beginning of first run
-            if scenario in ["flexible", "flexible-moderate", "retro_tes"] and not improved_cop:
-                update_sink_T(scenario, horizon, 55.0)
-            elif scenario == "flexible-moderate" and improved_cop:
+            if scenario == "flexible-moderate" and improved_cop:
                 # read sink_T from flexible scenario for improved COP runs
                 sink_T = read_sink_T("flexible", horizon)
                 update_sink_T(scenario, horizon, sink_T)
+            elif scenario in ["flexible", "flexible-moderate", "retro_tes"]:
+                update_sink_T(scenario, horizon, 55.0)
 
             # run full network preparation and solving workflow 
             run_status = run_workflow(scenario, horizon)
