@@ -61,7 +61,7 @@ def plot_capacities(capacities_df, clusters, planning_horizon, plot_width=7):
     plt.xticks(rotation=0, fontsize=10)
     ax.set_ylabel("Capacity [$\mathrm{GW_{el}}$]")
     ax.set_xlabel("")
-    ax.set_ylim([0, 1700])
+    ax.set_ylim([0, 2000])
     x_ticks = list(df.columns)
     if planning_horizon in ["2040", "2050"] and "Limited \nRenovation &\nCost-Optimal Heating" in x_ticks:
         # replace name for Limited Renovation scenario for 2030 to be LROH
