@@ -422,10 +422,13 @@ if __name__ == "__main__":
     # run model for given horizon
     for horizon in horizons:
         for scenario in scenarios:
-            # ensure heat_pump_sink_T: 55.0 at the beginning of first run
+            # calculate heat_pump_sink_T for flexible-moderate, set to 55.0 at the beginning of first run for other scenarios
             if scenario == "flexible-moderate" and improved_cop:
-                # read sink_T from flexible scenario for improved COP runs
-                sink_T = read_sink_T("flexible", horizon)
+                # read heat saved from flexible scenario
+                heat_saved_ratio = get_heat_saved("flexible", horizon)
+                # calculate sink_T for half of heat saved
+                sink_T = calculate_sink_T(heat_saved_ratio/2)
+                # update sink_T
                 update_sink_T(scenario, horizon, sink_T)
             elif scenario in ["flexible", "flexible-moderate", "retro_tes"]:
                 update_sink_T(scenario, horizon, 55.0)
