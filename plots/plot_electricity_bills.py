@@ -169,7 +169,7 @@ def plot_electricity_cost(df_prices, name):
     elif name == "prices":
         ax.set_title("Energy price per country")
         ylabel = ax.set_ylabel("EUR/MWh")
-        ax.set_ylim([0, 200])
+        ax.set_ylim([0, 300])
         plt.savefig(snakemake.output.figure_price, bbox_inches='tight', dpi=600)
 
 
