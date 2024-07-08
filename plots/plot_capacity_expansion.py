@@ -351,30 +351,6 @@ if __name__ == "__main__":
             table_cap_df = fill_table_df(table_cap_df, planning_horizon, scenarios, processed_capacities_df)
 
 
-    # add BAU
-    BAU_horizon = BAU_HORIZON
-    scenario = "BAU"
-    lineex = line_limits[BAU_horizon]
-    sector_opts = f"Co2L{co2l_limits[BAU_horizon]}-{opts}"
-    
-    # move to submodules/pypsa-eur
-    change_path_to_pypsa_eur()
-
-    n = load_network(lineex, clusters, sector_opts, BAU_horizon, scenario)
-
-    # move to base directory
-    change_path_to_base()
-
-    if n is None:
-        # Skip further computation for this scenario if network is not loaded
-        print(f"Network is not found for scenario '{scenario}', BAU year '{BAU_horizon}'. Skipping...")
-    else:
-        capacities_BAU = compute_capacity_expansion(n, "BAU")
-        if not table_cap_df.empty and not capacities_BAU.empty:
-            processed_capacities_BAU = plot_capacities(capacities_BAU, clusters, BAU_horizon, plot_width=1.6)
-            table_cap_df = fill_table_df(table_cap_df, BAU_horizon, {"BAU":"BAU"}, processed_capacities_BAU)
-
-
     # save all capacities to csv
     if not table_cap_df.empty:
         table_cap_df.index.name = "Capacity expansion [GW]"
