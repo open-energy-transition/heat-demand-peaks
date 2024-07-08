@@ -243,8 +243,8 @@ def plot_costs(cost_df, clusters, planning_horizon, plot_width=7):
     ax.set_ylabel("System Cost [EUR billion per year]")
 
     ax.set_xlabel("")
-    ax.set_ylim([0,1100])
-    ax.set_yticks(np.arange(0, 1200, 100))
+    ax.set_ylim([0,1400])
+    ax.set_yticks(np.arange(0, 1500, 100))
 
     x_ticks = list(df.columns)
     if planning_horizon in ["2040", "2050"] and "Limited \nRenovation &\nCost-Optimal Heating" in x_ticks:
