@@ -77,7 +77,7 @@ def plot_curtailment(df_curtailment):
     ax.set_xticklabels(unique_years)  # Set the tick labels
     ax.set_ylabel("Curtailment [TWh]")
     ax.set_xlabel(None)
-    ax.legend(loc="upper left", facecolor="white", fontsize='xx-small')
+    ax.legend(facecolor="none", fontsize='xx-small')
     plt.savefig(snakemake.output.figure, dpi=600, bbox_inches = 'tight')
     
 
