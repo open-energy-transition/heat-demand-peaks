@@ -108,6 +108,18 @@ def get_network_name(scenario, horizon):
     return filename
 
 
+def copy_custom_data():
+    # define source and destination directories
+    source_dir = "data/"
+    destination_dir = "submodules/pypsa-eur/data/"
+    # copy command
+    command = ['cp', '-r', os.path.join(source_dir, '.'), destination_dir]
+    # run the command
+    subprocess.run(command, check=True, shell=True)
+    # log the success
+    logging.info("Copied custom data from data/ folder to submodules/pypsa-eur/data/ folder")
+
+
 def increase_biomass_potential(factor=1.2):
     # change path to pypsa-eur
     change_path_to_pypsa_eur()
@@ -413,6 +425,9 @@ def run_workflow(scenario, horizon, improved_cop=False):
 if __name__ == "__main__":
     # get scenario from argument
     scenarios, horizons, improved_cop = get_scenario()
+
+    # copy custom data into pypsa-eur/data folder
+    copy_custom_data()
 
     # remove BAU scenario from scenarios list if present (BAU is simulated separately)
     scenario_BAU = "BAU" in scenarios
