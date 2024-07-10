@@ -41,6 +41,26 @@ rule plot_total_costs:
         ),
 
 
+rule plot_capacity_expansion:
+    params:
+        clusters=config["plotting"]["clusters"],
+        planning_horizon=config["plotting"]["planning_horizon"],
+    output:
+        capacities=RESULTS+"table_capacity_expansions_{clusters}.csv",
+    resources:
+        mem_mb=20000,
+    script:
+        "plots/plot_capacity_expansion.py"
+
+
+rule plot_capacity_expansions:
+    input:
+        expand(RESULTS
+            + "table_capacity_expansions_{clusters}.csv",
+            **config["plotting"],
+        ),
+
+
 rule plot_electricity_bill:
     params:
         clusters=config["plotting"]["clusters"],
@@ -291,6 +311,26 @@ rule plot_transmission_congestions:
         ),
 
 
+rule get_res_share:
+    params:
+        clusters=config["plotting"]["clusters"],
+    output:
+        table=RESULTS+"table_res_share_{clusters}.csv",
+    resources:
+        mem_mb=20000,
+    script:
+        "plots/table_res_share.py"
+
+
+rule get_res_shares:
+    input:
+        expand(
+            RESULTS
+            + "table_res_share_{clusters}.csv",
+            **config["plotting"],
+        ),
+
+
 rule plot_all:
     input:
         expand(RESULTS
@@ -299,6 +339,10 @@ rule plot_all:
         ),
         expand(RESULTS
             + "table_total_capacities_{clusters}.csv",
+            **config["plotting"],
+        ),
+        expand(RESULTS
+            + "table_capacity_expansions_{clusters}.csv",
             **config["plotting"],
         ),
         expand(
@@ -379,6 +423,11 @@ rule plot_all:
         expand(
             RESULTS
             + "table_infra_savings_costs_{clusters}.csv",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "table_res_share_{clusters}.csv",
             **config["plotting"],
         ),
 

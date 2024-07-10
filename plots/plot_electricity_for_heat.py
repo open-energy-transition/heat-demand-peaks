@@ -8,13 +8,14 @@ import sys
 sys.path.append("../submodules/pypsa-eur")
 import pypsa
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 import numpy as np
 import pandas as pd
 import warnings
 warnings.filterwarnings("ignore")
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                      change_path_to_pypsa_eur, change_path_to_base, \
-                     LINE_LIMITS, CO2L_LIMITS
+                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON
 
 
 def add_new_carriers(n):
@@ -65,9 +66,18 @@ def get_elec_consumption_for_heat(n):
 
 
 def plot_elec_consumption_for_heat(dict_elec):
-    
-    fig, (ax1, ax2, ax3, ax4) = plt.subplots(4,1)
-    axes = [ax1, ax2, ax3, ax4]
+    # set heights for each subplots
+    if len(dict_elec.keys()) == 1:
+        heights = [1.4]
+    else:
+        heights = [1.4] * 4
+    fig = plt.figure(figsize=(6.4, sum(heights)))
+    # fig, axes = plt.subplots(len(dict_elec.keys()),1) #, figsize=(11,5))
+    # axes = [ax1, ax2, ax3, ax4]
+    gs = gridspec.GridSpec(len(heights), 1, height_ratios=heights)
+    axes = [fig.add_subplot(gs[i]) for i in range(len(heights))]
+    if len(dict_elec.keys()) == 1:
+        axes = axes * 4
     i=0
     for name, elec_demand_f_heating in dict_elec.items():
         ax = axes[i]
@@ -85,7 +95,8 @@ def plot_elec_consumption_for_heat(dict_elec):
         )
 
         ax.set_xlabel("", fontsize=12)
-        ax.set_ylim([0,900])
+        ax.set_ylim([0,1200])
+        ax.set_yticks(np.arange(0, 1200, 500))
 
         if i <3:
             ax.set_xticks([])
@@ -107,8 +118,8 @@ def plot_elec_consumption_for_heat(dict_elec):
         ax.set_title(name, fontsize=10)
         i+= 1
 
-    handles1, _ = ax1.get_legend_handles_labels()
-    ax1.legend(
+    handles1, _ = axes[0].get_legend_handles_labels()
+    axes[0].legend(
         reversed(handles1[0:7]),
         [
             "Gas Boilers (gas)",
@@ -118,8 +129,13 @@ def plot_elec_consumption_for_heat(dict_elec):
         ],
         loc=[1.02, -.2], fontsize=10
     )
-    ax3.set_ylabel("Electricity and Gas Consumption to \n Cover Heating Demands [GW]", fontsize=10)
-    ax3.yaxis.set_label_coords(-0.1, 1)
+    if len(dict_elec.keys()) == 1:
+        ylabel = "Electricity and Gas \nConsumption to Cover \nHeating Demands [GW]"
+        axes[0].set_ylabel(ylabel, fontsize=10)
+    else:
+        ylabel = "Electricity and Gas Consumption to \n Cover Heating Demands [GW]"
+        axes[2].set_ylabel(ylabel, fontsize=10)
+        axes[2].yaxis.set_label_coords(-0.1, 1)
     plt.subplots_adjust(hspace=0.3)
     plt.savefig(snakemake.output.figure, bbox_inches='tight', dpi=600)
 
@@ -148,10 +164,13 @@ if __name__ == "__main__":
     change_path_to_pypsa_eur()
 
     # define scenario namings
-    scenarios = {"flexible": "Optimal Renovation and Cost-Optimal Heating", 
-                 "retro_tes": "Optimal Renovation and Electric Heating", 
-                 "flexible-moderate": "Limited Renovation and Cost-Optimal Heating", 
-                 "rigid": "No Renovation and Electric Heating"}
+    if planning_horizon == BAU_HORIZON:
+        scenarios = {"BAU": "BAU"}
+    else:
+        scenarios = {"flexible": "Optimal Renovation and Cost-Optimal Heating", 
+                     "retro_tes": "Optimal Renovation and Electric Heating", 
+                     "flexible-moderate": "Limited Renovation and Cost-Optimal Heating", 
+                     "rigid": "No Renovation and Electric Heating"}
 
     # load networks
     networks = {}

@@ -5,7 +5,7 @@
 plotting:
   clusters: 48
   planning_horizon: [2020, 2030, 2040, 2050]
-  sector_opts: "dist1.05-T-H-B-I"
+  sector_opts: "dist2.0-T-H-B-I"
 
 heat_pumps:
   residential_decentral: 7.5 # (kW_el) https://iea.blob.core.windows.net/assets/4713780d-c0ae-4686-8c9b-29e782452695/TheFutureofHeatPumps.pdf

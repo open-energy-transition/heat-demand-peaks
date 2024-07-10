@@ -18,7 +18,7 @@ logging.basicConfig(level=logging.INFO)
 def get_scenario():
     parser = argparse.ArgumentParser(description="Running the scenario")
     parser.add_argument("-s", "--scenario", help="Specify the scenario.", required=False, 
-                        choices=["flexible", "flexible-moderate", "retro_tes", "rigid"])
+                        choices=["flexible", "flexible-moderate", "retro_tes", "rigid", "BAU"])
     parser.add_argument("-c", "--continue_horizon", help="Specify the horizon to continue simulations", 
                         choices=["2030", "2040", "2050"])
     parser.add_argument("-y", "--year", help="Specify a single horizon to simulate", 
@@ -30,7 +30,7 @@ def get_scenario():
     # Access the value of the scenario argument
     scenarios = args.scenario
     if scenarios == None:
-        scenarios = ["flexible", "flexible-moderate", "retro_tes", "rigid"]
+        scenarios = ["flexible", "flexible-moderate", "retro_tes", "rigid", "BAU"]
     else:
         scenarios = [scenarios]
     # log scenario name
@@ -82,7 +82,10 @@ def get_config_path(scenario, horizon):
                        "flexible-moderate": "flexible-moderate",
                        "retro_tes": "retro_tes-industry",
                        "rigid": "rigid-industry"}
-    configname = f"config.{configname_dict[scenario]}_{horizon}.yaml"
+    if scenario in configname_dict.keys():
+        configname = f"config.{configname_dict[scenario]}_{horizon}.yaml"
+    elif scenario == "BAU":
+        configname = f"config.BAU.yaml"
     configpath = "configs/EEE_study/"
     return configpath + configname
 
@@ -103,6 +106,18 @@ def get_network_name(scenario, horizon):
     simpl, opts = params_default['simpl'][0], params_default['opts'][0]
     filename = f"elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc"
     return filename
+
+
+def copy_custom_data():
+    # define source and destination directories
+    source_dir = "data/"
+    destination_dir = "submodules/pypsa-eur/data/"
+    # copy command
+    command = ['cp', '-r', os.path.join(source_dir, '.'), destination_dir]
+    # run the command
+    subprocess.run(command, check=True, shell=True)
+    # log the success
+    logging.info("Copied custom data from data/ folder to submodules/pypsa-eur/data/ folder")
 
 
 def increase_biomass_potential(factor=1.2):
@@ -411,24 +426,35 @@ if __name__ == "__main__":
     # get scenario from argument
     scenarios, horizons, improved_cop = get_scenario()
 
+    # copy custom data into pypsa-eur/data folder
+    copy_custom_data()
+
+    # remove BAU scenario from scenarios list if present (BAU is simulated separately)
+    scenario_BAU = "BAU" in scenarios
+    if scenario_BAU:
+        scenarios.remove("BAU")
+
     # run model for given horizon
     for horizon in horizons:
         for scenario in scenarios:
-            # ensure heat_pump_sink_T: 55.0 at the beginning of first run
-            if scenario in ["flexible", "flexible-moderate", "retro_tes"] and not improved_cop:
-                update_sink_T(scenario, horizon, 55.0)
-            elif scenario == "flexible-moderate" and improved_cop:
-                # read sink_T from flexible scenario for improved COP runs
-                sink_T = read_sink_T("flexible", horizon)
+            # calculate heat_pump_sink_T for flexible-moderate, set to 55.0 at the beginning of first run for other scenarios
+            if scenario == "flexible-moderate" and improved_cop:
+                # read heat saved from flexible scenario
+                heat_saved_ratio = get_heat_saved("flexible", horizon)
+                # calculate sink_T for half of heat saved
+                sink_T = calculate_sink_T(heat_saved_ratio/2)
+                # update sink_T
                 update_sink_T(scenario, horizon, sink_T)
+            elif scenario in ["flexible", "flexible-moderate", "retro_tes"]:
+                update_sink_T(scenario, horizon, 55.0)
 
             # run full network preparation and solving workflow 
             run_status = run_workflow(scenario, horizon)
 
             # stop further execution if workflow did not succeed
-            if run_workflow is None:
-                logging.error("Workflow broke!")
-                break
+            if run_status is None:
+                logging.error(f"Workflow of {scenario} scenario for {horizon} broke!")
+                continue
 
             # for Optimal and Limited retrofitting proceed with improved COP
             if scenario in ["flexible", "retro_tes"] and improved_cop:
@@ -446,3 +472,12 @@ if __name__ == "__main__":
 
                 # run full network preparation and solving workflow
                 run_status = run_workflow(scenario, horizon, improved_cop=improved_cop)
+
+
+    # run BAU scenario
+    if scenario_BAU:
+        # remove biomass potential increase if present
+        revert_biomass_potential()
+
+        # solve the network
+        solve_network("BAU", 2020)

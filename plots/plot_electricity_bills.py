@@ -164,35 +164,81 @@ def plot_electricity_cost(df_prices, name):
     if name == "bills":
         ax.set_title("Electricity bills")
         ylabel = ax.set_ylabel("EUR/household")
-        ax.set_ylim([0,4500])
+        ax.set_ylim([0,5000])
         plt.savefig(snakemake.output.figure_bills, bbox_inches='tight', dpi=600)
     elif name == "prices":
         ax.set_title("Energy price per country")
         ylabel = ax.set_ylabel("EUR/MWh")
-        ax.set_ylim([0, 200])
+        ax.set_ylim([0, 300])
         plt.savefig(snakemake.output.figure_price, bbox_inches='tight', dpi=600)
 
 
 def electricity_prices(network, households):
     n = network
     
-    # rename AL1 0 load to AL1 0 low voltage
-    n.loads_t.p_set =  n.loads_t.p_set.rename(columns=n.loads.bus.to_dict())
-    load_cols = n.loads_t.p_set.columns
-    
-    # sum total electricity price per country in EUR using loads and marginal prices ar buses
-    prices = n.loads_t.p_set.multiply(n.snapshot_weightings.stores, axis=0).multiply(n.buses_t.marginal_price[load_cols]).sum()
-    
-    # rename indexes to 2-letter country code
-    prices.index = [x[:2] for x in prices.index]
-    
-    # group by country
-    prices = prices.groupby(level=0).sum()
+    rh_techs_elec = ['residential rural ground heat pump',
+                     'residential rural resistive heater', 
+                     'residential urban decentral air heat pump',
+                     'residential urban decentral resistive heater',
+                     'urban central resistive heater',
+                     'urban central air heat pump',
+                     'residential rural air heat pump']
+    rh_techs_mCHP = ['residential rural micro gas CHP', 'residential urban decentral micro gas CHP']
+    rh_techs_gasCHP = ['urban central gas CHP', 'urban central gas CHP CC']
 
-    # total load
-    total_load = n.loads_t.p_set.multiply(n.snapshot_weightings.stores, axis=0).sum()
-    total_load.index = [x[:2] for x in total_load.index]
-    total_load_country = total_load.groupby(level=0).sum()
+    ev_tech_charge = ['BEV charger']
+    ev_tech_discharge = ["V2G"]
+    
+    # map loads to corresponding buses (AL1 0 in load to AL1 0 low voltage)
+    n.loads_t.p_set =  n.loads_t.p_set.rename(columns=n.loads.bus.to_dict())
+    
+    # low voltage load
+    lv_buses = n.buses.query("carrier == 'low voltage'").index
+    lv_load = n.loads_t.p_set[lv_buses]
+    
+    # electricity consumption of residential heat techs in low_voltage bus of links
+    rh_elec_links = n.links.query("carrier in @rh_techs_elec").index
+    rh_techs_mapping = n.links.loc[rh_elec_links, "bus0"].to_dict()
+    rh_techs_consume = n.links_t.p0[rh_elec_links]
+    rh_techs_consume = rh_techs_consume.rename(columns=rh_techs_mapping)
+    rh_techs_consume = rh_techs_consume.T.groupby(level=0).sum().T
+    
+    # electricity consumption of land transport EV in low_voltage bus in links
+    ev_charge_links = n.links.query("carrier in @ev_tech_charge").index
+    ev_charge_mapping = n.links.loc[ev_charge_links, "bus0"].to_dict()
+    ev_tech_consume = n.links_t.p0[ev_charge_links]
+    ev_tech_consume = ev_tech_consume.rename(columns=ev_charge_mapping)
+    ev_tech_consume = ev_tech_consume.T.groupby(level=0).sum().T
+    if ev_tech_consume.empty:
+        ev_tech_consume = pd.DataFrame(0, index=lv_load.index, columns=lv_load.columns)
+    
+    # electricity prosumption of land transport EV to low_voltage bus in links
+    ev_discharge_links = n.links.query("carrier in @ev_tech_discharge").index
+    ev_discharge_mapping = n.links.loc[ev_discharge_links, "bus1"].to_dict()
+    ev_tech_prosume = n.links_t.p1[ev_discharge_links]
+    ev_tech_prosume = ev_tech_prosume.rename(columns=ev_discharge_mapping)
+    ev_tech_prosume = ev_tech_prosume.T.groupby(level=0).sum().T
+    if ev_tech_prosume.empty:
+        ev_tech_prosume = pd.DataFrame(0, index=lv_load.index, columns=lv_load.columns)
+    
+    # electricity prosumption of micro CHP to low_voltage bus in links
+    rh_mCHP_links = n.links.query("carrier in @rh_techs_mCHP").index
+    rh_mCHP_lv_mapping = n.links.loc[rh_mCHP_links, "bus1"].to_dict()
+    rh_mCHP_prosume = n.links_t.p1[rh_mCHP_links]
+    rh_mCHP_prosume = rh_mCHP_prosume.rename(columns=rh_mCHP_lv_mapping)
+    rh_mCHP_prosume = rh_mCHP_prosume.T.groupby(level=0).sum().T
+    
+    # total electricity consumption in low_voltage nodes
+    total_elec_load = (lv_load + rh_techs_consume + ev_tech_consume + ev_tech_prosume + rh_mCHP_prosume).multiply(n.snapshot_weightings.stores, axis=0)
+
+    # total electricity cost per country
+    total_cost = total_elec_load.multiply(n.buses_t.marginal_price[total_elec_load.columns]).sum()
+    total_cost.index = [x[:2] for x in total_cost.index]
+    prices = total_cost.groupby(level=0).sum()
+
+    # total electricity consumption by countries
+    total_elec_load.columns = [x[:2] for x in total_elec_load.columns]
+    total_load_country = total_elec_load.groupby(level=0, axis=1).sum().sum()
 
     # electricity bill per MWh [EUR/MWh]
     energy_price_MWh = prices / total_load_country

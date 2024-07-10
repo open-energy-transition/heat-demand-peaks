@@ -28,6 +28,169 @@ LINE_LIMITS = {"2020": "v1.0",
 # BAU year
 BAU_HORIZON = "2020"
 
+# constants for total costs and capacity expansion plots
+GAS_BOILERS = [
+    "Link:residential rural gas boiler",
+    "Link:residential urban decentral gas boiler",
+    "Link:services rural gas boiler",
+    "Link:services urban decentral gas boiler",
+    "Link:urban central gas boiler",
+]
+
+PREFIX_TO_REMOVE = [
+    "residential ",
+    "services ",
+    "urban ",
+    "rural ",
+    "central ",
+    "decentral ",
+]
+
+RENAME_IF_CONTAINS = [
+    "solid biomass CHP",
+    "gas CHP",
+    "gas boiler",
+    "biogas",
+    "solar thermal",
+    "air heat pump",
+    "ground heat pump",
+    "resistive heater",
+    "Fischer-Tropsch",
+]
+
+RENAME_IF_CONTAINS_DICT = {
+    "water tanks": "TES",
+    "retrofitting": "building retrofitting",
+    # "H2 Electrolysis": "hydrogen storage",
+    # "H2 Fuel Cell": "hydrogen storage",
+    # "H2 pipeline": "hydrogen storage",
+    "battery": "battery storage",
+    # "CC": "CC"
+}
+
+RENAME = {
+    "Solar": "solar PV",
+    "solar": "solar PV",
+    "Sabatier": "methanation",
+    "helmeth" : "methanation",
+    "Offshore Wind (AC)": "offshore wind",
+    "Offshore Wind (DC)": "offshore wind",
+    "Onshore Wind": "onshore wind",
+    "offwind-ac": "offshore wind",
+    "offwind-dc": "offshore wind",
+    "Run of River": "hydroelectricity",
+    "Run of river": "hydroelectricity",
+    "Reservoir & Dam": "hydroelectricity",
+    "Pumped Hydro Storage": "hydroelectricity",
+    "PHS": "hydroelectricity",
+    "NH3": "ammonia",
+    "co2 Store": "DAC",
+    "co2 stored": "CO2 sequestration",
+    "AC": "transmission lines",
+    "DC": "transmission lines",
+    "B2B": "transmission lines",
+    "solid biomass for industry": "solid biomass",
+    "solid biomass for industry CC": "solid biomass",
+    "electricity distribution grid": "distribution lines",
+    "Open-Cycle Gas":"OCGT",
+    "Combined-Cycle Gas":"CCGT",
+    "gas": "gas storage",
+    'gas pipeline new': 'gas pipeline',
+    "gas for industry CC": "gas for industry",
+    "SMR CC": "SMR",
+    "process emissions CC": "process emissions",
+    "Battery Storage": "battery storage",
+    'H2 Store': "H2 storage",
+    'Hydrogen Storage': "H2 storage",
+    'co2 sequestered': "CO2 sequestration",
+    "solid biomass transport": "solid biomass",
+    "uranium": "nuclear",
+}
+
+PREFERRED_ORDER = pd.Index(
+    [
+        "uranium",
+        "nuclear",
+        "solid biomass",
+        "biogas",
+        "gas for industry",
+        "coal for industry",
+        "methanol",
+        "oil",
+        "lignite",
+        "coal",
+        "shipping oil",
+        "shipping methanol",
+        "naphtha for industry",
+        "land transport oil",
+        "kerosene for aviation",
+        
+        "transmission lines",
+        "distribution lines",
+        "gas pipeline",
+        "H2 pipeline",
+        
+        "H2 Electrolysis",
+        "H2 Fuel Cell",
+        "DAC",
+        "Fischer-Tropsch",
+        "methanation",
+        "BEV charger",
+        "V2G",
+        "SMR",
+        "methanolisation",
+        
+        "battery storage",
+        "gas storage",
+        "H2 storage",
+        "TES",
+        
+        "hydroelectricity",
+        "OCGT",
+        "CCGT",
+        "onshore wind",
+        "offshore wind",
+        "solar PV",
+        "solar thermal",
+        "solar rooftop",
+
+        "co2",
+        "CO2 sequestration",
+        "process emissions",
+
+        "gas CHP",
+        "solid biomass CHP",
+        "resistive heater",
+        "air heat pump",
+        "ground heat pump",
+        "gas boiler",
+        "biomass boiler",
+        "WWHRS",
+        "building retrofitting",
+        "WWHRS",
+     ]
+)
+
+
+def rename_techs(label):
+
+    for ptr in PREFIX_TO_REMOVE:
+        if label[: len(ptr)] == ptr:
+            label = label[len(ptr) :]
+
+    for rif in RENAME_IF_CONTAINS:
+        if rif in label:
+            label = rif
+
+    for old, new in RENAME_IF_CONTAINS_DICT.items():
+        if old in label:
+            label = new
+
+    for old, new in RENAME.items():
+        if old == label:
+            label = new
+    return label
+
 
 def mock_snakemake(
     rulename,

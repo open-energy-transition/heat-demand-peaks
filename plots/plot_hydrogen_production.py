@@ -70,7 +70,7 @@ def plot_hydrogen_production(df_hydrogen, figure_dict):
         ax.set_xticklabels(unique_years)  # Set the tick labels
         ax.set_ylabel(idx)
         ax.set_xlabel(None)
-        ax.legend(loc="upper left", facecolor="white", fontsize='xx-small')
+        ax.legend(facecolor="none", fontsize='xx-small')
         plt.savefig(output, dpi=600, bbox_inches = 'tight')
         
 
