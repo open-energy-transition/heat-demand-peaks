@@ -306,6 +306,9 @@ if __name__ == "__main__":
     # initialize df for storing co2 balance information
     table_co2_df = define_table_df(scenarios)
 
+    # initialize df for storing CO2 emissions
+    table_emissions_df = define_table_df(scenarios)
+
     for planning_horizon in planning_horizons:
         lineex = line_limits[planning_horizon]
         sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{opts}"
@@ -335,6 +338,8 @@ if __name__ == "__main__":
         if not co2_df.empty:
             plot_co2_balance(co2_df, clusters, planning_horizon)
             table_co2_df = fill_table_df(table_co2_df, planning_horizon, scenarios, co2_df)
+            co2_emission = (co2_df.abs().sum() / 2).to_frame().T
+            table_emissions_df = fill_table_df(table_emissions_df, planning_horizon, scenarios, co2_emission)
     
     # Add BAU scenario
     BAU_horizon = BAU_HORIZON
@@ -361,6 +366,13 @@ if __name__ == "__main__":
             plot_co2_balance(co2_BAU, clusters, BAU_horizon, plot_width=1.5)
             table_co2_df = fill_table_df(table_co2_df, BAU_horizon, {"BAU":"BAU"}, co2_BAU)
             table_co2_df = table_co2_df.fillna(0)
+            co2_emission_BAU = (co2_BAU.abs().sum() / 2)[0]
+
+    # CO2 savings compared to BAU
+    co2_savings_df = co2_emission_BAU - table_emissions_df
+    co2_savings_df.index = ["CO2 emission savings [tCO2_eq]"]
+    # saving in cubic meter of gas (1 m3 natural gas = 1,9 kg CO2) Source: https://www.eeagrants.gov.pt/media/2776/conversion-guidelines.pdf
+    co2_savings_df.loc["Equivalent gas savings [m3]"] = co2_savings_df.loc["CO2 emission savings [tCO2_eq]", :] * 1000 / 1.9
 
 
     # move to base directory
@@ -376,4 +388,12 @@ if __name__ == "__main__":
         table_co2_df.columns = replace_multiindex_values(table_co2_df.columns, 
                                                          ("2050", "Limited \nRenovation &\nCost-Optimal Heating"),
                                                          ("2050","Limited \nRenovation &\nElectric Heating"))
+        co2_savings_df.columns = replace_multiindex_values(co2_savings_df.columns, 
+                                                           ("2040", "Limited \nRenovation &\nCost-Optimal Heating"),
+                                                           ("2040","Limited \nRenovation &\nElectric Heating"))
+        co2_savings_df.columns = replace_multiindex_values(co2_savings_df.columns, 
+                                                           ("2050", "Limited \nRenovation &\nCost-Optimal Heating"),
+                                                           ("2050","Limited \nRenovation &\nElectric Heating"))
+        
         table_co2_df.to_csv(snakemake.output.table)
+        co2_savings_df.to_csv(snakemake.output.table_savings)

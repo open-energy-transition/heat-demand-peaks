@@ -223,6 +223,7 @@ rule plot_co2_level:
         clusters=config["plotting"]["clusters"],
     output:
         table=RESULTS+"table_co2_level_{clusters}.csv",
+        table_savings=RESULTS+"table_co2_savings_{clusters}.csv",
     resources:
         mem_mb=20000,
     script:
@@ -234,6 +235,11 @@ rule plot_co2_levels:
         expand(
             RESULTS
             + "table_co2_level_{clusters}.csv",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "table_co2_savings_{clusters}.csv",
             **config["plotting"],
         ),
 
@@ -398,6 +404,11 @@ rule plot_all:
         expand(
             RESULTS
             + "table_co2_level_{clusters}.csv",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "table_co2_savings_{clusters}.csv",
             **config["plotting"],
         ),
         expand(
