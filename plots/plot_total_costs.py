@@ -282,7 +282,8 @@ def update_capital_cost(cap_costs_dict, p_nom_opt_dict, planning_horizon):
         full_cost = full_cost.loc[:, ~full_cost.columns.isin(missing_scenarios)]
 
     # set gas boilers manually after finished
-    full_cost.loc[GAS_BOILERS] = cap_costs_dict[str(planning_horizon_init)].loc[GAS_BOILERS]
+    if GAS_BOILERS[0] in cap_costs_dict[str(planning_horizon_init)].index:
+        full_cost.loc[GAS_BOILERS] = cap_costs_dict[str(planning_horizon_init)].loc[GAS_BOILERS]
     return full_cost
 
 
