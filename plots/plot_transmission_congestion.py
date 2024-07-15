@@ -137,7 +137,7 @@ if __name__ == "__main__":
             table.name = short_name
 
             # scale width for plots
-            scaling_factor = 4e-1
+            scaling_factor = 9e-1
             scaled_line_widths = line_widths * scaling_factor
             scaled_link_widths = link_widths * scaling_factor
             # set green cases thicker
