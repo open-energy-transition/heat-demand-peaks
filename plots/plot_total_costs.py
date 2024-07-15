@@ -196,8 +196,8 @@ def plot_capacities(caps_df, clusters, planning_horizon, plot_width=7):
     ax.set_ylabel("Installed capacities [GW]")
 
     ax.set_xlabel("")
-    ax.set_ylim([0,20000])
-    ax.set_yticks(np.arange(0, 21000, 2000))
+    ax.set_ylim([0,22000])
+    ax.set_yticks(np.arange(0, 23000, 2000))
 
     x_ticks = list(df.columns)
     if planning_horizon in ["2040", "2050"] and "Limited \nRenovation &\nCost-Optimal Heating" in x_ticks:
