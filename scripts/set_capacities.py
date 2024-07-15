@@ -87,6 +87,7 @@ def set_optimal_capacities(solved_network, unsolved_network):
 
     # set p_nom_max as max(p_nom_max, p_nom_min) for retrofitting
     retro_idx = unsolved_network.generators.query("carrier == 'retrofitting'").index
+    unsolved_network.generators.loc[retro_idx, ["p_nom_min", "p_nom"]] = solved_network.generators.loc[retro_idx, "p_nom_opt"]
     unsolved_network.generators.loc[retro_idx, "p_nom_max"] = unsolved_network.generators.loc[retro_idx, ["p_nom_max", "p_nom_min"]].max(axis=1)
 
     return unsolved_network
