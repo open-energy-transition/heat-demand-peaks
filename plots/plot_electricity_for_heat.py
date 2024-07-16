@@ -9,6 +9,7 @@ sys.path.append("../submodules/pypsa-eur")
 import pypsa
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+import matplotlib.ticker as ticker
 import numpy as np
 import pandas as pd
 import warnings
@@ -67,7 +68,7 @@ def get_elec_consumption_for_heat(n):
 
 def plot_elec_consumption_for_heat(dict_elec):
     # set heights for each subplots
-    if len(dict_elec.keys()) == 1:
+    if "BAU" in dict_elec.keys():
         heights = [1.4]
     else:
         heights = [1.4] * 4
@@ -76,7 +77,7 @@ def plot_elec_consumption_for_heat(dict_elec):
     # axes = [ax1, ax2, ax3, ax4]
     gs = gridspec.GridSpec(len(heights), 1, height_ratios=heights)
     axes = [fig.add_subplot(gs[i]) for i in range(len(heights))]
-    if len(dict_elec.keys()) == 1:
+    if "BAU" in dict_elec.keys():
         axes = axes * 4
     i=0
     for name, elec_demand_f_heating in dict_elec.items():
@@ -84,7 +85,7 @@ def plot_elec_consumption_for_heat(dict_elec):
         ax.set_facecolor("whitesmoke")
 
         print("Hard coded coordinates on x-axis, selected for 3H granularity")
-        where = [56, 224]
+        where = [359, 527]
 
         elec_demand_f_heating = elec_demand_f_heating.reset_index()[["ground heat pump", "air heat pump", "resistive heater", "gas boiler"]]
         colors = ["#2fb537", "#48f74f", "#d8f9b8", "#db6a25"]
@@ -95,14 +96,19 @@ def plot_elec_consumption_for_heat(dict_elec):
         )
 
         ax.set_xlabel("", fontsize=12)
-        ax.set_ylim([0,1200])
-        ax.set_yticks(np.arange(0, 1200, 500))
+        ax.set_ylim([1,2000])
+        ax.set_yscale("log")  # Set the y-axis to logarithmic scale
 
-        if i <3:
+        # Custom y-ticks for logarithmic scale
+        ax.yaxis.set_major_locator(ticker.LogLocator(base=10.0, numticks=10))
+        ax.yaxis.set_minor_locator(ticker.LogLocator(base=10.0, subs='auto'))
+        ax.yaxis.set_minor_formatter(ticker.NullFormatter())
+
+        if i < 3:
             ax.set_xticks([])
             ax.set_xlabel("")
-        if i == 3:
-            ticks = [i for i in range(where[0], where[1], 14)]
+        if i == 3 or "BAU" in dict_elec.keys():
+            ticks = [i for i in range(where[0], where[1], 24)]
             ax.set_xticks(ticks)  # Set the tick positions
             ticks = [
                 str(n.snapshots[i]).split(" ")[0].split("-")[2]+"."+str(n.snapshots[i]).split(" ")[0].split("-")[1]

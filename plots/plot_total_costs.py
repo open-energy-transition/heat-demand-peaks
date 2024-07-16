@@ -196,8 +196,8 @@ def plot_capacities(caps_df, clusters, planning_horizon, plot_width=7):
     ax.set_ylabel("Installed capacities [GW]")
 
     ax.set_xlabel("")
-    ax.set_ylim([0,20000])
-    ax.set_yticks(np.arange(0, 21000, 2000))
+    ax.set_ylim([0,22000])
+    ax.set_yticks(np.arange(0, 23000, 2000))
 
     x_ticks = list(df.columns)
     if planning_horizon in ["2040", "2050"] and "Limited \nRenovation &\nCost-Optimal Heating" in x_ticks:
@@ -282,7 +282,8 @@ def update_capital_cost(cap_costs_dict, p_nom_opt_dict, planning_horizon):
         full_cost = full_cost.loc[:, ~full_cost.columns.isin(missing_scenarios)]
 
     # set gas boilers manually after finished
-    full_cost.loc[GAS_BOILERS] = cap_costs_dict[str(planning_horizon_init)].loc[GAS_BOILERS]
+    if GAS_BOILERS[0] in cap_costs_dict[str(planning_horizon_init)].index:
+        full_cost.loc[GAS_BOILERS] = cap_costs_dict[str(planning_horizon_init)].loc[GAS_BOILERS]
     return full_cost
 
 
