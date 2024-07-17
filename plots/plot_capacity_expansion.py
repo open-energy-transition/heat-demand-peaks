@@ -52,6 +52,16 @@ def plot_capacities(caps_df, clusters, planning_horizon, plot_width=7):
 
     df = df.drop(to_drop)
 
+    # remove extra technologies that are not expanded
+    drop_techs = ["gas boiler", "process emissions",
+                  "solid biomass", "solid biomass CHP",
+                  "gas storage",
+                  "kerosene for aviation", "land transport oil", "naphtha for industry",
+                  "shipping methanol", "shipping oil",
+                  "coal", "lignite", "oil",
+                  "coal for industry", "gas for industry"]
+    df = df.drop(set(df.index).intersection(set(drop_techs)))
+
     logger.info(f"Total optimal capacity is {round(df.sum())} GW")
 
     new_index = PREFERRED_ORDER.intersection(df.index).append(
