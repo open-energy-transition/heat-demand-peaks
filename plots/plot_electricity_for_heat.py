@@ -95,14 +95,11 @@ def plot_elec_consumption_for_heat(dict_elec):
             linewidth=0, ax=ax
         )
 
+        cumulative = (elec_demand_f_heating / 1e3).cumsum(axis=1)
+        ax.plot(cumulative.iloc[where[0]:where[1]], color='black', linewidth=0.5)
+
         ax.set_xlabel("", fontsize=12)
         ax.set_ylim([1,1600])
-        # ax.set_yscale("log")  # Set the y-axis to logarithmic scale
-
-        # # Custom y-ticks for logarithmic scale
-        # ax.yaxis.set_major_locator(ticker.LogLocator(base=10.0, numticks=10))
-        # ax.yaxis.set_minor_locator(ticker.LogLocator(base=10.0, subs='auto'))
-        # ax.yaxis.set_minor_formatter(ticker.NullFormatter())
 
         if i < 3:
             ax.set_xticks([])
