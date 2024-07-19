@@ -85,7 +85,7 @@ def plot_elec_consumption_for_heat(dict_elec):
         ax.set_facecolor("whitesmoke")
 
         print("Hard coded coordinates on x-axis, selected for 3H granularity")
-        where = [359, 527]
+        where = [359, 695]
 
         elec_demand_f_heating = elec_demand_f_heating.reset_index()[["ground heat pump", "air heat pump", "resistive heater", "gas boiler"]]
         colors = ["#2fb537", "#48f74f", "#d8f9b8", "#db6a25"]
@@ -96,19 +96,19 @@ def plot_elec_consumption_for_heat(dict_elec):
         )
 
         ax.set_xlabel("", fontsize=12)
-        ax.set_ylim([1,2000])
-        ax.set_yscale("log")  # Set the y-axis to logarithmic scale
+        ax.set_ylim([1,1600])
+        # ax.set_yscale("log")  # Set the y-axis to logarithmic scale
 
-        # Custom y-ticks for logarithmic scale
-        ax.yaxis.set_major_locator(ticker.LogLocator(base=10.0, numticks=10))
-        ax.yaxis.set_minor_locator(ticker.LogLocator(base=10.0, subs='auto'))
-        ax.yaxis.set_minor_formatter(ticker.NullFormatter())
+        # # Custom y-ticks for logarithmic scale
+        # ax.yaxis.set_major_locator(ticker.LogLocator(base=10.0, numticks=10))
+        # ax.yaxis.set_minor_locator(ticker.LogLocator(base=10.0, subs='auto'))
+        # ax.yaxis.set_minor_formatter(ticker.NullFormatter())
 
         if i < 3:
             ax.set_xticks([])
             ax.set_xlabel("")
         if i == 3 or "BAU" in dict_elec.keys():
-            ticks = [i for i in range(where[0], where[1], 24)]
+            ticks = [i for i in range(where[0], where[1], 48)]
             ax.set_xticks(ticks)  # Set the tick positions
             ticks = [
                 str(n.snapshots[i]).split(" ")[0].split("-")[2]+"."+str(n.snapshots[i]).split(" ")[0].split("-")[1]
