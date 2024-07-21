@@ -112,12 +112,12 @@ def copy_custom_data():
     # define source and destination directories
     source_dir = "data/"
     destination_dir = "submodules/pypsa-eur/data/"
-    # copy command
-    command = ['cp', '-r', os.path.join(source_dir, '.'), destination_dir]
-    # run the command
-    subprocess.run(command, check=True, shell=True)
+    # files to copy
+    files_to_copy = ["custom_busmap_elec_s_48.csv", "custom_powerplants.csv"]
+    for file in files_to_copy:
+        subprocess.run(f"cp data/{file} submodules/pypsa-eur/data", check=True, shell=True)
     # log the success
-    logging.info("Copied custom data from data/ folder to submodules/pypsa-eur/data/ folder")
+    logging.info(f"Copied custom data {files_to_copy} from data/ folder to submodules/pypsa-eur/data/ folder")
 
 
 def increase_biomass_potential(factor=1.2):
