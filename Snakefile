@@ -109,6 +109,33 @@ rule plot_electricity_for_heats:
         ),
 
 
+rule plot_heat_saving:
+    params:
+        clusters=config["plotting"]["clusters"],
+        planning_horizon=config["plotting"]["planning_horizon"],
+    output:
+        figure=RESULTS+"plot_heat_savings_{clusters}_{planning_horizon}.png",
+        figure_full=RESULTS+"plot_heat_savings_full_year_{clusters}_{planning_horizon}.png",
+    resources:
+        mem_mb=10000,
+    script:
+        "plots/plot_heat_savings.py"
+
+
+rule plot_heat_savings:
+    input:
+        expand(
+            RESULTS
+            + "plot_heat_savings_{clusters}_{planning_horizon}.png",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "plot_heat_savings_full_year_{clusters}_{planning_horizon}.png",
+            **config["plotting"],
+        ),
+
+
 rule plot_electricity_generation:
     params:
         clusters=config["plotting"]["clusters"],
@@ -364,6 +391,16 @@ rule plot_all:
         expand(
             RESULTS
             + "plot_electricity_for_heat_{clusters}_{planning_horizon}.png",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "plot_heat_savings_{clusters}_{planning_horizon}.png",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "plot_heat_savings_full_year_{clusters}_{planning_horizon}.png",
             **config["plotting"],
         ),
         expand(
