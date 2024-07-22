@@ -56,7 +56,7 @@ def plot_elec_consumption_for_heat(dict_elec, full_year=False):
             heat_demand = heat_demand.resample('24H').max()
         
         heat_demand = heat_demand.reset_index(drop=True)
-        colors = ["#2fb537", "#48f74f", "#d8f9b8", "#db6a25"]
+        colors = ["#a63f3f", "#e39191"]
 
         (heat_demand/1e3).iloc[where[0] : where[1]].plot(
             kind='area', stacked=True, color=colors, legend=False,
