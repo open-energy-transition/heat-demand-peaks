@@ -19,23 +19,35 @@ from _helpers import mock_snakemake, update_config_from_wildcards, load_network,
                      LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON
 
 
-def get_heat_data(n):
+def get_heat_data(n, with_flexibility=False):
     # get heat load
     heat_load = n.loads_t.p_set.filter(like="heat").multiply(n.snapshot_weightings.objective, axis=0).sum(axis=1)
     # get heat savings by retrofitting
     heat_savings = n.generators_t.p.filter(like="retrofitting").multiply(n.snapshot_weightings.objective, axis=0).sum(axis=1)
-    # compute heat load after renovation
-    net_heat_load = heat_load - heat_savings
-    # concatenate net heat load and heat_savings
-    heat_data = pd.concat([net_heat_load, heat_savings], axis=1)
-    heat_data.columns = ["Net heat demand", "Heat savings by renovation"]
+    # get heat flexibility
+    if with_flexibility:
+        heat_flex_carr = ['residential rural heat', 'residential urban decentral heat', 'urban central heat']
+        heat_flexibility_techs = n.stores.query("carrier in @heat_flex_carr").index
+        heat_flexibility = n.stores_t.p[heat_flexibility_techs].multiply(n.snapshot_weightings.objective, axis=0).sum(axis=1)
+        
+        # compute heat load after renovation and flexbility
+        net_heat_load = heat_load - heat_savings - heat_flexibility
+        # concatenate net heat load and heat_savings
+        heat_data = pd.concat([net_heat_load, heat_flexibility + heat_savings], axis=1)
+        heat_data.columns = ["Net heat demand", "Heat savings by renovation"]
+    else:
+        # compute heat load after renovation
+        net_heat_load = heat_load - heat_savings
+        # concatenate net heat load and heat_savings
+        heat_data = pd.concat([net_heat_load, heat_savings], axis=1)
+        heat_data.columns = ["Net heat demand", "Heat savings by renovation"]
     return heat_data
 
 
 def plot_elec_consumption_for_heat(dict_elec, full_year=False):
     # set heights for each subplots
     if "BAU" in dict_elec.keys():
-        heights = [1.4]
+        heights = [1.2]
     else:
         heights = [1.4] * 3
     fig = plt.figure(figsize=(6.4, sum(heights)))
@@ -105,7 +117,7 @@ def plot_elec_consumption_for_heat(dict_elec, full_year=False):
         reversed(handles1[0:7]),
         [
             "Heat savings by renovation",
-            "Net heat demand"
+            "Net heat demand",
         ],
         loc=[1.02, -.2], fontsize=10
     )
@@ -170,6 +182,7 @@ if __name__ == "__main__":
     change_path_to_base()
    
     total_heat_data = {}
+    total_heat_data_with_flex = {}
     for name, network in networks.items():
         if network is None:
             # Skip further computation for this scenario if network is not loaded
@@ -177,8 +190,10 @@ if __name__ == "__main__":
             continue
         heat_data= get_heat_data(network)
         total_heat_data[name] = heat_data
+        heat_data_with_flex = get_heat_data(network, with_flexibility=True)
+        total_heat_data_with_flex[name] = heat_data_with_flex
     
     # plot heat demand data for short period
-    plot_elec_consumption_for_heat(total_heat_data)
+    plot_elec_consumption_for_heat(total_heat_data_with_flex, full_year=False)
     # plot heat demand data for full year
     plot_elec_consumption_for_heat(total_heat_data, full_year=True)
