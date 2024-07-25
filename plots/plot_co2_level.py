@@ -186,12 +186,14 @@ def get_co2_balance(n, nice_name):
 
 
 def plot_co2_balance(co2_df, clusters, planning_horizon, plot_width=7):
+    # convert to Billion tCO2_eq
+    co2_df = co2_df / 1e9
     # filter out technologies with very small emission
     max_emissions = co2_df.abs().sum().max() / 2
     co2_threshold = max_emissions / 100 # 1% of max
     to_drop = co2_df.index[co2_df.abs().max(axis=1) < co2_threshold]
     logger.info(
-        f"Dropping technology with co2 balance below {co2_threshold} ton CO2_eq per year"
+        f"Dropping technology with co2 balance below {co2_threshold} Bton CO2_eq per year"
     )
     logger.debug(co2_df.loc[to_drop])
     co2_df = co2_df.drop(to_drop)
@@ -220,10 +222,11 @@ def plot_co2_balance(co2_df, clusters, planning_horizon, plot_width=7):
     labels = labels[:-neg_co2_length] + labels[-neg_co2_length:][::-1]
 
     plt.xticks(rotation=0, fontsize=10)
-    ax.set_ylabel("CO$_2$ emissions [tCO$_{2-eq}$]")
+    ax.set_ylabel("CO$_2$ emissions [BtCO$_{2-eq}$]")
     ax.set_xlabel("")
-    ax.set_ylim([-4e9,4e9])
-    ax.set_yticks(np.arange(-4.0e9, 4.0e9, 5e8))
+    ax.set_yticks(np.arange(-4.0, 4.0, 0.5))
+    ax.set_ylim([-3.6,3.6])
+
     x_ticks = list(co2_df.columns)
     if planning_horizon in ["2040", "2050"] and "Limited \nRenovation &\nOptimal Heating" in x_ticks:
         # replace name for Limited Renovation scenario for 2030 to be LROH
