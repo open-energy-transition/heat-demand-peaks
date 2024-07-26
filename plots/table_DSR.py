@@ -3,12 +3,8 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-import os
 import sys
 sys.path.append("../submodules/pypsa-eur")
-import pypsa
-import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import warnings
 warnings.filterwarnings("ignore")
