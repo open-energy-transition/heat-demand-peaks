@@ -230,6 +230,18 @@ rule plot_co2_level:
         "plots/plot_co2_level.py"
 
 
+rule plot_DSR:
+    params:
+        clusters=config["plotting"]["clusters"],
+        planning_horizon=config["plotting"]["planning_horizon"],
+    output:
+        table=RESULTS+"table_DSR_{clusters}.csv",
+    resources:
+        mem_mb=20000,
+    script:
+        "plots/table_DSR.py"
+
+
 rule plot_co2_levels:
     input:
         expand(
