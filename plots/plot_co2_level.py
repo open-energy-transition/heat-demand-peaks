@@ -366,7 +366,7 @@ if __name__ == "__main__":
             co2_savings_df = co2_emission_BAU - table_emissions_df
             co2_savings_df.index = ["CO2 emission savings [tCO2_eq]"]
             # saving in cubic meter of gas (1 m3 natural gas = 1,9 kg CO2) Source: https://www.eeagrants.gov.pt/media/2776/conversion-guidelines.pdf
-            co2_savings_df.loc["Equivalent gas savings [m3]"] = co2_savings_df.loc["CO2 emission savings [tCO2_eq]", :] * 1000 / 1.9
+            co2_savings_df.loc["Equivalent gas savings [trillion m3]"] = co2_savings_df.loc["CO2 emission savings [tCO2_eq]", :] * 1000 / 1.9 / 1e12
 
 
     # move to base directory
