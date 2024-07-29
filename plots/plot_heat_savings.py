@@ -61,7 +61,7 @@ def get_flexibility(network):
 def plot_elec_consumption_for_heat(dict_elec, full_year=False):
     # set heights for each subplots
     if "BAU" in dict_elec.keys():
-        heights = [1.2]
+        heights = [1.3]
     else:
         heights = [1.4] * 3
     fig = plt.figure(figsize=(6.4, sum(heights)))
@@ -170,8 +170,8 @@ def plot_flexibility(dict_elec):
         where = [0, 8759]
         heat_demand = heat_demand.reset_index(drop=True)
 
-        ax.plot((heat_demand["EV"]/1e3).iloc[where[0]:where[1]], color="red", linewidth=0.5)
-        ax.plot((heat_demand["heat"]/1e3).iloc[where[0]:where[1]], color="black", linewidth=0.5)
+        ax.plot((heat_demand["EV"]/1e3).iloc[where[0]:where[1]], color="red", linewidth=0.5, label="EV flexibility")
+        ax.plot((heat_demand["heat"]/1e3).iloc[where[0]:where[1]], color="black", linewidth=0.5, label="Heat flexibility")
 
         ax.set_xlabel("", fontsize=12)
         ax.set_ylim([-550,550])
@@ -199,6 +199,7 @@ def plot_flexibility(dict_elec):
         ax.set_title(name, fontsize=10)
         i+= 1
 
+    axes[0].legend(loc=[1.02, -.2], fontsize=10)
     if len(dict_elec.keys()) == 1:
         ylabel = "Heating Demands [GW]"
         axes[0].set_ylabel(ylabel, fontsize=10)
