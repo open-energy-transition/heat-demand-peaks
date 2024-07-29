@@ -66,7 +66,7 @@ def get_elec_consumption_for_heat(n):
     return elec_demand_f_heating
 
 
-def plot_elec_consumption_for_heat(dict_elec):
+def plot_elec_consumption_for_heat(dict_elec, horizon):
     # set heights for each subplots
     if "BAU" in dict_elec.keys():
         heights = [1.4]
@@ -99,7 +99,10 @@ def plot_elec_consumption_for_heat(dict_elec):
         ax.plot(cumulative.iloc[where[0]:where[1]], color='black', linewidth=0.5)
 
         ax.set_xlabel("", fontsize=12)
-        ax.set_ylim([1,1600])
+        # get in y limits for all horizons
+        y_limits = {'2020':1600, '2030':1100, '2040':900, '2050': 900}
+
+        ax.set_ylim([1, y_limits[horizon]])
 
         if i < 3:
             ax.set_xticks([])
@@ -200,5 +203,5 @@ if __name__ == "__main__":
         total_elec_consumption_for_heat[name] = elec_consumption_for_heat
     
     # plot and store electricity prices
-    plot_elec_consumption_for_heat(total_elec_consumption_for_heat)
+    plot_elec_consumption_for_heat(total_elec_consumption_for_heat, planning_horizon)
 
