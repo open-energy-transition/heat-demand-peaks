@@ -116,6 +116,7 @@ rule plot_heat_saving:
     output:
         figure=RESULTS+"plot_heat_savings_{clusters}_{planning_horizon}.png",
         figure_full=RESULTS+"plot_heat_savings_full_year_{clusters}_{planning_horizon}.png",
+        figure_flexibility=RESULTS+"plot_heat_flexibility_{clusters}_{planning_horizon}.png",
     resources:
         mem_mb=10000,
     script:
@@ -132,6 +133,11 @@ rule plot_heat_savings:
         expand(
             RESULTS
             + "plot_heat_savings_full_year_{clusters}_{planning_horizon}.png",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "plot_heat_flexibility_{clusters}_{planning_horizon}.png",
             **config["plotting"],
         ),
 
@@ -401,6 +407,11 @@ rule plot_all:
         expand(
             RESULTS
             + "plot_heat_savings_full_year_{clusters}_{planning_horizon}.png",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "plot_heat_flexibility_{clusters}_{planning_horizon}.png",
             **config["plotting"],
         ),
         expand(

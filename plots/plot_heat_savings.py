@@ -44,6 +44,20 @@ def get_heat_data(n, with_flexibility=False):
     return heat_data
 
 
+def get_flexibility(network):
+    # heat flexibility
+    heat_flex_carr = ['residential rural heat', 'residential urban decentral heat', 'urban central heat']
+    heat_flexibility_techs = n.stores.query("carrier in @heat_flex_carr").index
+    heat_flexibility = n.stores_t.p[heat_flexibility_techs].multiply(n.snapshot_weightings.objective, axis=0).sum(axis=1)
+    # EV flexibility
+    ev_flex_carr = ['Li ion']
+    ev_flexibility_techs = n.stores.query("carrier in @ev_flex_carr").index
+    ev_flexibility = n.stores_t.p[ev_flexibility_techs].multiply(n.snapshot_weightings.objective, axis=0).sum(axis=1)
+    # concatenate flexibility
+    flexibility = pd.concat([ev_flexibility, heat_flexibility], axis=1)
+    flexibility.columns = ["EV", "heat"]
+    return flexibility
+
 def plot_elec_consumption_for_heat(dict_elec, full_year=False):
     # set heights for each subplots
     if "BAU" in dict_elec.keys():
@@ -135,6 +149,66 @@ def plot_elec_consumption_for_heat(dict_elec, full_year=False):
         plt.savefig(snakemake.output.figure_full, bbox_inches='tight', dpi=600)
 
 
+def plot_flexibility(dict_elec):
+    # set heights for each subplots
+    if "BAU" in dict_elec.keys():
+        heights = [1.2]
+    else:
+        heights = [1.4] * 3
+    fig = plt.figure(figsize=(6.4, sum(heights)))
+    gs = gridspec.GridSpec(len(heights), 1, height_ratios=heights)
+    axes = [fig.add_subplot(gs[i]) for i in range(len(heights))]
+    if "BAU" in dict_elec.keys():
+        axes = axes * 3
+    i=0
+    colors = ["red", "black"]
+    for name, heat_demand in dict_elec.items():
+        ax = axes[i]
+        ax.set_facecolor("whitesmoke")
+
+        print("Hard coded coordinates on x-axis, selected for 3H granularity")
+        where = [0, 8759]
+        heat_demand = heat_demand.reset_index(drop=True)
+
+        ax.plot((heat_demand["EV"]/1e3).iloc[where[0]:where[1]], color="red", linewidth=0.5)
+        ax.plot((heat_demand["heat"]/1e3).iloc[where[0]:where[1]], color="black", linewidth=0.5)
+
+        ax.set_xlabel("", fontsize=12)
+        ax.set_ylim([-550,550])
+        ax.set_yticks(np.arange(-500, 600, 250))
+
+        if i < 2:
+            ax.set_xticks([])
+            ax.set_xlabel("")
+        if i == 2 or "BAU" in dict_elec.keys():
+            snapshots_series = pd.Series(1, index=n.snapshots)
+            first_day_each_month = snapshots_series.resample('MS').first().index
+            hours_diff = first_day_each_month.to_series().diff().dt.total_seconds() / 3600
+            hours_diff.iloc[0] = 0
+            cumulative_hours = hours_diff.cumsum()
+            cumulative_hours_list = cumulative_hours.tolist()
+            ax.set_xticks([int(x) for x in cumulative_hours_list])
+            ticks = [str(i).split(" ")[0].replace("-",".")[5:] for i in first_day_each_month]
+            ax.set_xticklabels(ticks, fontsize=10, rotation=15)  # Set the tick labels
+        plt.xticks(fontsize=10)
+        plt.yticks(fontsize=10)
+
+        ax.set_xlim([where[0], where[1]-1])
+        # change name to LR for 2040 and 2050
+        name = "Limited Renovation and Electric Heating" if name == "Limited Renovation and Cost-Optimal Heating" and planning_horizon in ["2040", "2050"] else name
+        ax.set_title(name, fontsize=10)
+        i+= 1
+
+    if len(dict_elec.keys()) == 1:
+        ylabel = "Heating Demands [GW]"
+        axes[0].set_ylabel(ylabel, fontsize=10)
+    else:
+        ylabel = "Heating Demands [GW]"
+        axes[1].set_ylabel(ylabel, fontsize=10)
+    plt.subplots_adjust(hspace=0.3)
+    plt.savefig(snakemake.output.figure_flexibility, bbox_inches='tight', dpi=600)
+
+
 
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -183,6 +257,7 @@ if __name__ == "__main__":
    
     total_heat_data = {}
     total_heat_data_with_flex = {}
+    total_flexibility = {}
     for name, network in networks.items():
         if network is None:
             # Skip further computation for this scenario if network is not loaded
@@ -192,8 +267,13 @@ if __name__ == "__main__":
         total_heat_data[name] = heat_data
         heat_data_with_flex = get_heat_data(network, with_flexibility=True)
         total_heat_data_with_flex[name] = heat_data_with_flex
+        # get flexibility data
+        flexibility = get_flexibility(network)
+        total_flexibility[name] = flexibility
     
     # plot heat demand data for short period
     plot_elec_consumption_for_heat(total_heat_data_with_flex, full_year=False)
     # plot heat demand data for full year
     plot_elec_consumption_for_heat(total_heat_data, full_year=True)
+    # plot heat flexibility
+    plot_flexibility(total_flexibility)
