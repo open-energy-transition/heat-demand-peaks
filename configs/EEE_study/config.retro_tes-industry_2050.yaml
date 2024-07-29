@@ -121,3 +121,4 @@ solving:
       threads: 8
       BarConvTol: 1.e-4
       BarHomogeneous: 1
+      NumericFocus: 3
