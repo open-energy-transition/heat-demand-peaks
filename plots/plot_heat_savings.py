@@ -136,10 +136,10 @@ def plot_elec_consumption_for_heat(dict_elec, full_year=False):
         loc=[1.02, -.2], fontsize=10
     )
     if len(dict_elec.keys()) == 1:
-        ylabel = "Heating Demands [GW]"
+        ylabel = "Flexibility [GW]"
         axes[0].set_ylabel(ylabel, fontsize=10)
     else:
-        ylabel = "Heating Demands [GW]"
+        ylabel = "Flexibility [GW]"
         axes[1].set_ylabel(ylabel, fontsize=10)
         # axes[1].yaxis.set_label_coords(-0.1, 1)
     plt.subplots_adjust(hspace=0.3)
