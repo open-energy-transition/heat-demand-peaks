@@ -129,7 +129,7 @@ def electricity_bills(network, households):
 
 def plot_electricity_cost(df_prices, name):
     # Check if name is one of the allowed values
-    allowed_names = ["bills", "prices"]
+    allowed_names = ["bills", "prices", "industry"]
     if name not in allowed_names:
         raise ValueError("name must be one of {}".format(allowed_names))
 
@@ -171,9 +171,14 @@ def plot_electricity_cost(df_prices, name):
         ylabel = ax.set_ylabel("EUR/MWh")
         ax.set_ylim([0, 300])
         plt.savefig(snakemake.output.figure_price, bbox_inches='tight', dpi=600)
+    elif name == "industry":
+        ax.set_title("OPEX for the industry")
+        ylabel = ax.set_ylabel("bn EUR")
+        #ax.set_ylim([0, 300])
+        plt.savefig(snakemake.output.figure_opex, bbox_inches='tight', dpi=600)
 
 
-def electricity_prices(network, households):
+def electricity_prices(network):
     n = network
     
     rh_techs_elec = ['residential rural ground heat pump',
@@ -249,6 +254,14 @@ def electricity_prices(network, households):
     
     return energy_price_MWh
 
+def calc_opex(network, per_MWh):
+    hours = network.snapshot_weightings.objective.sum()
+    query = "carrier == 'industry electricity'"
+    mapping = network.loads.bus.map(network.buses.country)
+    load = (hours*network.loads.query(query).groupby(mapping).sum().p_set)
+    return (
+        load * per_MWh
+    )
 
 
 if __name__ == "__main__":
@@ -297,21 +310,25 @@ if __name__ == "__main__":
     # calculate electricity bills per household for each network and electricity prices
     total_elec_bills = pd.DataFrame()
     total_elec_prices = pd.DataFrame()
+    industry_opex = pd.DataFrame()
     for name, network in networks.items():
         if network is None:
             # Skip further computation for this scenario if network is not loaded
             print(f"Network is not found for scenario '{scenario}', planning year '{planning_horizon}'. Skipping...")
             continue
         # get electricity bills
-        elec_bills_household = electricity_bills(network, households)
+        elec_bills_household = electricity_bills(network, households).rename(name)
         # get electricity prices
-        elec_bills_MWh = electricity_prices(network, households)
+        elec_bills_MWh = electricity_prices(network).rename(name)
+        # OPEX for industry
+        opex = calc_opex(network, elec_bills_MWh).rename(name)
         # rename series name to scenario name
         elec_bills_household.name = name
         elec_bills_MWh.name = name
         # concatenate current results
         total_elec_bills = pd.concat([total_elec_bills, elec_bills_household.to_frame().T], axis=0)
         total_elec_prices = pd.concat([total_elec_prices, elec_bills_MWh.to_frame().T], axis=0)
+        industry_opex = pd.concat([industry_opex, opex.to_frame().T], axis=0)
 
     # plot and store electricity bills
     if not total_elec_bills.empty:
@@ -320,4 +337,8 @@ if __name__ == "__main__":
     # plot and store electricity prices
     if not total_elec_prices.empty:
         plot_electricity_cost(total_elec_prices, "prices")
+
+    # plot and store industry opex
+    if not total_elec_prices.empty:
+        plot_electricity_cost(total_elec_prices, "industry")
 

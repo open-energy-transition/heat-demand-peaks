@@ -68,6 +68,7 @@ rule plot_electricity_bill:
     output:
         figure_bills=RESULTS+"plot_bill_per_household_{clusters}_{planning_horizon}.png",
         figure_price=RESULTS+"plot_prices_per_MWh_{clusters}_{planning_horizon}.png",
+        figure_opex=RESULTS+"plot_opex_industry_{clusters}_{planning_horizon}.png",
     resources:
         mem_mb=20000,
     script:
