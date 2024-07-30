@@ -41,7 +41,8 @@ if __name__ == "__main__":
     # define scenario namings
     scenarios = {"flexible": "Optimal Renovation and Cost-Optimal Heating", 
                  "retro_tes": "Optimal Renovation and Electric Heating", 
-                 "flexible-moderate": "Limited Renovation and Cost-Optimal Heating", 
+                 "flexible-moderate": "Limited Renovation and Cost-Optimal Heating",
+                 "rigid": "No Renovation and Electric Heating" 
                  }
 
     # define dataframe to store infra savings
@@ -61,8 +62,8 @@ if __name__ == "__main__":
             ("2050", "wind"), ("2050", "solar"), ("2050", "gas")
         ]
     )
-    df_savings.columns = pd.MultiIndex.from_tuples(df_savings.columns, names=['horizon','tech'])
-    cost_savings.columns = pd.MultiIndex.from_tuples(cost_savings.columns, names=['horizon','tech'])
+    df_savings.columns = pd.MultiIndex.from_tuples(df_savings.columns, names=['horizon','Installed capacity [GW]'])
+    cost_savings.columns = pd.MultiIndex.from_tuples(cost_savings.columns, names=['horizon','Capital cost [BEur]'])
 
     for planning_horizon in planning_horizons:
         lineex = line_limits[planning_horizon]
@@ -82,41 +83,23 @@ if __name__ == "__main__":
 
             # estimate upper and lower limits of congestion of grid
             solar_carriers = ["solar", "solar rooftop"]
-            solar = (
-                n.generators.query("carrier in @solar_carriers").p_nom_opt.sum() -
-                b.generators.query("carrier in @solar_carriers").p_nom_opt.sum()
-            )/1e3
+            solar = n.generators.query("carrier in @solar_carriers").p_nom_opt.sum() / 1e3
             wind_carriers = ["onwind", "offwind-ac", "offwind-dc"]
-            wind = (
-                n.generators.query("carrier in @wind_carriers").p_nom_opt.sum() -
-                b.generators.query("carrier in @wind_carriers").p_nom_opt.sum()
-            )/1e3
+            wind = n.generators.query("carrier in @wind_carriers").p_nom_opt.sum() / 1e3
             CCGT_carriers = ["CCGT"]
-            gas = (
-                n.links.query("carrier in @CCGT_carriers").p_nom_opt.multiply(n.links.efficiency).sum() -
-                b.links.query("carrier in @CCGT_carriers").p_nom_opt.multiply(b.links.efficiency).sum()
-            )/1e3
+            gas = n.links.query("carrier in @CCGT_carriers").p_nom_opt.multiply(n.links.efficiency).sum() / 1e3
 
-            df_savings.loc[nice_name, (planning_horizon, "solar")] = solar
-            df_savings.loc[nice_name, (planning_horizon, "wind")] = wind
-            df_savings.loc[nice_name, (planning_horizon, "gas")] = gas
+            df_savings.loc[nice_name, (planning_horizon, "solar")] = solar.round(2)
+            df_savings.loc[nice_name, (planning_horizon, "wind")] = wind.round(2)
+            df_savings.loc[nice_name, (planning_horizon, "gas")] = gas.round(2)
 
             cap_costs = compute_costs(n, nice_name, "Capital")
             wind_costs_carriers = ["Generator:Offshore Wind (AC)", "Generator:Offshore Wind (DC)", "Generator:Onshore Wind"]
-            cost_savings.loc[nice_name, (planning_horizon, "wind")] = (
-                b_costs.loc[wind_costs_carriers].sum()[0]-
-                cap_costs.loc[wind_costs_carriers].sum()[0]
-            )/1e9
+            cost_savings.loc[nice_name, (planning_horizon, "wind")] = (cap_costs.loc[wind_costs_carriers].sum()[0] / 1e9).round(2)
             solar_costs_carriers = ["Generator:Solar", "Generator:solar rooftop"]
-            cost_savings.loc[nice_name, (planning_horizon, "solar")] = (
-                b_costs.loc[solar_costs_carriers].sum()[0]-
-                cap_costs.loc[solar_costs_carriers].sum()[0]
-            )/1e9
+            cost_savings.loc[nice_name, (planning_horizon, "solar")] = (cap_costs.loc[solar_costs_carriers].sum()[0] / 1e9).round(2)
             gas_costs_carriers = ["Store:gas", "Link:Open-Cycle Gas"]
-            cost_savings.loc[nice_name, (planning_horizon, "gas")] = (
-                b_costs.loc[gas_costs_carriers].sum()[0]-
-                cap_costs.loc[gas_costs_carriers].sum()[0]
-            )/1e9
+            cost_savings.loc[nice_name, (planning_horizon, "gas")] = (cap_costs.loc[gas_costs_carriers].sum()[0] / 1e9).round(2)
 
     # add name for columns
     df_savings.index.name = "Scenario [GW]"

@@ -69,7 +69,7 @@ def get_elec_consumption_for_heat(n):
 def plot_elec_consumption_for_heat(dict_elec, horizon):
     # set heights for each subplots
     if "BAU" in dict_elec.keys():
-        heights = [1.4]
+        heights = [1.5]
     else:
         heights = [1.4] * 4
     fig = plt.figure(figsize=(6.4, sum(heights)))
@@ -136,10 +136,10 @@ def plot_elec_consumption_for_heat(dict_elec, horizon):
         loc=[1.02, -.2], fontsize=10
     )
     if len(dict_elec.keys()) == 1:
-        ylabel = "Electricity and Gas \nConsumption to Cover \nHeating Demands [GW]"
+        ylabel = "Electricity and Gas \nConsumption to Cover \nHeating Demands [$GW_{el}$]"
         axes[0].set_ylabel(ylabel, fontsize=10)
     else:
-        ylabel = "Electricity and Gas Consumption to \n Cover Heating Demands [GW]"
+        ylabel = "Electricity and Gas Consumption to \n Cover Heating Demands [$GW_{el}$]"
         axes[2].set_ylabel(ylabel, fontsize=10)
         axes[2].yaxis.set_label_coords(-0.1, 1)
     plt.subplots_adjust(hspace=0.3)
