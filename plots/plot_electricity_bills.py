@@ -11,7 +11,7 @@ import warnings
 warnings.filterwarnings("ignore")
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                      change_path_to_pypsa_eur, change_path_to_base, \
-                     CO2L_LIMITS, LINE_LIMITS, BAU_HORIZON
+                     CO2L_LIMITS, LINE_LIMITS, BAU_HORIZON, HISTORIC_PRICES
 
 
 def get_households():
@@ -120,6 +120,10 @@ def electricity_bills(network, households):
     total_cost_country += total_gas_cost_country
     # electricity bill per household [EUR/household] (households given in thousands)
     elec_bills_household = total_cost_country / (households*1e3)
+
+    # add EU average bills
+    average_bills_household = total_cost_country.sum() / (households.sum() * 1e3)
+    elec_bills_household["EUR"] = average_bills_household
     
     return elec_bills_household
 
@@ -138,7 +142,14 @@ def plot_electricity_cost(df_prices, name):
                    "Optimal Renovation and Electric Heating":"limegreen", 
                    "Limited Renovation and Cost-Optimal Heating":"royalblue", 
                    "No Renovation and Electric Heating":"#f4b609",
-                   "BAU": "grey"}
+                   "BAU": "grey",
+                   "Historic data": '#900C3F'}
+
+    # add historic electricity price for BAU plot
+    if "BAU" in df_prices.index and name == "prices":
+        historic_prices = pd.Series(HISTORIC_PRICES).to_frame().T
+        historic_prices.index = ["Historic data"]
+        sorted_df_prices = pd.concat([sorted_df_prices, historic_prices], axis=0)
 
     # plot as bar plot
     fig, ax = plt.subplots(figsize=(7,3))
@@ -269,9 +280,9 @@ def electricity_prices(network):
     # electricity bill per MWh [EUR/MWh]
     energy_price_MWh = prices / total_load_country
 
-    # drop EU
-    if "EU" in energy_price_MWh.index:
-        energy_price_MWh.drop("EU", axis=0, inplace=True)
+    # add EU average 
+    average_price_MWh = total_cost.sum() / total_load_country.sum()
+    energy_price_MWh["EUR"] = average_price_MWh
     
     return energy_price_MWh
 
@@ -338,7 +349,7 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "plot_electricity_bill", 
             clusters="48",
-            planning_horizon="2030",
+            planning_horizon="2020",
         )
     # update config based on wildcards
     config = update_config_from_wildcards(snakemake.config, snakemake.wildcards)

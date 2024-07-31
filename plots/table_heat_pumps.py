@@ -19,9 +19,10 @@ from _helpers import mock_snakemake, update_config_from_wildcards, load_network,
 
 def define_heat_pump_dataframe():
     # Define index levels
-    index_level_0 = ['Optimal Heat Pump Capacity [MW_el]', 
-                     'Optimal Heat Pump Capacity [MW_el]',
-                     'Optimal Heat Pump Capacity [MW_el]', 
+    index_level_0 = ['Optimal Heat Pump Capacity [GW_el]', 
+                     'Optimal Heat Pump Capacity [GW_el]',
+                     'Optimal Heat Pump Capacity [GW_el]', 
+                     'Optimal Heat Pump Capacity [GW_el]',
                      'Number of heat pumps [millions]',
                      'Number of heat pumps [millions]', 
                      'Number of heat pumps [millions]',  
@@ -29,6 +30,7 @@ def define_heat_pump_dataframe():
     index_level_1 = ['Residential decentral', 
                      'Services', 
                      'Central',
+                     'Total',
                      'Residential decentral', 
                      'Services', 
                      'Central',
@@ -110,11 +112,12 @@ if __name__ == "__main__":
                 p_nom_opt = n.links.filter(like=h, axis=0).filter(like="heat pump", axis=0).p_nom_opt.sum()
                 cop = n.links_t.efficiency.filter(like=h).filter(like="heat pump").mean().mean()
                 
-                df_heat_pumps.loc[("Optimal Heat Pump Capacity [MW_el]", h_name), (planning_horizon, nice_name)] = p_nom_opt.round(2)
+                df_heat_pumps.loc[("Optimal Heat Pump Capacity [GW_el]", h_name), (planning_horizon, nice_name)] = (p_nom_opt / 1e3).round(2)
                 df_heat_pumps.loc[("Number of heat pumps [millions]", h_name), (planning_horizon, nice_name)] = (p_nom_opt * cop / (hp_capacity[h] * 1e3)).round(2)
 
             # estimate heat pump 
             df_heat_pumps.loc[("Number of heat pumps [millions]", "Total"), (planning_horizon, nice_name)] = df_heat_pumps.loc[("Number of heat pumps [millions]", heat_pumps.values()), (planning_horizon, nice_name)].sum()
+            df_heat_pumps.loc[("Optimal Heat Pump Capacity [GW_el]", "Total"), (planning_horizon, nice_name)] = df_heat_pumps.loc[("Optimal Heat Pump Capacity [GW_el]", heat_pumps.values()), (planning_horizon, nice_name)].sum()
 
     # set heat plan amount based on EU action plan
     df_heat_pumps.loc[('Number of heat pumps [millions]', 'Total'), ("2030", "EU action plan (Announced Pledges Scenario) [2]")] = 45

@@ -171,6 +171,13 @@ PREFERRED_ORDER = pd.Index(
      ]
 )
 
+# day-ahead prices for 2021 URL:https://www.ffe.de/en/publications/european-day-ahead-electricity-prices-in-2022/
+HISTORIC_PRICES = {"AT": 106.9, "BE": 104.1, "CH": 114.9, "CZ": 100.7, "DE": 96.8,
+                   "DK": 88.1, "EE": 86.7, "ES": 111.9, "FI": 72.3, "FR": 109.2,
+                   "GR": 116.4, "HU": 113.9, "IT": 125.2, "LT": 90.5, "LV": 88.8,
+                   "NL": 103.0, "NO": 74.7, "PL": 87.0, "PT": 112.0, "RO": 110.9,
+                   "RS": 114.0, "SE": 66.0, "SI": 115.0, "SK": 102.8}
+
 
 def rename_techs(label):
 

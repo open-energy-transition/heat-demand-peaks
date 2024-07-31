@@ -39,18 +39,28 @@ def plot_capacities(caps_df, clusters, planning_horizon, plot_width=7):
     df = df[df.index != 'solid biomass transport']
 
     # convert to GW
-    df = df / 1e3
+    df = df / 1e6
     df = df.groupby(df.index.map(rename_techs)).sum()
 
-    caps_threshold = 10
+    caps_threshold = 10e-3
     to_drop = df.index[df.max(axis=1) < caps_threshold]  #df <
 
     logger.info(
-        f"Dropping technology with capacity below {caps_threshold} GW"
+        f"Dropping technology with capacity below {caps_threshold} TW"
     )
     logger.debug(df.loc[to_drop])
 
     df = df.drop(to_drop)
+
+    # remove extra technologies that are not expanded
+    drop_techs = ["gas boiler", "process emissions",
+                  "solid biomass", "solid biomass CHP",
+                  "gas storage",
+                  "kerosene for aviation", "land transport oil", "naphtha for industry",
+                  "shipping methanol", "shipping oil",
+                  "coal", "lignite", "oil",
+                  "coal for industry", "gas for industry"]
+    df = df.drop(set(df.index).intersection(set(drop_techs)))
 
     logger.info(f"Total optimal capacity is {round(df.sum())} GW")
 
@@ -75,11 +85,11 @@ def plot_capacities(caps_df, clusters, planning_horizon, plot_width=7):
 
     plt.xticks(rotation=0, fontsize=10)
 
-    ax.set_ylabel("Capacity expansion [GW]")
+    ax.set_ylabel("Capacity expansion [TW]")
 
     ax.set_xlabel("")
-    ax.set_ylim([0,16000])
-    ax.set_yticks(np.arange(0, 17000, 2000))
+    ax.set_ylim([0,16])
+    ax.set_yticks(np.arange(0, 17, 2))
 
     x_ticks = list(df.columns)
     if planning_horizon in ["2040", "2050"] and "Limited \nRenovation &\nCost-Optimal Heating" in x_ticks:
