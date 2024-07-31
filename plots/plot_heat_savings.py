@@ -74,6 +74,9 @@ def plot_elec_consumption_for_heat(dict_elec, full_year=False):
         ax = axes[i]
         ax.set_facecolor("whitesmoke")
 
+        # heat saved ratio
+        heat_saved_ratio = heat_demand.sum()["Heat savings by renovation"] / heat_demand.sum().sum()
+
         print("Hard coded coordinates on x-axis, selected for 3H granularity")
         if not full_year:
             where = [359, 695]
@@ -92,8 +95,46 @@ def plot_elec_consumption_for_heat(dict_elec, full_year=False):
         cumulative = (heat_demand / 1e3).cumsum(axis=1)
         ax.plot(cumulative.iloc[where[0]:where[1]], color='black', linewidth=0.5)
 
+        # x position for arrow
+        if not full_year:
+            x_loc = 436
+            y_shift_arrow = 0
+            x_shift_arrow = -24
+            x_shift_after = 33
+            x_shift_before = -65
+            x_shift_mid = -12
+            y_after = 1550
+            y_before = 2000
+            y_mid = 1800
+        else:
+            x_loc = 90
+            y_shift_arrow = -50
+            x_shift_arrow = 0
+            x_shift_after = 33
+            x_shift_before = -15
+            x_shift_mid = 20
+            y_after = 746
+            y_before = 1600
+            y_mid = 1150
+
+        # Heating demand before renovation
+        ax.annotate('heat demand before renovation', xy=(x_loc+x_shift_arrow, cumulative['Heat savings by renovation'][x_loc]+y_shift_arrow), xytext=(x_loc+x_shift_before, y_before),
+            arrowprops=dict(facecolor='black', edgecolor='black', arrowstyle='->', linewidth=0.75), fontsize=7, color="#e39191")
+        
+        if not "BAU" == name:
+            # Heating demand after renovation
+            ax.annotate('heat demand after renovation', xy=(x_loc, cumulative['Net heat demand'][x_loc]+y_shift_arrow), xytext=(x_loc+x_shift_after, y_after),
+                arrowprops=dict(facecolor='black', edgecolor='black', arrowstyle='->', linewidth=0.75), fontsize=7, color="#a63f3f")
+            # Heating savings
+            mid_point = cumulative.sum(axis=1) / 2
+            ax.annotate(f'saved heating demand ({100*heat_saved_ratio:.1f}%)', xy=(x_loc, mid_point[x_loc]+y_shift_arrow), xytext=(x_loc+x_shift_mid, y_mid),
+                arrowprops=dict(facecolor='black', edgecolor='black', arrowstyle='->', linewidth=0.75), fontsize=7, color="black")
+            
         ax.set_xlabel("", fontsize=12)
-        ax.set_ylim([1,1700])
+        if full_year:
+            ax.set_ylim([1,2000])
+        else:
+            ax.set_ylim([1,2200])
 
         if i < 2:
             ax.set_xticks([])
@@ -126,15 +167,15 @@ def plot_elec_consumption_for_heat(dict_elec, full_year=False):
         ax.set_title(name, fontsize=10)
         i+= 1
 
-    handles1, _ = axes[0].get_legend_handles_labels()
-    axes[0].legend(
-        reversed(handles1[0:7]),
-        [
-            "Heat savings by renovation",
-            "Net heat demand",
-        ],
-        loc=[1.02, -.2], fontsize=10
-    )
+    # handles1, _ = axes[0].get_legend_handles_labels()
+    # axes[0].legend(
+    #     reversed(handles1[0:7]),
+    #     [
+    #         "Heat savings by renovation",
+    #         "Net heat demand",
+    #     ],
+    #     loc=[1.02, -.2], fontsize=10
+    # )
     if len(dict_elec.keys()) == 1:
         ylabel = "Heat demand [$GW_{th}$]"
         axes[0].set_ylabel(ylabel, fontsize=10)
@@ -275,6 +316,6 @@ if __name__ == "__main__":
     # plot heat demand data for short period
     plot_elec_consumption_for_heat(total_heat_data_with_flex, full_year=False)
     # plot heat demand data for full year
-    plot_elec_consumption_for_heat(total_heat_data, full_year=True)
+    plot_elec_consumption_for_heat(total_heat_data_with_flex, full_year=True)
     # plot heat flexibility
     plot_flexibility(total_flexibility)
