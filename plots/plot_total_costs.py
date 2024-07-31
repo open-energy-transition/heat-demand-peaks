@@ -156,11 +156,11 @@ def plot_capacities(caps_df, clusters, planning_horizon, plot_width=7):
     # drop solid biomass transport
     df = df[df.index != 'solid biomass transport']
 
-    # convert to GW
-    df = df / 1e3
+    # convert to TW
+    df = df / 1e6
     df = df.groupby(df.index.map(rename_techs)).sum()
 
-    caps_threshold = 20
+    caps_threshold = 20e-3
     to_drop = df.index[df.max(axis=1) < caps_threshold]  #df <
 
     logger.info(
@@ -170,7 +170,7 @@ def plot_capacities(caps_df, clusters, planning_horizon, plot_width=7):
 
     df = df.drop(to_drop)
 
-    logger.info(f"Total optimal capacity is {round(df.sum())} GW")
+    logger.info(f"Total optimal capacity is {round(df.sum())} TW")
 
     new_index = PREFERRED_ORDER.intersection(df.index).append(
         df.index.difference(PREFERRED_ORDER)
@@ -193,11 +193,11 @@ def plot_capacities(caps_df, clusters, planning_horizon, plot_width=7):
 
     plt.xticks(rotation=0, fontsize=10)
 
-    ax.set_ylabel("Installed capacities [GW]")
+    ax.set_ylabel("Installed capacities [TW]")
 
     ax.set_xlabel("")
-    ax.set_ylim([0,22000])
-    ax.set_yticks(np.arange(0, 23000, 2000))
+    ax.set_ylim([0,22])
+    ax.set_yticks(np.arange(0, 23, 2))
 
     x_ticks = list(df.columns)
     if planning_horizon in ["2040", "2050"] and "Limited \nRenovation &\nCost-Optimal Heating" in x_ticks:

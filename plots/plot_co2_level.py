@@ -110,18 +110,18 @@ PREFERRED_ORDER = pd.Index(
         "solid biomass for industry",
         "gas for industry",
         "coal for industry",
-        "methanol",
-        "oil",
-        "lignite",
-        "coal",
         "shipping oil",
         "shipping methanol",
         "naphtha for industry",
         "land transport oil",
         "kerosene for aviation",
-        
-        "transmission lines",
-        "distribution lines",
+        "process emissions",
+        "SMR",
+        "coal",
+        "lignite",
+        "methanol",
+        "oil",
+
         "gas pipeline",
         "H2 pipeline",
         
@@ -132,26 +132,17 @@ PREFERRED_ORDER = pd.Index(
         "methanation",
         "BEV charger",
         "V2G",
-        "SMR",
         "methanolisation",
         
         "battery storage",
         "gas storage",
         "H2 storage",
         "TES",
-        
-        "hydroelectricity",
         "OCGT",
         "CCGT",
-        "onshore wind",
-        "offshore wind",
-        "solar PV",
-        "solar thermal",
-        "solar rooftop",
 
         "co2",
         "CO2 sequestration",
-        "process emissions",
 
         "gas CHP",
         "resistive heater",
@@ -195,12 +186,14 @@ def get_co2_balance(n, nice_name):
 
 
 def plot_co2_balance(co2_df, clusters, planning_horizon, plot_width=7):
+    # convert to Billion tCO2_eq
+    co2_df = co2_df / 1e9
     # filter out technologies with very small emission
     max_emissions = co2_df.abs().sum().max() / 2
     co2_threshold = max_emissions / 100 # 1% of max
     to_drop = co2_df.index[co2_df.abs().max(axis=1) < co2_threshold]
     logger.info(
-        f"Dropping technology with co2 balance below {co2_threshold} ton CO2_eq per year"
+        f"Dropping technology with co2 balance below {co2_threshold} Bton CO2_eq per year"
     )
     logger.debug(co2_df.loc[to_drop])
     co2_df = co2_df.drop(to_drop)
@@ -229,10 +222,11 @@ def plot_co2_balance(co2_df, clusters, planning_horizon, plot_width=7):
     labels = labels[:-neg_co2_length] + labels[-neg_co2_length:][::-1]
 
     plt.xticks(rotation=0, fontsize=10)
-    ax.set_ylabel("CO$_2$ emissions [tCO$_{2-eq}$]")
+    ax.set_ylabel("CO$_2$ emissions [BtCO$_{2-eq}$]")
     ax.set_xlabel("")
-    ax.set_ylim([-4e9,4e9])
-    ax.set_yticks(np.arange(-4.0e9, 4.0e9, 5e8))
+    ax.set_yticks(np.arange(-4.0, 4.0, 0.5))
+    ax.set_ylim([-3.6,3.6])
+
     x_ticks = list(co2_df.columns)
     if planning_horizon in ["2040", "2050"] and "Limited \nRenovation &\nOptimal Heating" in x_ticks:
         # replace name for Limited Renovation scenario for 2030 to be LROH
@@ -372,7 +366,7 @@ if __name__ == "__main__":
             co2_savings_df = co2_emission_BAU - table_emissions_df
             co2_savings_df.index = ["CO2 emission savings [tCO2_eq]"]
             # saving in cubic meter of gas (1 m3 natural gas = 1,9 kg CO2) Source: https://www.eeagrants.gov.pt/media/2776/conversion-guidelines.pdf
-            co2_savings_df.loc["Equivalent gas savings [m3]"] = co2_savings_df.loc["CO2 emission savings [tCO2_eq]", :] * 1000 / 1.9
+            co2_savings_df.loc["Equivalent gas savings [trillion m3]"] = co2_savings_df.loc["CO2 emission savings [tCO2_eq]", :] * 1000 / 1.9 / 1e12
 
 
     # move to base directory

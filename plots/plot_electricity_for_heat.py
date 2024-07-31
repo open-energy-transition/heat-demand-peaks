@@ -66,10 +66,10 @@ def get_elec_consumption_for_heat(n):
     return elec_demand_f_heating
 
 
-def plot_elec_consumption_for_heat(dict_elec):
+def plot_elec_consumption_for_heat(dict_elec, horizon):
     # set heights for each subplots
     if "BAU" in dict_elec.keys():
-        heights = [1.4]
+        heights = [1.5]
     else:
         heights = [1.4] * 4
     fig = plt.figure(figsize=(6.4, sum(heights)))
@@ -85,7 +85,7 @@ def plot_elec_consumption_for_heat(dict_elec):
         ax.set_facecolor("whitesmoke")
 
         print("Hard coded coordinates on x-axis, selected for 3H granularity")
-        where = [359, 527]
+        where = [359, 695]
 
         elec_demand_f_heating = elec_demand_f_heating.reset_index()[["ground heat pump", "air heat pump", "resistive heater", "gas boiler"]]
         colors = ["#2fb537", "#48f74f", "#d8f9b8", "#db6a25"]
@@ -95,20 +95,20 @@ def plot_elec_consumption_for_heat(dict_elec):
             linewidth=0, ax=ax
         )
 
-        ax.set_xlabel("", fontsize=12)
-        ax.set_ylim([1,2000])
-        ax.set_yscale("log")  # Set the y-axis to logarithmic scale
+        cumulative = (elec_demand_f_heating / 1e3).cumsum(axis=1)
+        ax.plot(cumulative.iloc[where[0]:where[1]], color='black', linewidth=0.5)
 
-        # Custom y-ticks for logarithmic scale
-        ax.yaxis.set_major_locator(ticker.LogLocator(base=10.0, numticks=10))
-        ax.yaxis.set_minor_locator(ticker.LogLocator(base=10.0, subs='auto'))
-        ax.yaxis.set_minor_formatter(ticker.NullFormatter())
+        ax.set_xlabel("", fontsize=12)
+        # get in y limits for all horizons
+        y_limits = {'2020':1600, '2030':1100, '2040':900, '2050': 900}
+
+        ax.set_ylim([1, y_limits[horizon]])
 
         if i < 3:
             ax.set_xticks([])
             ax.set_xlabel("")
         if i == 3 or "BAU" in dict_elec.keys():
-            ticks = [i for i in range(where[0], where[1], 24)]
+            ticks = [i for i in range(where[0], where[1], 48)]
             ax.set_xticks(ticks)  # Set the tick positions
             ticks = [
                 str(n.snapshots[i]).split(" ")[0].split("-")[2]+"."+str(n.snapshots[i]).split(" ")[0].split("-")[1]
@@ -136,10 +136,10 @@ def plot_elec_consumption_for_heat(dict_elec):
         loc=[1.02, -.2], fontsize=10
     )
     if len(dict_elec.keys()) == 1:
-        ylabel = "Electricity and Gas \nConsumption to Cover \nHeating Demands [GW]"
+        ylabel = "Electricity and Gas \nConsumption to Cover \nHeating Demands [$GW_{el}$]"
         axes[0].set_ylabel(ylabel, fontsize=10)
     else:
-        ylabel = "Electricity and Gas Consumption to \n Cover Heating Demands [GW]"
+        ylabel = "Electricity and Gas Consumption to \n Cover Heating Demands [$GW_{el}$]"
         axes[2].set_ylabel(ylabel, fontsize=10)
         axes[2].yaxis.set_label_coords(-0.1, 1)
     plt.subplots_adjust(hspace=0.3)
@@ -203,5 +203,5 @@ if __name__ == "__main__":
         total_elec_consumption_for_heat[name] = elec_consumption_for_heat
     
     # plot and store electricity prices
-    plot_elec_consumption_for_heat(total_elec_consumption_for_heat)
+    plot_elec_consumption_for_heat(total_elec_consumption_for_heat, planning_horizon)
 
