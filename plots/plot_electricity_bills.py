@@ -3,12 +3,9 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-import os
 import sys
 sys.path.append("../submodules/pypsa-eur")
-import pypsa
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import warnings
 warnings.filterwarnings("ignore")
@@ -129,7 +126,7 @@ def electricity_bills(network, households):
 
 def plot_electricity_cost(df_prices, name):
     # Check if name is one of the allowed values
-    allowed_names = ["bills", "prices", "industry"]
+    allowed_names = ["bills", "prices"]
     if name not in allowed_names:
         raise ValueError("name must be one of {}".format(allowed_names))
 
@@ -171,12 +168,36 @@ def plot_electricity_cost(df_prices, name):
         ylabel = ax.set_ylabel("EUR/MWh")
         ax.set_ylim([0, 300])
         plt.savefig(snakemake.output.figure_price, bbox_inches='tight', dpi=600)
-    elif name == "industry":
-        ax.set_title("OPEX for the industry")
-        ylabel = ax.set_ylabel("bn EUR")
-        #ax.set_ylim([0, 300])
-        plt.savefig(snakemake.output.figure_opex, bbox_inches='tight', dpi=600)
 
+
+def plot_industry_opex(df):
+
+    # color codes f
+    color_codes = {
+        "Coal":"#545454",
+        "Methanol":"#468c8b",
+        "Biomass":"#baa741",
+        "Hydrogen":"#f073da",
+        "Oil products": "#aaaaaa",
+        "Gas": "#e05b09",
+        "Heat": "#cc1f1f",
+        "Electricity": "#110d63",
+    }
+
+    fig, ax = plt.subplots(figsize=(3,3))
+    df.T.plot.bar(ax=ax, width=0.7, color=color_codes, stacked=True)
+    ax.set_facecolor("white")
+    handles, labels = ax.get_legend_handles_labels()
+    if planning_horizon in ["2040", "2050"]:
+        labels = ["LREH" if label == "LROH" else label for label in labels]
+    ax.legend(handles[::-1], labels[::-1], loc=[1.05,0], ncol=1, facecolor="white", fontsize='x-small')
+    ax.set_title("")
+    ax.spines['left'].set_color('black')
+    ax.spines['bottom'].set_color('black')
+
+    ylabel = ax.set_ylabel("operating expenses [bn EUR]")
+    ax.set_ylim([0, 550])
+    plt.savefig(snakemake.output.figure_opex, bbox_inches='tight', dpi=600)
 
 def electricity_prices(network):
     n = network
@@ -254,13 +275,61 @@ def electricity_prices(network):
     
     return energy_price_MWh
 
-def calc_opex(network, per_MWh):
-    hours = network.snapshot_weightings.objective.sum()
-    query = "carrier == 'industry electricity'"
+def calc_opex(network, scenarioname):
     mapping = network.loads.bus.map(network.buses.country)
-    load = (hours*network.loads.query(query).groupby(mapping).sum().p_set)
+
+    query = "carrier == 'industry electricity'"
+    load = network.loads.query(query).groupby(mapping).sum().p_set
+    per_MWh = network.buses_t.marginal_price[network.buses.query("carrier == 'AC'").index].T.groupby(network.buses.country).mean().T
+    elec = (load * per_MWh).sum().sum()
+
+    query = "carrier == 'solid biomass for industry'"
+    load = network.loads.query(query).groupby(mapping).sum().p_set
+    per_MWh = network.buses_t.marginal_price[network.buses.query("carrier == 'solid biomass'").index].T.groupby(network.buses.country).mean().T
+    solid_biomass = (load * per_MWh).sum().sum()
+
+    query = "carrier == 'gas for industry'"
+    load = network.loads.query(query).groupby(mapping).sum().p_set
+    per_MWh = network.buses_t.marginal_price[network.buses.query("carrier == 'gas for industry'").index].T.groupby(network.buses.country).mean().T
+    gas = (load * per_MWh).sum().values[0]
+
+    query = "carrier == 'coal for industry'"
+    load = network.loads.query(query).groupby(mapping).sum().p_set.sum()
+    per_MWh = network.buses_t.marginal_price[network.buses.query("carrier == 'coal'").index].T.groupby(network.buses.country).mean().T
+    coal = (load * per_MWh).sum().values[0]
+
+    query = "carrier == 'H2 for industry'"
+    load = network.loads.query(query).groupby(mapping).sum().p_set
+    per_MWh = network.buses_t.marginal_price[network.buses.query("carrier == 'H2'").index].T.groupby(network.buses.country).mean().T
+    H2 = (load * per_MWh).sum().sum()
+
+    query = "carrier == 'H2 for industry'"
+    load = network.loads.query(query).groupby(mapping).sum().p_set
+    per_MWh = network.buses_t.marginal_price[network.buses.query("carrier == 'H2'").index].T.groupby(network.buses.country).mean().T
+    H2 = (load * per_MWh).sum().sum()
+
+    query = "carrier in ['industry methanol', 'shipping methanol']"
+    load = network.loads.query(query).p_set
+    per_MWh = network.buses_t.marginal_price[network.buses.query("carrier in ['industry methanol', 'shipping methanol']").index]
+    methanol = (load * per_MWh).sum().sum()
+
+    query = "carrier in ['shipping oil', 'naphtha for industry']"
+    load = network.loads.query(query).p_set
+    per_MWh = network.buses_t.marginal_price[network.buses.query("carrier in ['shipping oil', 'naphtha for industry']").index]
+    oil = (load * per_MWh).sum().sum()
+
+    query = "carrier == 'low-temperature heat for industry'"
+    load = network.loads.query(query).set_index("bus").p_set
+    per_MWh = network.buses_t.marginal_price[network.buses.query("carrier in ['urban central heat', 'services urban decentral heat']").index].clip(lower=0)
+    heat = (load * per_MWh).fillna(0).sum().sum()
+
+    opex = pd.DataFrame(
+        index=["Electricity", "Biomass", "Gas", "Coal", "Hydrogen", "Methanol", "Oil products", "Heat"],
+        columns=[scenarioname],
+        data=[elec, solid_biomass, gas, coal, H2, methanol, oil, heat]
+    )/1e9
     return (
-        load * per_MWh
+        opex.loc[["Coal", "Methanol", "Hydrogen", "Oil products", "Biomass", "Heat", "Gas", "Electricity"]]
     )
 
 
@@ -289,11 +358,16 @@ if __name__ == "__main__":
     # define scenario namings
     if planning_horizon == BAU_HORIZON:
         scenarios = {"BAU": "BAU"}
+        scenario_abbrev = scenarios
     else:
-        scenarios = {"flexible": "Optimal Renovation and Cost-Optimal Heating", 
-                     "retro_tes": "Optimal Renovation and Electric Heating", 
-                     "flexible-moderate": "Limited Renovation and Cost-Optimal Heating", 
+        scenarios = {"flexible": "Optimal Renovation and Cost-Optimal Heating",
+                     "retro_tes": "Optimal Renovation and Electric Heating",
+                     "flexible-moderate": "Limited Renovation and Cost-Optimal Heating",
                      "rigid": "No Renovation and Electric Heating"}
+        scenario_abbrev = {"Optimal Renovation and Cost-Optimal Heating": "OROH",
+                     "Optimal Renovation and Electric Heating": "OREH",
+                     "Limited Renovation and Cost-Optimal Heating": "LROH",
+                     "No Renovation and Electric Heating": "NREH"}
 
     # load networks
     networks = {}
@@ -321,14 +395,14 @@ if __name__ == "__main__":
         # get electricity prices
         elec_bills_MWh = electricity_prices(network).rename(name)
         # OPEX for industry
-        opex = calc_opex(network, elec_bills_MWh).rename(name)
+        opex = calc_opex(network, scenario_abbrev[name])
         # rename series name to scenario name
         elec_bills_household.name = name
         elec_bills_MWh.name = name
         # concatenate current results
         total_elec_bills = pd.concat([total_elec_bills, elec_bills_household.to_frame().T], axis=0)
         total_elec_prices = pd.concat([total_elec_prices, elec_bills_MWh.to_frame().T], axis=0)
-        industry_opex = pd.concat([industry_opex, opex.to_frame().T], axis=0)
+        industry_opex = pd.concat([industry_opex, opex], axis=1)
 
     # plot and store electricity bills
     if not total_elec_bills.empty:
@@ -339,6 +413,6 @@ if __name__ == "__main__":
         plot_electricity_cost(total_elec_prices, "prices")
 
     # plot and store industry opex
-    if not total_elec_prices.empty:
-        plot_electricity_cost(total_elec_prices, "industry")
+    if not industry_opex.empty:
+        plot_industry_opex(industry_opex)
 
