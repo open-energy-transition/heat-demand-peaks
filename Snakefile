@@ -321,6 +321,7 @@ rule get_infra_saving:
     output:
         table_cap=RESULTS+"table_infra_savings_caps_{clusters}.csv",
         table_costs=RESULTS+"table_infra_savings_costs_{clusters}.csv",
+        table_land=RESULTS+"table_infra_savings_land_{clusters}.csv",
     resources:
         mem_mb=20000,
     script:
@@ -337,6 +338,11 @@ rule get_infra_savings:
         expand(
             RESULTS
             + "table_infra_savings_costs_{clusters}.csv",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "table_infra_savings_land_{clusters}.csv",
             **config["plotting"],
         ),
 
@@ -495,6 +501,11 @@ rule plot_all:
         expand(
             RESULTS
             + "table_infra_savings_costs_{clusters}.csv",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "table_infra_savings_land_{clusters}.csv",
             **config["plotting"],
         ),
         expand(
