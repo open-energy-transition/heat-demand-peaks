@@ -178,6 +178,11 @@ HISTORIC_PRICES = {"AT": 106.9, "BE": 104.1, "CH": 114.9, "CZ": 100.7, "DE": 96.
                    "NL": 103.0, "NO": 74.7, "PL": 87.0, "PT": 112.0, "RO": 110.9,
                    "RS": 114.0, "SE": 66.0, "SI": 115.0, "SK": 102.8}
 
+# land usage for 1 MW nameplate capacity of wind (34.5 ha = 0.345 km^2) URL: https://www.nrel.gov/docs/fy09osti/45834.pdf
+LAND_FOR_WIND = 0.345
+
+# land usage for 1 MW nameplate capacity of solar (4-5 acres = 0.02 km^2) URL: https://amplussolar.com/blogs/1mw-solar-power-plant
+LAND_FOR_SOLAR = 0.02
 
 def rename_techs(label):
 

@@ -13,7 +13,7 @@ import warnings
 warnings.filterwarnings("ignore")
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                      change_path_to_pypsa_eur, change_path_to_base, \
-                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON, replace_multiindex_values
+                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON, LAND_FOR_WIND, LAND_FOR_SOLAR
                      
 from plot_total_costs import compute_costs
 
@@ -62,8 +62,10 @@ if __name__ == "__main__":
             ("2050", "wind"), ("2050", "solar"), ("2050", "gas")
         ]
     )
+    land_usage = df_savings.copy()
     df_savings.columns = pd.MultiIndex.from_tuples(df_savings.columns, names=['horizon','Installed capacity [GW]'])
     cost_savings.columns = pd.MultiIndex.from_tuples(cost_savings.columns, names=['horizon','Capital cost [BEur]'])
+    land_usage.columns = pd.MultiIndex.from_tuples(land_usage.columns, names=['horizon','Land usage [km2]'])
 
     for planning_horizon in planning_horizons:
         lineex = line_limits[planning_horizon]
@@ -101,6 +103,10 @@ if __name__ == "__main__":
             gas_costs_carriers = ["Store:gas", "Link:Open-Cycle Gas"]
             cost_savings.loc[nice_name, (planning_horizon, "gas")] = (cap_costs.loc[gas_costs_carriers].sum()[0] / 1e9).round(2)
 
+            # land usage in thousand km^2
+            land_usage.loc[nice_name, (planning_horizon, "solar")] = (solar * LAND_FOR_SOLAR).round(2)
+            land_usage.loc[nice_name, (planning_horizon, "wind")] = (wind * LAND_FOR_WIND).round(2)
+
     # add name for columns
     df_savings.index.name = "Scenario [GW]"
 
@@ -112,4 +118,6 @@ if __name__ == "__main__":
     df_savings.to_csv(snakemake.output.table_cap)
     cost_savings.index = ["Limited Renovation and Cost-Optimal/Electric Heating" if s == "Limited Renovation and Cost-Optimal Heating" else s for s in cost_savings.index]
     cost_savings.to_csv(snakemake.output.table_costs)
+    land_usage.index = ["Limited Renovation and Cost-Optimal/Electric Heating" if s == "Limited Renovation and Cost-Optimal Heating" else s for s in land_usage.index]
+    land_usage.to_csv(snakemake.output.table_land)
 
