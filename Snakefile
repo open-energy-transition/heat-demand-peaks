@@ -68,6 +68,7 @@ rule plot_electricity_bill:
     output:
         figure_bills=RESULTS+"plot_bill_per_household_{clusters}_{planning_horizon}.png",
         figure_price=RESULTS+"plot_prices_per_MWh_{clusters}_{planning_horizon}.png",
+        figure_opex=RESULTS+"plot_opex_industry_{clusters}_{planning_horizon}.png",
     resources:
         mem_mb=20000,
     script:
@@ -263,6 +264,18 @@ rule plot_co2_level:
         "plots/plot_co2_level.py"
 
 
+rule plot_DSR:
+    params:
+        clusters=config["plotting"]["clusters"],
+        planning_horizon=config["plotting"]["planning_horizon"],
+    output:
+        table=RESULTS+"table_DSR_{clusters}.csv",
+    resources:
+        mem_mb=20000,
+    script:
+        "plots/table_DSR.py"
+
+
 rule plot_co2_levels:
     input:
         expand(
@@ -308,6 +321,7 @@ rule get_infra_saving:
     output:
         table_cap=RESULTS+"table_infra_savings_caps_{clusters}.csv",
         table_costs=RESULTS+"table_infra_savings_costs_{clusters}.csv",
+        table_land=RESULTS+"table_infra_savings_land_{clusters}.csv",
     resources:
         mem_mb=20000,
     script:
@@ -324,6 +338,11 @@ rule get_infra_savings:
         expand(
             RESULTS
             + "table_infra_savings_costs_{clusters}.csv",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "table_infra_savings_land_{clusters}.csv",
             **config["plotting"],
         ),
 
@@ -482,6 +501,11 @@ rule plot_all:
         expand(
             RESULTS
             + "table_infra_savings_costs_{clusters}.csv",
+            **config["plotting"],
+        ),
+        expand(
+            RESULTS
+            + "table_infra_savings_land_{clusters}.csv",
             **config["plotting"],
         ),
         expand(
