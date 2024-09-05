@@ -245,6 +245,38 @@ def plot_co2_balance(co2_df, clusters, planning_horizon, plot_width=7):
     else:
         ax.set_title(planning_horizon, fontsize=12)
 
+    # Percentage drop for renovation scenarios
+    if scenarios["rigid"] in co2_df.columns:
+        total_co2_rigid = co2_df[co2_df>0].sum(axis=0)[scenarios["rigid"]]
+        percentage_lower = 100 * (co2_df[co2_df>0].sum(axis=0) - total_co2_rigid) / total_co2_rigid
+        
+        # Calculate x-coordinates for the groups
+        unique_x_coords = sorted(list(set([bar.get_x() + bar.get_width() / 2 for bar in ax.patches])))
+        
+        # Add arrows and percentage texts with corrected positions
+        arrowprops = dict(facecolor='red', shrink=0.05, width=1, headwidth=8)
+        
+        # Annotate each group
+        for i, x in enumerate(unique_x_coords[:-1]):
+            if percentage_lower[i] > 0:
+                color_percent = 'red'
+            else:
+                color_percent = 'green'
+            plt.annotate(
+                f'{percentage_lower[i]:.2f}%', 
+                xy=(x, co2_df[co2_df>0].iloc[:,i].sum()), 
+                xytext=(x, co2_df[co2_df>0].iloc[:,i].sum()+0.15), 
+                fontsize=12, 
+                color=color_percent, 
+                ha='center'
+            )
+
+        # add horizontal line
+        bar_width = unique_x_coords[1] - unique_x_coords[0]
+        line_start = unique_x_coords[0] - bar_width * 0.25
+        line_end = unique_x_coords[-1] + bar_width * 0.25
+        ax.plot([line_start, line_end], [total_co2_rigid, total_co2_rigid], color='red', linestyle='--', linewidth=2)
+
     ax.set_facecolor('white')
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
