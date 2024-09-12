@@ -34,7 +34,7 @@ def compute_costs(n, nice_name, cost_type):
     return costs
 
 
-def plot_costs(cost_df, clusters, planning_horizon, plot_width=7):
+def plot_costs(cost_df, clusters, planning_horizon, plot_width=7, plot_name="total_costs"):
     df = cost_df.groupby(cost_df.index).sum()
 
     # convert to billions
@@ -77,11 +77,23 @@ def plot_costs(cost_df, clusters, planning_horizon, plot_width=7):
 
     plt.xticks(rotation=0, fontsize=10)
 
-    ax.set_ylabel("System Cost [EUR billion per year]")
+    if plot_name == "operational_costs":
+        y_label = "Operational Cost"
+    elif plot_name == "investment_costs":
+        y_label = "Investment Cost"
+    else:
+        y_label = "System Cost"
+    ax.set_ylabel(f"{y_label} [EUR billion per year]")
 
     ax.set_xlabel("")
-    ax.set_ylim([0,1400])
-    ax.set_yticks(np.arange(0, 1500, 100))
+    if plot_name == "operational_costs":
+        y_lim = 700
+        y_tick_max = 800
+    else:
+        y_lim = 1400
+        y_tick_max = 1500
+    ax.set_ylim([0,y_lim])
+    ax.set_yticks(np.arange(0, y_tick_max, 100))
 
     x_ticks = list(df.columns)
     if planning_horizon in ["2040", "2050"] and "Limited \nRenovation &\nCost-Optimal Heating" in x_ticks:
@@ -114,11 +126,17 @@ def plot_costs(cost_df, clusters, planning_horizon, plot_width=7):
         arrowprops = dict(facecolor='red', shrink=0.05, width=1, headwidth=8)
         
         # Annotate each group
+        if plot_name == "operational_costs":
+            text_shift = 50
+            arrowprops = None
+        else:
+            text_shift = 10
+
         for i, x in enumerate(unique_x_coords[:-1]):
             plt.annotate(
                 f'{percentage_lower[i]:.2f}%', 
                 xy=(x, df.iloc[:,i].sum()), 
-                xytext=(x, total_cost_rigid+10), 
+                xytext=(x, total_cost_rigid+text_shift), 
                 arrowprops=arrowprops, 
                 fontsize=12, 
                 color='red', 
@@ -137,7 +155,7 @@ def plot_costs(cost_df, clusters, planning_horizon, plot_width=7):
     ax.spines['left'].set_color('black')
     ax.spines['bottom'].set_color('black')
     ax.grid(axis='y', linestyle='--', linewidth=0.5, color='gray', zorder=0)
-    plt.savefig(f"{PATH_PLOTS}/plot_total_costs_{clusters}_{planning_horizon}.png", dpi=600, bbox_inches = 'tight')
+    plt.savefig(f"{PATH_PLOTS}/plot_{plot_name}_{clusters}_{planning_horizon}.png", dpi=600, bbox_inches = 'tight')
     return df.loc[new_index[::-1]]
     
 
@@ -389,6 +407,12 @@ if __name__ == "__main__":
             reorder_columns = [s for s in scenarios.values() if s in cost_df.columns]
             cost_df = cost_df[reorder_columns]
 
+            # get operational and investment costs
+            invest_cost_df = sum_costs(updated_caps_df, 0)
+            oper_cost_df = sum_costs(0, op_cost_df)
+            invest_cost_df = invest_cost_df[reorder_columns]
+            oper_cost_df = oper_cost_df[reorder_columns]
+
         # move to base directory
         change_path_to_base()
 
@@ -396,6 +420,9 @@ if __name__ == "__main__":
         if not cost_df.empty:
             processed_cost_df = plot_costs(cost_df, clusters, planning_horizon)
             table_cost_df = fill_table_df(table_cost_df, planning_horizon, scenarios, processed_cost_df)
+            # plot operational and investment costs
+            processed_oper_cost_df = plot_costs(oper_cost_df, clusters, planning_horizon, plot_name="operational_costs")
+            processed_invest_cost_df = plot_costs(invest_cost_df, clusters, planning_horizon, plot_name="investment_costs")
 
         # plot capacities
         if not capacities_df.empty:
@@ -424,10 +451,16 @@ if __name__ == "__main__":
         cap_costs = compute_costs(n, "BAU", "Capital")
         op_costs = compute_costs(n, "BAU", "Operational")
         cost_BAU = sum_costs(cap_costs, op_costs)
+        # operational and investment costs for BAU
+        invest_cost_BAU = sum_costs(cap_costs, 0)
+        oper_cost_BAU = sum_costs(0, op_costs)
         capacities_BAU = compute_capacities(n, "BAU")
         if not table_cost_df.empty and not cost_BAU.empty:
             processed_cost_BAU = plot_costs(cost_BAU, clusters, BAU_horizon, plot_width=1.6)
             table_cost_df = fill_table_df(table_cost_df, BAU_horizon, {"BAU":"BAU"}, processed_cost_BAU)
+            # plot operational and investment costs
+            processed_oper_cost_BAU = plot_costs(oper_cost_BAU, clusters, BAU_horizon, plot_width=1.6, plot_name="operational_costs")
+            processed_invest_cost_BAU = plot_costs(invest_cost_BAU, clusters, BAU_horizon, plot_width=1.6, plot_name="investment_costs")
 
         if not table_cap_df.empty and not capacities_BAU.empty:
             processed_capacities_BAU = plot_capacities(capacities_BAU, clusters, BAU_horizon, plot_width=1.6)
