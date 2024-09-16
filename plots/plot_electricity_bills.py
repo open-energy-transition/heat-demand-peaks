@@ -138,15 +138,15 @@ def plot_electricity_cost(df_prices, name):
     sorted_df_prices = df_prices.sort_values(by=df_prices.index[0], axis=1)
 
     # color codes for legend
-    color_codes = {"Optimal Renovation and Cost-Optimal Heating":"purple", 
-                   "Optimal Renovation and Electric Heating":"limegreen", 
-                   "Limited Renovation and Cost-Optimal Heating":"royalblue", 
-                   "No Renovation and Electric Heating":"#f4b609",
-                   "BAU": "grey",
+    color_codes = {"Widespread Renovation":"purple",
+                   "Widespread Renovation & Electrification":"limegreen",
+                   "Limited Renovation":"royalblue",
+                   "Business as Usual & Electrification":"#f4b609",
+                   "Baseline 2023": "grey",
                    "Historic data": '#900C3F'}
 
     # add historic electricity price for BAU plot
-    if "BAU" in df_prices.index and name == "prices":
+    if "Baseline 2023" in df_prices.index and name == "prices":
         historic_prices = pd.Series(HISTORIC_PRICES).to_frame().T
         historic_prices.index = ["Historic data"]
         sorted_df_prices = pd.concat([sorted_df_prices, historic_prices], axis=0)
@@ -159,7 +159,7 @@ def plot_electricity_cost(df_prices, name):
     # modify the name for LR in legend for 2040 and 2050
     handles, labels = ax.get_legend_handles_labels()
     if planning_horizon in ["2040", "2050"]:
-        labels = ["Limited Renovation and Electric Heating" if label == "Limited Renovation and Cost-Optimal Heating" else label for label in labels]
+        labels = ["Limited Renovation & Electrification" if label == "Limited Renovation" else label for label in labels]
     ax.legend(handles, labels, loc="upper left", facecolor="white", fontsize='x-small')
     xlabel = ax.set_xlabel("countries")
     ax.spines['left'].set_color('black')
@@ -195,12 +195,13 @@ def plot_industry_opex(df):
         "Electricity": "#110d63",
     }
 
+    if planning_horizon in ["2040", "2050"] and "LIMIT" in df.columns:
+        df.rename(columns={"LIMIT": "LIMIT+ELEC"}, inplace=True)
+
     fig, ax = plt.subplots(figsize=(3,3))
     df.T.plot.bar(ax=ax, width=0.7, color=color_codes, stacked=True)
     ax.set_facecolor("white")
     handles, labels = ax.get_legend_handles_labels()
-    if planning_horizon in ["2040", "2050"]:
-        labels = ["LREH" if label == "LROH" else label for label in labels]
     ax.legend(handles[::-1], labels[::-1], loc=[1.05,0], ncol=1, facecolor="white", fontsize='x-small')
     ax.set_title("")
     ax.spines['left'].set_color('black')
@@ -368,17 +369,17 @@ if __name__ == "__main__":
 
     # define scenario namings
     if planning_horizon == BAU_HORIZON:
-        scenarios = {"BAU": "BAU"}
-        scenario_abbrev = scenarios
+        scenarios = {"BAU": "Baseline 2023"}
+        scenario_abbrev = {"Baseline 2023": "BASE 2023"}
     else:
-        scenarios = {"flexible": "Optimal Renovation and Cost-Optimal Heating",
-                     "retro_tes": "Optimal Renovation and Electric Heating",
-                     "flexible-moderate": "Limited Renovation and Cost-Optimal Heating",
-                     "rigid": "No Renovation and Electric Heating"}
-        scenario_abbrev = {"Optimal Renovation and Cost-Optimal Heating": "OROH",
-                     "Optimal Renovation and Electric Heating": "OREH",
-                     "Limited Renovation and Cost-Optimal Heating": "LROH",
-                     "No Renovation and Electric Heating": "NREH"}
+        scenarios = {"flexible": "Widespread Renovation",
+                     "retro_tes": "Widespread Renovation & Electrification",
+                     "flexible-moderate": "Limited Renovation",
+                     "rigid": "Business as Usual & Electrification"}
+        scenario_abbrev = {"Widespread Renovation": "WIDE",
+                     "Widespread Renovation & Electrification": "WIDE+ELEC",
+                     "Limited Renovation": "LIMIT",
+                     "Business as Usual & Electrification": "BAU+ELEC"}
 
     # load networks
     networks = {}
