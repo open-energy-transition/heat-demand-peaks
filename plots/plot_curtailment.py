@@ -81,7 +81,7 @@ def plot_curtailment(df_curtailment):
         values = curtailments.values
         years = curtailments.index
         if nice_name == "BASE 2023":
-            years = [2024]
+            years = [2023]
         else:
             years = [int(x) for x in years]
         ax.plot(years, values, color=color_code, 
