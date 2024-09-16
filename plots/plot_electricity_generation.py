@@ -103,12 +103,12 @@ if __name__ == "__main__":
 
     # define scenario namings
     if planning_horizon == BAU_HORIZON:
-        scenarios = {"BAU": "BAU"}
+        scenarios = {"BAU": "BASE 2023"}
     else:
-        scenarios = {"flexible": "OROH", 
-                     "retro_tes": "OREH", 
-                     "flexible-moderate": "LROH", 
-                     "rigid": "NREH"}
+        scenarios = {"flexible": "WIDE",
+                     "retro_tes": "WIDE+ELEC",
+                     "flexible-moderate": "LIMIT",
+                     "rigid": "BAU+ELEC"}
 
     # define figure
     count_scenarios = len(scenarios.keys())
@@ -168,7 +168,7 @@ if __name__ == "__main__":
 
         ax.set(aspect="equal")
         # set nice_name to LRGH for LR in 2040 and 2050
-        nice_name = "LREH" if nice_name == "LROH" and planning_horizon in ["2040", "2050"] else nice_name
+        nice_name = "LIMIT+ELEC" if nice_name == "LIMIT" and planning_horizon in ["2040", "2050"] else nice_name
         ax.set_title(nice_name, fontsize=6)
     
     nuclear_patch = mpatches.Patch(color='#ff8c00', label='Nuclear')
