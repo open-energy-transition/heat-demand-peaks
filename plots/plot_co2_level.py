@@ -386,11 +386,11 @@ if __name__ == "__main__":
         print(f"Network is not found for scenario '{scenario}', planning year '{BAU_horizon}'. Skipping...")
     else:
         # get co2 balance for BAU and group technologies
-        co2_BAU = get_co2_balance(n, "BASE 2023")
+        co2_BAU = get_co2_balance(n, "Baseline 2023")
         co2_BAU = co2_BAU.groupby(co2_BAU.index.map(rename_techs)).sum()
         if not table_co2_df.empty and not co2_BAU.empty:
             plot_co2_balance(co2_BAU, clusters, BAU_horizon, plot_width=1.5)
-            table_co2_df = fill_table_df(table_co2_df, BAU_horizon, {"BAU":"BASE 2023"}, co2_BAU)
+            table_co2_df = fill_table_df(table_co2_df, BAU_horizon, {"BAU":"Baseline 2023"}, co2_BAU)
             table_co2_df = table_co2_df.fillna(0)
             co2_emission_BAU = -co2_BAU.loc["co2"].values[0]
 

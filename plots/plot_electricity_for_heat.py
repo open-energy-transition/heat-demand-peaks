@@ -68,7 +68,7 @@ def get_elec_consumption_for_heat(n):
 
 def plot_elec_consumption_for_heat(dict_elec, horizon):
     # set heights for each subplots
-    if "BASE 2023" in dict_elec.keys():
+    if "Baseline 2023" in dict_elec.keys():
         heights = [1.5]
     else:
         heights = [1.4] * 4
@@ -77,7 +77,7 @@ def plot_elec_consumption_for_heat(dict_elec, horizon):
     # axes = [ax1, ax2, ax3, ax4]
     gs = gridspec.GridSpec(len(heights), 1, height_ratios=heights)
     axes = [fig.add_subplot(gs[i]) for i in range(len(heights))]
-    if "BASE 2023" in dict_elec.keys():
+    if "Baseline 2023" in dict_elec.keys():
         axes = axes * 4
     i=0
     for name, elec_demand_f_heating in dict_elec.items():
@@ -107,7 +107,7 @@ def plot_elec_consumption_for_heat(dict_elec, horizon):
         if i < 3:
             ax.set_xticks([])
             ax.set_xlabel("")
-        if i == 3 or "BASE 2023" in dict_elec.keys():
+        if i == 3 or "Baseline 2023" in dict_elec.keys():
             ticks = [i for i in range(where[0], where[1], 48)]
             ax.set_xticks(ticks)  # Set the tick positions
             ticks = [
@@ -171,7 +171,7 @@ if __name__ == "__main__":
 
     # define scenario namings
     if planning_horizon == BAU_HORIZON:
-        scenarios = {"BAU": "BASE 2023"}
+        scenarios = {"BAU": "Baseline 2023"}
     else:
         scenarios = {"flexible": "Widespread Renovation",
                      "retro_tes": "Widespread Renovation & Electrification",
