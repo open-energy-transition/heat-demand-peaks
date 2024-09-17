@@ -68,7 +68,7 @@ def get_elec_consumption_for_heat(n):
 
 def plot_elec_consumption_for_heat(dict_elec, horizon):
     # set heights for each subplots
-    if "BAU" in dict_elec.keys():
+    if "BASE 2023" in dict_elec.keys():
         heights = [1.5]
     else:
         heights = [1.4] * 4
@@ -77,7 +77,7 @@ def plot_elec_consumption_for_heat(dict_elec, horizon):
     # axes = [ax1, ax2, ax3, ax4]
     gs = gridspec.GridSpec(len(heights), 1, height_ratios=heights)
     axes = [fig.add_subplot(gs[i]) for i in range(len(heights))]
-    if "BAU" in dict_elec.keys():
+    if "BASE 2023" in dict_elec.keys():
         axes = axes * 4
     i=0
     for name, elec_demand_f_heating in dict_elec.items():
@@ -107,7 +107,7 @@ def plot_elec_consumption_for_heat(dict_elec, horizon):
         if i < 3:
             ax.set_xticks([])
             ax.set_xlabel("")
-        if i == 3 or "BAU" in dict_elec.keys():
+        if i == 3 or "BASE 2023" in dict_elec.keys():
             ticks = [i for i in range(where[0], where[1], 48)]
             ax.set_xticks(ticks)  # Set the tick positions
             ticks = [
@@ -120,7 +120,7 @@ def plot_elec_consumption_for_heat(dict_elec, horizon):
 
         ax.set_xlim([where[0], where[1]-1])
         # change name to LR for 2040 and 2050
-        name = "Limited Renovation and Electric Heating" if name == "Limited Renovation and Cost-Optimal Heating" and planning_horizon in ["2040", "2050"] else name
+        name = "Limited Renovation & Electrification" if name == "Limited Renovation" and planning_horizon in ["2040", "2050"] else name
         ax.set_title(name, fontsize=10)
         i+= 1
 
@@ -171,12 +171,12 @@ if __name__ == "__main__":
 
     # define scenario namings
     if planning_horizon == BAU_HORIZON:
-        scenarios = {"BAU": "BAU"}
+        scenarios = {"BAU": "BASE 2023"}
     else:
-        scenarios = {"flexible": "Optimal Renovation and Cost-Optimal Heating", 
-                     "retro_tes": "Optimal Renovation and Electric Heating", 
-                     "flexible-moderate": "Limited Renovation and Cost-Optimal Heating", 
-                     "rigid": "No Renovation and Electric Heating"}
+        scenarios = {"flexible": "Widespread Renovation",
+                     "retro_tes": "Widespread Renovation & Electrification",
+                     "flexible-moderate": "Limited Renovation",
+                     "rigid": "Business as Usual & Electrification"}
 
     # load networks
     networks = {}
