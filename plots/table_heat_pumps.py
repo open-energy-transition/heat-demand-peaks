@@ -40,11 +40,11 @@ def define_heat_pump_dataframe():
 
     # Define column levels
     col_level_0 = ["2030"]*5 + ["2040"]*4 + ["2050"]*4
-    col_level_1 = ["Optimal Renovation and Cost-Optimal Heating", "Optimal Renovation and Electric Heating", 
-                   "Limited Renovation and Cost-Optimal Heating", "No Renovation and Electric Heating", 
+    col_level_1 = ["Widespread Renovation", "Widespread Renovation and Electrification", 
+                   "Limited Renovation", "Business as Usual and Electrification", 
                    "EU action plan (Announced Pledges Scenario) [2]"] + \
-                   ["Optimal Renovation and Cost-Optimal Heating", "Optimal Renovation and Electric Heating", 
-                   "Limited Renovation and Cost-Optimal Heating", "No Renovation and Electric Heating"]*2
+                   ["Widespread Renovation", "Widespread Renovation and Electrification", 
+                   "Limited Renovation", "Business as Usual and Electrification"]*2
 
     # Create a MultiColumns
     multi_cols = pd.MultiIndex.from_arrays([col_level_0, col_level_1], names=['Year', 'Scenario'])
@@ -85,10 +85,10 @@ if __name__ == "__main__":
                    "urban central": config["heat_pumps"]["central"]}
 
     # define scenario namings
-    scenarios = {"flexible": "Optimal Renovation and Cost-Optimal Heating", 
-                 "retro_tes": "Optimal Renovation and Electric Heating", 
-                 "flexible-moderate": "Limited Renovation and Cost-Optimal Heating", 
-                 "rigid": "No Renovation and Electric Heating"}
+    scenarios = {"flexible": "Widespread Renovation",
+                 "retro_tes": "Widespread Renovation and Electrification",
+                 "flexible-moderate": "Limited Renovation",
+                 "rigid": "Business as Usual and Electrification"}
 
     # define heat pumps dataframe
     df_heat_pumps = define_heat_pump_dataframe()
@@ -127,9 +127,9 @@ if __name__ == "__main__":
 
     # save the heat pumps data in Excel format
     df_heat_pumps.columns = replace_multiindex_values(df_heat_pumps.columns, 
-                                                      ("2040", "Limited Renovation and Cost-Optimal Heating"),
-                                                      ("2040", "Limited Renovation and Electric Heating"))
+                                                      ("2040", "Limited Renovation"),
+                                                      ("2040", "Limited Renovation and Electrification"))
     df_heat_pumps.columns = replace_multiindex_values(df_heat_pumps.columns, 
-                                                      ("2050", "Limited Renovation and Cost-Optimal Heating"),
-                                                      ("2050", "Limited Renovation and Electric Heating"))
+                                                      ("2050", "Limited Renovation"),
+                                                      ("2050", "Limited Renovation and Electrification"))
     df_heat_pumps.to_csv(snakemake.output.table)
