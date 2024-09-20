@@ -65,7 +65,7 @@ def plot_capacities(capacities_df, clusters, planning_horizon, plot_width=7):
     x_ticks = list(df.columns)
     if planning_horizon in ["2040", "2050"] and "Limited\nRenovation" in x_ticks:
         # replace name for Limited Renovation scenario for 2030 to be LROH
-        x_ticks[x_ticks.index("Limited\nRenovation")] = "Limited\nRenovation&\nElectrification"
+        x_ticks[x_ticks.index("Limited\nRenovation")] = "Limited\nRenovation &\nElectrification"
 
     ax.set_xticklabels(x_ticks)
 
@@ -122,9 +122,9 @@ if __name__ == "__main__":
 
     # define scenario namings
     scenarios = {"flexible": "Widespread\nRenovation",
-                 "retro_tes": "Widespread\nRenovation&\nElectrification",
+                 "retro_tes": "Widespread\nRenovation &\nElectrification",
                  "flexible-moderate": "Limited\nRenovation",
-                 "rigid": "Business\nas Usual&\nElectrification"}
+                 "rigid": "Business\nas Usual &\nElectrification"}
 
     # initialize df for storing table information
     table_cap_df = define_table_df(scenarios)
@@ -135,12 +135,12 @@ if __name__ == "__main__":
 
         # if planning_horizon is 2020
         if planning_horizon == BAU_HORIZON:
-            scenarios = {"BAU": "BAU"}
+            scenarios = {"BAU": "BASE 2023"}
         else:
             scenarios = {"flexible": "Widespread\nRenovation",
                         "retro_tes": "Widespread\nRenovation &\nElectrification",
                         "flexible-moderate": "Limited\nRenovation",
-                        "rigid": "Business\nas Usual&\nElectrification"}
+                        "rigid": "Business\nas Usual &\nElectrification"}
 
         # move to submodules/pypsa-eur
         change_path_to_pypsa_eur()
