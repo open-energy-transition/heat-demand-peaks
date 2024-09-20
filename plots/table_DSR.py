@@ -46,10 +46,10 @@ if __name__ == "__main__":
     opts = config["plotting"]["sector_opts"]
 
     # define scenario namings
-    scenarios = {"flexible": "Optimal Renovation and Cost-Optimal Heating", 
-                 "retro_tes": "Optimal Renovation and Electric Heating", 
-                 "flexible-moderate": "Limited Renovation and Cost-Optimal Heating", 
-                 "rigid": "No Renovation and Electric Heating"}
+    scenarios = {"flexible": "Widespread Renovation",
+                 "retro_tes": "Widespread Renovation and Electrification",
+                 "flexible-moderate": "Limited Renovation",
+                 "rigid": "Business as Usual and Electrification"}
 
     # define heat pumps dataframe
     df_DSR_heat = pd.DataFrame(
