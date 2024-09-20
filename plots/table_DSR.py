@@ -46,18 +46,18 @@ if __name__ == "__main__":
     opts = config["plotting"]["sector_opts"]
 
     # define scenario namings
-    scenarios = {"flexible": "Widespread Renovation",
-                 "retro_tes": "Widespread Renovation and Electrification",
-                 "flexible-moderate": "Limited Renovation",
-                 "rigid": "Business as Usual and Electrification"}
+    scenarios = {"flexible": "WIDE",
+                 "retro_tes": "WIDE+ELEC",
+                 "flexible-moderate": "LIMIT",
+                 "rigid": "BAU+ELEC"}
 
     # define heat pumps dataframe
     df_DSR_heat = pd.DataFrame(
-            index = [scenario + dsr for scenario in scenarios.keys() for dsr in [" upward", " downward"]],
+            index = [nice_name + dsr for _, nice_name in scenarios.items() for dsr in [" upward", " downward"]],
             columns = planning_horizons,
         )
     df_DSR_transport = pd.DataFrame(
-            index = [scenario + dsr for scenario in scenarios.keys() for dsr in [" upward", " downward"]],
+            index = [nice_name + dsr for _, nice_name in scenarios.items() for dsr in [" upward", " downward"]],
             columns = planning_horizons,
         )
 
@@ -76,11 +76,11 @@ if __name__ == "__main__":
                 continue
 
             # store into table
-            df_DSR_heat.loc[scenario + " upward", planning_horizon] = DSR(n, "upward", "heating")/1e6
-            df_DSR_heat.loc[scenario + " downward", planning_horizon] = -1*DSR(n, "downward", "heating")/1e6
+            df_DSR_heat.loc[nice_name + " upward", planning_horizon] = DSR(n, "upward", "heating")/1e6
+            df_DSR_heat.loc[nice_name + " downward", planning_horizon] = -1*DSR(n, "downward", "heating")/1e6
     
-            df_DSR_transport.loc[scenario + " upward", planning_horizon] = DSR(n, "upward", "transport")/1e6
-            df_DSR_transport.loc[scenario + " downward", planning_horizon] = DSR(n, "downward", "transport")/1e6
+            df_DSR_transport.loc[nice_name + " upward", planning_horizon] = DSR(n, "upward", "transport")/1e6
+            df_DSR_transport.loc[nice_name + " downward", planning_horizon] = DSR(n, "downward", "transport")/1e6
 
 
     df_DSR_heat.index = df_DSR_heat.index + " heating"
