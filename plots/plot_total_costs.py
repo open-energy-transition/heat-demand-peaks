@@ -354,6 +354,8 @@ if __name__ == "__main__":
     # initialize df for storing table information
     table_cost_df = define_table_df(scenarios)
     table_cap_df = define_table_df(scenarios)
+    table_invest_df = define_table_df(scenarios)
+    table_oper_df = define_table_df(scenarios)
 
     for planning_horizon in planning_horizons:
         lineex = line_limits[planning_horizon]
@@ -423,6 +425,8 @@ if __name__ == "__main__":
             # plot operational and investment costs
             processed_oper_cost_df = plot_costs(oper_cost_df, clusters, planning_horizon, plot_name="operational_costs")
             processed_invest_cost_df = plot_costs(invest_cost_df, clusters, planning_horizon, plot_name="investment_costs")
+            table_oper_df = fill_table_df(table_oper_df, planning_horizon, scenarios, processed_oper_cost_df)
+            table_invest_df = fill_table_df(table_invest_df, planning_horizon, scenarios, processed_invest_cost_df)
 
         # plot capacities
         if not capacities_df.empty:
@@ -461,6 +465,8 @@ if __name__ == "__main__":
             # plot operational and investment costs
             processed_oper_cost_BAU = plot_costs(oper_cost_BAU, clusters, BAU_horizon, plot_width=1.6, plot_name="operational_costs")
             processed_invest_cost_BAU = plot_costs(invest_cost_BAU, clusters, BAU_horizon, plot_width=1.6, plot_name="investment_costs")
+            table_oper_df = fill_table_df(table_oper_df, BAU_horizon, {"BAU":"Baseline 2023"}, processed_oper_cost_BAU)
+            table_invest_df = fill_table_df(table_invest_df, BAU_horizon, {"BAU":"Baseline 2023"}, processed_invest_cost_BAU)
 
         if not table_cap_df.empty and not capacities_BAU.empty:
             processed_capacities_BAU = plot_capacities(capacities_BAU, clusters, BAU_horizon, plot_width=1.6)
@@ -478,6 +484,8 @@ if __name__ == "__main__":
                                                           ("2050","Limited \nRenovation &\nElectrification"))
 
         table_cost_df.to_csv(snakemake.output.costs)
+        table_oper_df.to_csv(snakemake.output.operational_costs)
+        table_invest_df.to_csv(snakemake.output.investment_costs)
 
     # save all capacities to csv
     if not table_cap_df.empty:
