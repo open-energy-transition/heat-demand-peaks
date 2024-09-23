@@ -428,3 +428,6 @@ if __name__ == "__main__":
     if not industry_opex.empty:
         plot_industry_opex(industry_opex)
 
+    # save electricity bills and prices into table
+    total_elec_bills.to_csv(snakemake.output.table_bills)
+    total_elec_prices.to_csv(snakemake.output.table_price)
