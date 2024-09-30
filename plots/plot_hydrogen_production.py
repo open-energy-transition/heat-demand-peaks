@@ -40,28 +40,28 @@ def get_hydrogen_production(n, param_dict):
 
 def plot_hydrogen_production(df_hydrogen, figure_dict):
     # color codes for legend
-    color_codes = {"OROH":"purple", 
-                   "OREH":"limegreen", 
-                   "LROH":"royalblue", 
-                   "NREH":"#f4b609",
-                   "BAU": "grey"}
+    color_codes = {"WIDE":"purple", 
+                   "WIDE+ELEC":"limegreen", 
+                   "LIMIT":"royalblue", 
+                   "BAU+ELEC":"#f4b609",
+                   "BASE 2023": "grey"}
     
     # get BAU year
-    BAU_year = df_hydrogen.filter(like="BAU", axis=1).columns.get_level_values(0)
+    BAU_year = df_hydrogen.filter(like="BASE 2023", axis=1).columns.get_level_values(0)
 
     for idx, output in figure_dict.items():
         _, ax = plt.subplots(figsize=(7, 3))
         for nice_name, color_code in color_codes.items():
             # set name for Limited retrofitting for 2040 and 2050
-            if planning_horizon in ["2040", "2050"] and nice_name == 'LROH':
-                label_name = "LROH/LREH"
+            if planning_horizon in ["2040", "2050"] and nice_name == 'LIMIT':
+                label_name = "LIMIT/LIMIT+ELEC"
             else:
                 label_name = nice_name
 
-            if not nice_name == "BAU":
+            if not nice_name == "BASE 2023":
                 df_hydrogen.loc[idx, (slice(None), nice_name)].plot(ax=ax, color=color_code, 
                                                                         linewidth=2, marker='o', label=label_name, zorder=5)
-            elif nice_name == "BAU" and not BAU_year.empty:
+            elif nice_name == "BASE 2023" and not BAU_year.empty:
                 ax.axhline(y=df_hydrogen.loc[idx, (BAU_year, nice_name)].values, 
                         color=color_code, linestyle='--', label=nice_name, zorder=1)
 
@@ -112,10 +112,10 @@ if __name__ == "__main__":
     planning_horizons = [str(x) for x in planning_horizons if not str(x) == BAU_HORIZON]
 
     # define scenario namings
-    scenarios = {"flexible": "OROH", 
-                "retro_tes": "OREH", 
-                "flexible-moderate": "LROH", 
-                "rigid": "NREH"}
+    scenarios = {"flexible": "WIDE",
+                "retro_tes": "WIDE+ELEC",
+                "flexible-moderate": "LIMIT",
+                "rigid": "BAU+ELEC"}
 
     # define dictionary to map to links buses
     param_dict = {"Electricity used [TWh]": "p0",
@@ -147,6 +147,7 @@ if __name__ == "__main__":
     # Add BAU scenario
     BAU_horizon = BAU_HORIZON
     scenario = "BAU"
+    scenario_name = "BASE 2023"
     lineex = line_limits[BAU_horizon]
     sector_opts = f"Co2L{co2l_limits[BAU_horizon]}-{opts}"
 
@@ -157,7 +158,7 @@ if __name__ == "__main__":
         print(f"Network is not found for scenario '{scenario}', planning year '{BAU_horizon}'. Skipping...")
     else:
         hydrogen_dict = get_hydrogen_production(n, param_dict=param_dict)
-        hydrogen_df.loc[:, (BAU_horizon, scenario)] = pd.Series(hydrogen_dict)
+        hydrogen_df.loc[:, (BAU_horizon, scenario_name)] = pd.Series(hydrogen_dict)
 
     # move to base directory
     change_path_to_base()
@@ -168,9 +169,9 @@ if __name__ == "__main__":
         plot_hydrogen_production(hydrogen_df, figure_dict=figure_dict)
         # save to csv
         hydrogen_df.columns = replace_multiindex_values(hydrogen_df.columns, 
-                                                        ("2040", "LROH"),
-                                                        ("2040", "LREH"))
+                                                        ("2040", "LIMIT"),
+                                                        ("2040", "LIMIT+ELEC"))
         hydrogen_df.columns = replace_multiindex_values(hydrogen_df.columns, 
-                                                        ("2050", "LROH"),
-                                                        ("2050", "LREH"))
+                                                        ("2050", "LIMIT"),
+                                                        ("2050", "LIMIT+ELEC"))
         hydrogen_df.to_csv(snakemake.output.table)

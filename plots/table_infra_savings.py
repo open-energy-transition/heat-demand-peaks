@@ -39,10 +39,10 @@ if __name__ == "__main__":
     opts = config["plotting"]["sector_opts"]
 
     # define scenario namings
-    scenarios = {"flexible": "Optimal Renovation and Cost-Optimal Heating", 
-                 "retro_tes": "Optimal Renovation and Electric Heating", 
-                 "flexible-moderate": "Limited Renovation and Cost-Optimal Heating",
-                 "rigid": "No Renovation and Electric Heating" 
+    scenarios = {"flexible": "Widespread Renovation",
+                 "retro_tes": "Widespread Renovation and Electrification",
+                 "flexible-moderate": "Limited Renovation",
+                 "rigid": "Business as Usual and Electrification"
                  }
 
     # define dataframe to store infra savings
@@ -114,10 +114,10 @@ if __name__ == "__main__":
     change_path_to_base()
 
     # save the heat pumps data in Excel format
-    df_savings.index = ["Limited Renovation and Cost-Optimal/Electric Heating" if s == "Limited Renovation and Cost-Optimal Heating" else s for s in df_savings.index]
+    df_savings.index = ["Limited Renovation/Limited Renovation & Electrification" if s == "Limited Renovation" else s for s in df_savings.index]
     df_savings.to_csv(snakemake.output.table_cap)
-    cost_savings.index = ["Limited Renovation and Cost-Optimal/Electric Heating" if s == "Limited Renovation and Cost-Optimal Heating" else s for s in cost_savings.index]
+    cost_savings.index = ["Limited Renovation/Limited Renovation & Electrification" if s == "Limited Renovation" else s for s in cost_savings.index]
     cost_savings.to_csv(snakemake.output.table_costs)
-    land_usage.index = ["Limited Renovation and Cost-Optimal/Electric Heating" if s == "Limited Renovation and Cost-Optimal Heating" else s for s in land_usage.index]
+    land_usage.index = ["Limited Renovation/Limited Renovation & Electrification" if s == "Limited Renovation" else s for s in land_usage.index]
     land_usage.to_csv(snakemake.output.table_land)
 

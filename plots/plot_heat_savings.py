@@ -60,14 +60,14 @@ def get_flexibility(network):
 
 def plot_elec_consumption_for_heat(dict_elec, full_year=False):
     # set heights for each subplots
-    if "BAU" in dict_elec.keys():
+    if "Baseline 2023" in dict_elec.keys():
         heights = [1.3]
     else:
         heights = [1.4] * 3
     fig = plt.figure(figsize=(6.4, sum(heights)))
     gs = gridspec.GridSpec(len(heights), 1, height_ratios=heights)
     axes = [fig.add_subplot(gs[i]) for i in range(len(heights))]
-    if "BAU" in dict_elec.keys():
+    if "Baseline 2023" in dict_elec.keys():
         axes = axes * 3
     i=0
     for name, heat_demand in dict_elec.items():
@@ -117,14 +117,14 @@ def plot_elec_consumption_for_heat(dict_elec, full_year=False):
             y_before = 1600
             y_mid = 1150
 
-        if name == "Optimal Renovation and Cost-Optimal Heating":
+        if name == "Widespread Renovation":
             # Heating demand before renovation
             ax.annotate('heat demand before renovation', xy=(x_loc+x_shift_arrow, cumulative['Heat savings by renovation'][x_loc]+y_shift_arrow), xytext=(x_loc+x_shift_before, y_before),
                 arrowprops=dict(facecolor='black', edgecolor='black', arrowstyle='->', linewidth=0.75), fontsize=7, color="black")
             # Heating demand after renovation
             ax.annotate('heat demand after renovation', xy=(x_loc, cumulative['Net heat demand'][x_loc]+y_shift_arrow), xytext=(x_loc+x_shift_after, y_after),
                 arrowprops=dict(facecolor='black', edgecolor='black', arrowstyle='->', linewidth=0.75), fontsize=7, color="black")
-        if not name == "BAU":
+        if not name == "Baseline 2023":
             # Heating savings
             mid_point = cumulative.sum(axis=1) / 2
             ax.annotate(f'saved heating demand ({100*heat_saved_ratio:.1f}%)', xy=(x_loc, mid_point[x_loc]+y_shift_arrow), xytext=(x_loc+x_shift_mid, y_mid),
@@ -139,7 +139,7 @@ def plot_elec_consumption_for_heat(dict_elec, full_year=False):
         if i < 2:
             ax.set_xticks([])
             ax.set_xlabel("")
-        if i == 2 or "BAU" in dict_elec.keys():
+        if i == 2 or "Baseline 2023" in dict_elec.keys():
             if not full_year:
                 ticks = [i for i in range(where[0], where[1], 48)]
                 ax.set_xticks(ticks)  # Set the tick positions
@@ -163,7 +163,7 @@ def plot_elec_consumption_for_heat(dict_elec, full_year=False):
 
         ax.set_xlim([where[0], where[1]-1])
         # change name to LR for 2040 and 2050
-        name = "Limited Renovation and Electric Heating" if name == "Limited Renovation and Cost-Optimal Heating" and planning_horizon in ["2040", "2050"] else name
+        name = "Limited Renovation & Electrification" if name == "Limited Renovation" and planning_horizon in ["2040", "2050"] else name
         ax.set_title(name, fontsize=10)
         i+= 1
 
@@ -192,14 +192,14 @@ def plot_elec_consumption_for_heat(dict_elec, full_year=False):
 
 def plot_flexibility(dict_elec):
     # set heights for each subplots
-    if "BAU" in dict_elec.keys():
+    if "Baseline 2023" in dict_elec.keys():
         heights = [1.2]
     else:
         heights = [1.4] * 3
     fig = plt.figure(figsize=(6.4, sum(heights)))
     gs = gridspec.GridSpec(len(heights), 1, height_ratios=heights)
     axes = [fig.add_subplot(gs[i]) for i in range(len(heights))]
-    if "BAU" in dict_elec.keys():
+    if "Baseline 2023" in dict_elec.keys():
         axes = axes * 3
     i=0
     colors = ["red", "black"]
@@ -221,7 +221,7 @@ def plot_flexibility(dict_elec):
         if i < 2:
             ax.set_xticks([])
             ax.set_xlabel("")
-        if i == 2 or "BAU" in dict_elec.keys():
+        if i == 2 or "Baseline 2023" in dict_elec.keys():
             snapshots_series = pd.Series(1, index=n.snapshots)
             first_day_each_month = snapshots_series.resample('MS').first().index
             hours_diff = first_day_each_month.to_series().diff().dt.total_seconds() / 3600
@@ -236,7 +236,7 @@ def plot_flexibility(dict_elec):
 
         ax.set_xlim([where[0], where[1]-1])
         # change name to LR for 2040 and 2050
-        name = "Limited Renovation and Electric Heating" if name == "Limited Renovation and Cost-Optimal Heating" and planning_horizon in ["2040", "2050"] else name
+        name = "Limited Renovation & Electrification" if name == "Limited Renovation" and planning_horizon in ["2040", "2050"] else name
         ax.set_title(name, fontsize=10)
         i+= 1
 
@@ -276,11 +276,11 @@ if __name__ == "__main__":
 
     # define scenario namings
     if planning_horizon == BAU_HORIZON:
-        scenarios = {"BAU": "BAU"}
+        scenarios = {"BAU": "Baseline 2023"}
     else:
-        scenarios = {"flexible": "Optimal Renovation and Cost-Optimal Heating", 
-                     "retro_tes": "Optimal Renovation and Electric Heating", 
-                     "flexible-moderate": "Limited Renovation and Cost-Optimal Heating"} #, 
+        scenarios = {"flexible": "Widespread Renovation",
+                     "retro_tes": "Widespread Renovation & Electrification",
+                     "flexible-moderate": "Limited Renovation"} #, 
                      #"rigid": "No Renovation and Electric Heating"}
 
     # load networks

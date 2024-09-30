@@ -101,10 +101,10 @@ if __name__ == "__main__":
     opts = config["plotting"]["sector_opts"]
 
     # define scenario namings
-    scenarios = {"flexible": "OROH", 
-                "retro_tes": "OREH", 
-                "flexible-moderate": "LROH", 
-                "rigid": "NREH"}
+    scenarios = {"flexible": "WIDE",
+                "retro_tes": "WIDE+ELEC",
+                "flexible-moderate": "LIMIT",
+                "rigid": "BAU+ELEC"}
 
     table = pd.Series(index=scenarios.values(), data=0)
     if planning_horizon != BAU_HORIZON:
@@ -155,7 +155,7 @@ if __name__ == "__main__":
                 link_widths=scaled_link_widths, line_widths=0
             )
             # set LRGH for LR for 2040 and 2050
-            label_name = "LREH" if short_name == "LROH" and planning_horizon in ["2040", "2050"] else short_name
+            label_name = "LIMIT+ELEC" if short_name == "LIMIT" and planning_horizon in ["2040", "2050"] else short_name
             ax.set_title(label_name)
             # total congestion
             ax.text(0, 1, "Avg", ha='left', va='top', 
@@ -172,14 +172,14 @@ if __name__ == "__main__":
         change_path_to_base()
         plt.savefig(snakemake.output.plot, bbox_inches="tight", dpi=200)
         # rename LROH to LRGH for 2040 and 2050
-        table.index = ["LREH" if s == "LROH" and planning_horizon in ["2040", "2050"] else s for s in table.index]
+        table.index = ["LIMIT+ELEC" if s == "LIMIT" and planning_horizon in ["2040", "2050"] else s for s in table.index]
         table.name = None
         table.to_csv(snakemake.output.table)
 
     # add BAU
     BAU_horizon = BAU_HORIZON
     if BAU_horizon in config["plotting"]["planning_horizon"]:
-        scenario, short_name = "BAU", "BAU"
+        scenario, short_name = "BAU", "BASE 2023"
         lineex = line_limits[BAU_horizon]
         sector_opts = f"Co2L{co2l_limits[BAU_horizon]}-{opts}"
         

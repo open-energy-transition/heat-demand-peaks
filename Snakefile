@@ -22,6 +22,8 @@ rule plot_total_cost:
         planning_horizon=config["plotting"]["planning_horizon"],
     output:
         costs=RESULTS+"table_total_costs_{clusters}.csv",
+        operational_costs=RESULTS+"table_operational_costs_{clusters}.csv",
+        investment_costs=RESULTS+"table_investment_costs_{clusters}.csv",
         capacities=RESULTS+"table_total_capacities_{clusters}.csv",
     resources:
         mem_mb=20000,
@@ -33,6 +35,14 @@ rule plot_total_costs:
     input:
         expand(RESULTS
             + "table_total_costs_{clusters}.csv",
+            **config["plotting"],
+        ),
+        expand(RESULTS
+            + "table_investment_costs_{clusters}.csv",
+            **config["plotting"],
+        ),
+        expand(RESULTS
+            + "table_operational_costs_{clusters}.csv",
             **config["plotting"],
         ),
         expand(RESULTS
@@ -69,6 +79,8 @@ rule plot_electricity_bill:
         figure_bills=RESULTS+"plot_bill_per_household_{clusters}_{planning_horizon}.png",
         figure_price=RESULTS+"plot_prices_per_MWh_{clusters}_{planning_horizon}.png",
         figure_opex=RESULTS+"plot_opex_industry_{clusters}_{planning_horizon}.png",
+        table_bills=RESULTS+"table_bill_per_household_{clusters}_{planning_horizon}.csv",
+        table_price=RESULTS+"table_prices_per_MWh_{clusters}_{planning_horizon}.csv"
     resources:
         mem_mb=20000,
     script:
@@ -393,6 +405,14 @@ rule plot_all:
     input:
         expand(RESULTS
             + "table_total_costs_{clusters}.csv",
+            **config["plotting"],
+        ),
+        expand(RESULTS
+            + "table_investment_costs_{clusters}.csv",
+            **config["plotting"],
+        ),
+        expand(RESULTS
+            + "table_operational_costs_{clusters}.csv",
             **config["plotting"],
         ),
         expand(RESULTS

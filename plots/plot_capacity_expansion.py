@@ -92,9 +92,9 @@ def plot_capacities(caps_df, clusters, planning_horizon, plot_width=7):
     ax.set_yticks(np.arange(0, 17, 2))
 
     x_ticks = list(df.columns)
-    if planning_horizon in ["2040", "2050"] and "Limited \nRenovation &\nCost-Optimal Heating" in x_ticks:
+    if planning_horizon in ["2040", "2050"] and "Limited \nRenovation" in x_ticks:
         # replace name for Limited Renovation scenario for 2030 to be LROH
-        x_ticks[x_ticks.index("Limited \nRenovation &\nCost-Optimal Heating")] = "Limited \nRenovation &\nElectric Heating"
+        x_ticks[x_ticks.index("Limited \nRenovation")] = "Limited \nRenovation &\nElectrification"
 
     ax.set_xticklabels(x_ticks)
 
@@ -105,7 +105,7 @@ def plot_capacities(caps_df, clusters, planning_horizon, plot_width=7):
         handles, labels, ncol=1, loc="upper left", bbox_to_anchor=[1, 1], frameon=False
     )
     if planning_horizon == BAU_HORIZON:
-        ax.set_title("BAU", fontsize=12)
+        ax.set_title("BASE 2023", fontsize=12)
     else:
         ax.set_title(planning_horizon, fontsize=12)
     
@@ -157,10 +157,10 @@ if __name__ == "__main__":
     opts = config["plotting"]["sector_opts"]
 
     # define scenario namings
-    scenarios = {"flexible": "Optimal \nRenovation &\nCost-Optimal Heating", 
-                "retro_tes": "Optimal \nRenovation &\nElectric Heating", 
-                "flexible-moderate": "Limited \nRenovation &\nCost-Optimal Heating", 
-                "rigid": "No \nRenovation &\nElectric Heating"}
+    scenarios = {"flexible": "Widespread \nRenovation",
+                "retro_tes": "Widespread \nRenovation &\nElectrification",
+                "flexible-moderate": "Limited \nRenovation",
+                "rigid": "Business\nas Usual &\nElectrification"}
 
     # initialize df for storing capacity expansion in table form
     table_cap_df = define_table_df(scenarios)
@@ -202,10 +202,10 @@ if __name__ == "__main__":
     if not table_cap_df.empty:
         table_cap_df.index.name = "Capacity expansion [GW]"
         table_cap_df.columns = replace_multiindex_values(table_cap_df.columns, 
-                                                         ("2040", "Limited \nRenovation &\nCost-Optimal Heating"),
-                                                         ("2040","Limited \nRenovation &\nElectric Heating"))
+                                                         ("2040", "Limited \nRenovation"),
+                                                         ("2040","Limited \nRenovation &\nElectrification"))
         table_cap_df.columns = replace_multiindex_values(table_cap_df.columns, 
-                                                         ("2050", "Limited \nRenovation &\nCost-Optimal Heating"),
-                                                         ("2050","Limited \nRenovation &\nElectric Heating"))
+                                                         ("2050", "Limited \nRenovation"),
+                                                         ("2050","Limited \nRenovation &\nElectrification"))
 
         table_cap_df.to_csv(snakemake.output.capacities) 
