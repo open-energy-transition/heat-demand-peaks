@@ -429,5 +429,8 @@ if __name__ == "__main__":
         plot_industry_opex(industry_opex)
 
     # save electricity bills and prices into table
+    if planning_horizon in ["2040", "2050"]:
+        total_elec_bills.rename(index={"Limited Renovation":"Limited Renovation & Electrification"}, inplace=True)
+        total_elec_prices.rename(index={"Limited Renovation":"Limited Renovation & Electrification"}, inplace=True)
     total_elec_bills.to_csv(snakemake.output.table_bills)
     total_elec_prices.to_csv(snakemake.output.table_price)
