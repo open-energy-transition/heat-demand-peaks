@@ -160,7 +160,7 @@ def plot_electricity_cost(df_prices, name):
     handles, labels = ax.get_legend_handles_labels()
     if planning_horizon in ["2040", "2050"]:
         labels = ["Limited Renovation & Electrification" if label == "Limited Renovation" else label for label in labels]
-    ax.legend(handles, labels, loc="upper left", facecolor="white", fontsize='x-small')
+    ax.legend(handles, labels, loc="upper left", facecolor="white", fontsize='small')
     xlabel = ax.set_xlabel("countries")
     ax.spines['left'].set_color('black')
     ax.spines['bottom'].set_color('black')
@@ -202,7 +202,7 @@ def plot_industry_opex(df):
     df.T.plot.bar(ax=ax, width=0.7, color=color_codes, stacked=True)
     ax.set_facecolor("white")
     handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles[::-1], labels[::-1], loc=[1.05,0], ncol=1, facecolor="white", fontsize='x-small')
+    ax.legend(handles[::-1], labels[::-1], loc=[1.05,0], ncol=1, facecolor="white", fontsize='small')
     ax.set_title("")
     ax.spines['left'].set_color('black')
     ax.spines['bottom'].set_color('black')
