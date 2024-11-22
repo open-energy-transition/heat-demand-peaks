@@ -105,7 +105,7 @@ if __name__ == "__main__":
     plot_pies(ax, elec_mix_array)
 
     ax.set(aspect="equal")
-    ax.set_title("2022", fontsize=6)
+    ax.set_title("2023", fontsize=6)
     
     nuclear_patch = mpatches.Patch(color='#ff8c00', label='Nuclear')
     wind_patch = mpatches.Patch(color='#235ebc', label='Wind')
