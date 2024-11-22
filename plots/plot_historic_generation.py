@@ -84,16 +84,16 @@ if __name__ == "__main__":
     # define figure
     fig, ax = plt.subplots(1, 1, figsize=(1.6, 1.9)) #each scenario one axis
 
-    # electricity generation mix for cited source https://www.consilium.europa.eu/en/infographics/how-is-eu-electricity-produced-and-sold/
-    total_elec = 2641
-    mix_nuclear = 0.219
-    mix_coal = 0.158
-    mix_gas = 0.196
-    mix_other = 0.033
-    mix_wind = 0.159
-    mix_solar = 0.076
-    mix_hydro = 0.113
-    mix_biomass = 0.044
+    # electricity generation mix for 2023 taken from EMBER https://ember-energy.org/data/yearly-electricity-data/
+    total_elec = 3279
+    mix_nuclear = 683.53 / total_elec
+    mix_coal = 382 / total_elec
+    mix_gas = 459 / total_elec
+    mix_other = (101.29 + 7.87) / total_elec
+    mix_wind = 488.07 / total_elec
+    mix_solar = 265.04 / total_elec
+    mix_hydro = 513.91 / total_elec
+    mix_biomass = 153.58 / total_elec
     # form electricity mix array
     elec_mix_array = [
         [total_elec*mix_nuclear, 0, 0, 0, 0],
