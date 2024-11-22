@@ -75,7 +75,7 @@ def plot_costs(cost_df, clusters, planning_horizon, plot_width=7, plot_name="tot
     handles.reverse()
     labels.reverse()
 
-    plt.xticks(rotation=0, fontsize=10)
+    plt.xticks(rotation=0, fontsize=14)
 
     if plot_name == "operational_costs":
         y_label = "Operational Cost"
@@ -83,7 +83,7 @@ def plot_costs(cost_df, clusters, planning_horizon, plot_width=7, plot_name="tot
         y_label = "Investment Cost"
     else:
         y_label = "System Cost"
-    ax.set_ylabel(f"{y_label} [EUR billion per year]")
+    ax.set_ylabel(f"{y_label} [EUR billion per year]", fontsize=14)
 
     ax.set_xlabel("")
     if plot_name == "operational_costs":
@@ -96,9 +96,9 @@ def plot_costs(cost_df, clusters, planning_horizon, plot_width=7, plot_name="tot
     ax.set_yticks(np.arange(0, y_tick_max, 100))
 
     x_ticks = list(df.columns)
-    if planning_horizon in ["2040", "2050"] and "Limited \nRenovation" in x_ticks:
+    if planning_horizon in ["2040", "2050"] and "LIMIT" in x_ticks:
         # replace name for Limited Renovation scenario for 2030 to be LROH
-        x_ticks[x_ticks.index("Limited \nRenovation")] = "Limited \nRenovation &\nElectrification"
+        x_ticks[x_ticks.index("LIMIT")] = "LIMIT\n+ELEC"
 
     ax.set_xticklabels(x_ticks)
 
@@ -110,9 +110,9 @@ def plot_costs(cost_df, clusters, planning_horizon, plot_width=7, plot_name="tot
     )
     
     if planning_horizon == BAU_HORIZON:
-        ax.set_title("2023", fontsize=12)
+        ax.set_title("2023", fontsize=15)
     else:
-        ax.set_title(planning_horizon, fontsize=12)
+        ax.set_title(planning_horizon, fontsize=15)
     
     # Percentage drop for renovation scenarios
     if scenarios["rigid"] in df.columns:
@@ -138,7 +138,7 @@ def plot_costs(cost_df, clusters, planning_horizon, plot_width=7, plot_name="tot
                 xy=(x, df.iloc[:,i].sum()), 
                 xytext=(x, total_cost_rigid+text_shift), 
                 arrowprops=arrowprops, 
-                fontsize=12, 
+                fontsize=15, 
                 color='red', 
                 ha='center'
             )
@@ -209,18 +209,18 @@ def plot_capacities(caps_df, clusters, planning_horizon, plot_width=7):
     handles.reverse()
     labels.reverse()
 
-    plt.xticks(rotation=0, fontsize=10)
+    plt.xticks(rotation=0, fontsize=14)
 
-    ax.set_ylabel("Installed capacities [TW]")
+    ax.set_ylabel("Installed capacities [TW]", fontsize=14)
 
     ax.set_xlabel("")
     ax.set_ylim([0,22])
     ax.set_yticks(np.arange(0, 23, 2))
 
     x_ticks = list(df.columns)
-    if planning_horizon in ["2040", "2050"] and "Limited \nRenovation" in x_ticks:
+    if planning_horizon in ["2040", "2050"] and "LIMIT" in x_ticks:
         # replace name for Limited Renovation scenario for 2030 to be LROH
-        x_ticks[x_ticks.index("Limited \nRenovation")] = "Limited \nRenovation &\nElectrification"
+        x_ticks[x_ticks.index("LIMIT")] = "LIMIT\n+ELEC"
 
     ax.set_xticklabels(x_ticks)
 
@@ -232,9 +232,9 @@ def plot_capacities(caps_df, clusters, planning_horizon, plot_width=7):
     )
 
     if planning_horizon == BAU_HORIZON:
-        ax.set_title("2023", fontsize=12)
+        ax.set_title("2023", fontsize=15)
     else:
-        ax.set_title(planning_horizon, fontsize=12)
+        ax.set_title(planning_horizon, fontsize=15)
     
     ax.set_facecolor('white')
     ax.spines['top'].set_visible(False)
@@ -343,10 +343,10 @@ if __name__ == "__main__":
     opts = config["plotting"]["sector_opts"]
 
     # define scenario namings
-    scenarios = {"flexible": "Widespread \nRenovation", 
-                "retro_tes": "Widespread \nRenovation &\nElectrification", 
-                "flexible-moderate": "Limited \nRenovation", 
-                "rigid": "Business\nas Usual &\nElectrification"}
+    scenarios = {"flexible": "WIDE", 
+                "retro_tes": "WIDE\n+ELEC", 
+                "flexible-moderate": "LIMIT", 
+                "rigid": "BAU\n+ELEC"}
 
     # initialize capital cost and p_nom_opt storing dictionary for different horizons
     cap_costs_dict = {}
@@ -452,36 +452,36 @@ if __name__ == "__main__":
         # Skip further computation for this scenario if network is not loaded
         print(f"Network is not found for scenario '{scenario}', BAU year '{BAU_horizon}'. Skipping...")
     else:
-        cap_costs = compute_costs(n, "Baseline 2023", "Capital")
-        op_costs = compute_costs(n, "Baseline 2023", "Operational")
+        cap_costs = compute_costs(n, "Baseline\n2023", "Capital")
+        op_costs = compute_costs(n, "Baseline\n2023", "Operational")
         cost_BAU = sum_costs(cap_costs, op_costs)
         # operational and investment costs for BAU
         invest_cost_BAU = sum_costs(cap_costs, 0)
         oper_cost_BAU = sum_costs(0, op_costs)
-        capacities_BAU = compute_capacities(n, "Baseline 2023")
+        capacities_BAU = compute_capacities(n, "Baseline\n2023")
         if not table_cost_df.empty and not cost_BAU.empty:
             processed_cost_BAU = plot_costs(cost_BAU, clusters, BAU_horizon, plot_width=1.6)
-            table_cost_df = fill_table_df(table_cost_df, BAU_horizon, {"BAU":"Baseline 2023"}, processed_cost_BAU)
+            table_cost_df = fill_table_df(table_cost_df, BAU_horizon, {"BAU":"Baseline\n2023"}, processed_cost_BAU)
             # plot operational and investment costs
             processed_oper_cost_BAU = plot_costs(oper_cost_BAU, clusters, BAU_horizon, plot_width=1.6, plot_name="operational_costs")
             processed_invest_cost_BAU = plot_costs(invest_cost_BAU, clusters, BAU_horizon, plot_width=1.6, plot_name="investment_costs")
-            table_oper_df = fill_table_df(table_oper_df, BAU_horizon, {"BAU":"Baseline 2023"}, processed_oper_cost_BAU)
-            table_invest_df = fill_table_df(table_invest_df, BAU_horizon, {"BAU":"Baseline 2023"}, processed_invest_cost_BAU)
+            table_oper_df = fill_table_df(table_oper_df, BAU_horizon, {"BAU":"Baseline\n2023"}, processed_oper_cost_BAU)
+            table_invest_df = fill_table_df(table_invest_df, BAU_horizon, {"BAU":"Baseline\n2023"}, processed_invest_cost_BAU)
 
         if not table_cap_df.empty and not capacities_BAU.empty:
             processed_capacities_BAU = plot_capacities(capacities_BAU, clusters, BAU_horizon, plot_width=1.6)
-            table_cap_df = fill_table_df(table_cap_df, BAU_horizon, {"BAU":"Baseline 2023"}, processed_capacities_BAU)
+            table_cap_df = fill_table_df(table_cap_df, BAU_horizon, {"BAU":"Baseline\n2023"}, processed_capacities_BAU)
 
 
     # save all costs to csv
     if not table_cost_df.empty:
         table_cost_df.index.name = "System cost [EUR billion per year]"
         table_cost_df.columns = replace_multiindex_values(table_cost_df.columns, 
-                                                          ("2040", "Limited \nRenovation"),
-                                                          ("2040","Limited \nRenovation &\nElectrification"))
+                                                          ("2040", "LIMIT"),
+                                                          ("2040","LIMIT\n+ELEC"))
         table_cost_df.columns = replace_multiindex_values(table_cost_df.columns, 
-                                                          ("2050", "Limited \nRenovation"),
-                                                          ("2050","Limited \nRenovation &\nElectrification"))
+                                                          ("2050", "LIMIT"),
+                                                          ("2050","LIMIT\n+ELEC"))
 
         table_cost_df.to_csv(snakemake.output.costs)
         table_oper_df.to_csv(snakemake.output.operational_costs)
@@ -491,10 +491,10 @@ if __name__ == "__main__":
     if not table_cap_df.empty:
         table_cap_df.index.name = "Installed capacity [GW]"
         table_cap_df.columns = replace_multiindex_values(table_cap_df.columns, 
-                                                         ("2040", "Limited \nRenovation"),
-                                                         ("2040","Limited \nRenovation &\nElectrification"))
+                                                         ("2040", "LIMIT"),
+                                                         ("2040","LIMIT\n+ELEC"))
         table_cap_df.columns = replace_multiindex_values(table_cap_df.columns, 
-                                                         ("2050", "Limited \nRenovation"),
-                                                         ("2050","Limited \nRenovation &\nElectrification"))
+                                                         ("2050", "LIMIT"),
+                                                         ("2050","LIMIT\n+ELEC"))
 
         table_cap_df.to_csv(snakemake.output.capacities) 
