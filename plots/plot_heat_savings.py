@@ -120,15 +120,15 @@ def plot_elec_consumption_for_heat(dict_elec, full_year=False):
         if name == "Widespread Renovation":
             # Heating demand before renovation
             ax.annotate('heat demand before renovation', xy=(x_loc+x_shift_arrow, cumulative['Heat savings by renovation'][x_loc]+y_shift_arrow), xytext=(x_loc+x_shift_before, y_before),
-                arrowprops=dict(facecolor='black', edgecolor='black', arrowstyle='->', linewidth=0.75), fontsize=7, color="black")
+                arrowprops=dict(facecolor='black', edgecolor='black', arrowstyle='->', linewidth=0.75), fontsize=9, color="black")
             # Heating demand after renovation
             ax.annotate('heat demand after renovation', xy=(x_loc, cumulative['Net heat demand'][x_loc]+y_shift_arrow), xytext=(x_loc+x_shift_after, y_after),
-                arrowprops=dict(facecolor='black', edgecolor='black', arrowstyle='->', linewidth=0.75), fontsize=7, color="black")
+                arrowprops=dict(facecolor='black', edgecolor='black', arrowstyle='->', linewidth=0.75), fontsize=9, color="black")
         if not name == "Baseline 2023":
             # Heating savings
             mid_point = cumulative.sum(axis=1) / 2
             ax.annotate(f'saved heating demand ({100*heat_saved_ratio:.1f}%)', xy=(x_loc, mid_point[x_loc]+y_shift_arrow), xytext=(x_loc+x_shift_mid, y_mid),
-                arrowprops=dict(facecolor='black', edgecolor='black', arrowstyle='->', linewidth=0.75), fontsize=7, color="#a63f3f")
+                arrowprops=dict(facecolor='black', edgecolor='black', arrowstyle='->', linewidth=0.75), fontsize=9, color="#a63f3f")
             
         ax.set_xlabel("", fontsize=12)
         if full_year:
