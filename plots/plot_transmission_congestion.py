@@ -72,14 +72,14 @@ def add_legend(axes, scaling_factor):
     # Add legend to the plot
     if isinstance(axes, np.ndarray):
         legend = axes[1,1].legend(handles=[green_line, black_line_2, black_line_3, black_line_5],
-                                  loc='lower center', bbox_to_anchor=(-0.2, -0.35), 
-                                  ncol=2, fontsize='x-small', title="Marginal costs of lines",
-                                  title_fontsize=8)
+                                  loc='lower center', bbox_to_anchor=(-0.2, -0.47), 
+                                  ncol=2, fontsize='medium', title="Marginal costs of lines",
+                                  title_fontsize=12)
     else:
         legend = axes.legend(handles=[green_line, black_line_2, black_line_3, black_line_5],
-                             loc='lower center', bbox_to_anchor=(0.5, -0.18), 
-                             ncol=2, fontsize='small', title="Marginal costs of lines",
-                             title_fontsize=10)
+                             loc='lower center', bbox_to_anchor=(0.5, -0.22), 
+                             ncol=2, fontsize='medium', title="Marginal costs of lines",
+                             title_fontsize=12)
     return legend
 
 
@@ -156,13 +156,13 @@ if __name__ == "__main__":
             )
             # set LRGH for LR for 2040 and 2050
             label_name = "LIMIT+ELEC" if short_name == "LIMIT" and planning_horizon in ["2040", "2050"] else short_name
-            ax.set_title(label_name)
+            ax.set_title(label_name, fontsize=15)
             # total congestion
-            ax.text(0, 1, "Avg", ha='left', va='top', 
-                    transform=ax.transAxes, fontsize='x-small',
+            ax.text(0, 1.05, "Avg", ha='left', va='top', 
+                    transform=ax.transAxes, fontsize='medium',
                     bbox=dict(facecolor='white', edgecolor='none', pad=3))
             ax.text(0, 0.92, f"{table[short_name].round(2)}x", ha='left', va='top', 
-                    transform=ax.transAxes, fontsize='x-small',
+                    transform=ax.transAxes, fontsize='medium',
                     bbox=dict(facecolor='white', edgecolor='none', pad=3))
 
 
@@ -222,7 +222,7 @@ if __name__ == "__main__":
                 link_widths=scaled_link_widths, line_widths=0
             )
 
-            ax.set_title(short_name)
+            ax.set_title(short_name, fontsize=15)
             
             add_legend(ax, scaling_factor)
 
