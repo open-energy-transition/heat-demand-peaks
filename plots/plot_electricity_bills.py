@@ -138,10 +138,10 @@ def plot_electricity_cost(df_prices, name):
     sorted_df_prices = df_prices.sort_values(by=df_prices.index[0], axis=1)
 
     # color codes for legend
-    color_codes = {"Widespread Renovation":"purple",
-                   "Widespread Renovation & Electrification":"limegreen",
-                   "Limited Renovation":"royalblue",
-                   "Business as Usual & Electrification":"#f4b609",
+    color_codes = {"WIDE":"purple",
+                   "WIDE+ELEC":"limegreen",
+                   "LIMIT":"royalblue",
+                   "BAU+ELEC":"#f4b609",
                    "Baseline 2023": "grey",
                    "Historic data": '#900C3F'}
 
@@ -159,24 +159,26 @@ def plot_electricity_cost(df_prices, name):
     # modify the name for LR in legend for 2040 and 2050
     handles, labels = ax.get_legend_handles_labels()
     if planning_horizon in ["2040", "2050"]:
-        labels = ["Limited Renovation & Electrification" if label == "Limited Renovation" else label for label in labels]
-    ax.legend(handles, labels, loc="upper left", facecolor="white", fontsize='small')
-    xlabel = ax.set_xlabel("countries")
+        labels = ["LIMIT+ELEC" if label == "LIMIT" else label for label in labels]
+    ax.legend(handles, labels, loc="upper left", facecolor="white", fontsize='medium')
+    xlabel = ax.set_xlabel("countries", fontsize=14)
     ax.spines['left'].set_color('black')
     ax.spines['bottom'].set_color('black')
+    ax.tick_params(axis='x', labelsize=12)
+    ax.tick_params(axis='y', labelsize=12)
     ax.grid(axis='y', linestyle='--', linewidth=0.5, color='gray')
 
     max_price = sorted_df_prices.max().max()
     ax.set_ylim(0, max_price * 1.2) 
 
     if name == "bills":
-        ax.set_title("Energy bills")
-        ylabel = ax.set_ylabel("EUR/household")
+        ax.set_title("Energy bills", fontsize=14)
+        ylabel = ax.set_ylabel("EUR/household", fontsize=14)
         ax.set_ylim([0,5000])
         plt.savefig(snakemake.output.figure_bills, bbox_inches='tight', dpi=600)
     elif name == "prices":
-        ax.set_title("Energy price per country")
-        ylabel = ax.set_ylabel("EUR/MWh")
+        ax.set_title("Energy price per country", fontsize=14)
+        ylabel = ax.set_ylabel("EUR/MWh", fontsize=14)
         ax.set_ylim([0, 300])
         plt.savefig(snakemake.output.figure_price, bbox_inches='tight', dpi=600)
 
@@ -202,12 +204,14 @@ def plot_industry_opex(df):
     df.T.plot.bar(ax=ax, width=0.7, color=color_codes, stacked=True)
     ax.set_facecolor("white")
     handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles[::-1], labels[::-1], loc=[1.05,0], ncol=1, facecolor="white", fontsize='small')
+    ax.legend(handles[::-1], labels[::-1], loc=[1.05,0], ncol=1, facecolor="white", fontsize='medium')
     ax.set_title("")
     ax.spines['left'].set_color('black')
     ax.spines['bottom'].set_color('black')
+    ax.tick_params(axis='x', labelsize=12)
+    ax.tick_params(axis='y', labelsize=12)
 
-    ylabel = ax.set_ylabel("operating expenses [bn EUR]")
+    ylabel = ax.set_ylabel("operating expenses [bn EUR]", fontsize=12)
     ax.set_ylim([0, 550])
     plt.savefig(snakemake.output.figure_opex, bbox_inches='tight', dpi=600)
 
@@ -372,14 +376,14 @@ if __name__ == "__main__":
         scenarios = {"BAU": "Baseline 2023"}
         scenario_abbrev = {"Baseline 2023": "BASE 2023"}
     else:
-        scenarios = {"flexible": "Widespread Renovation",
-                     "retro_tes": "Widespread Renovation & Electrification",
-                     "flexible-moderate": "Limited Renovation",
-                     "rigid": "Business as Usual & Electrification"}
-        scenario_abbrev = {"Widespread Renovation": "WIDE",
-                     "Widespread Renovation & Electrification": "WIDE+ELEC",
-                     "Limited Renovation": "LIMIT",
-                     "Business as Usual & Electrification": "BAU+ELEC"}
+        scenarios = {"flexible": "WIDE",
+                     "retro_tes": "WIDE+ELEC",
+                     "flexible-moderate": "LIMIT",
+                     "rigid": "BAU+ELEC"}
+        scenario_abbrev = {"WIDE": "WIDE",
+                     "WIDE+ELEC": "WIDE+ELEC",
+                     "LIMIT": "LIMIT",
+                     "BAU+ELEC": "BAU+ELEC"}
 
     # load networks
     networks = {}
@@ -430,7 +434,7 @@ if __name__ == "__main__":
 
     # save electricity bills and prices into table
     if planning_horizon in ["2040", "2050"]:
-        total_elec_bills.rename(index={"Limited Renovation":"Limited Renovation & Electrification"}, inplace=True)
-        total_elec_prices.rename(index={"Limited Renovation":"Limited Renovation & Electrification"}, inplace=True)
+        total_elec_bills.rename(index={"LIMIT":"LIMIT+ELEC"}, inplace=True)
+        total_elec_prices.rename(index={"LIMIT":"LIMIT+ELEC"}, inplace=True)
     total_elec_bills.to_csv(snakemake.output.table_bills)
     total_elec_prices.to_csv(snakemake.output.table_price)
