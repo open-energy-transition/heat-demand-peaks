@@ -221,16 +221,16 @@ def plot_co2_balance(co2_df, clusters, planning_horizon, plot_width=7):
     handles = handles[:-neg_co2_length] + handles[-neg_co2_length:][::-1]
     labels = labels[:-neg_co2_length] + labels[-neg_co2_length:][::-1]
 
-    plt.xticks(rotation=0, fontsize=10)
-    ax.set_ylabel("CO$_2$ emissions [BtCO$_{2-eq}$]")
+    plt.xticks(rotation=0, fontsize=14)
+    ax.set_ylabel("CO$_2$ emissions [BtCO$_{2-eq}$]", fontsize=14)
     ax.set_xlabel("")
     ax.set_yticks(np.arange(-4.0, 4.0, 0.5))
     ax.set_ylim([-3.6,3.6])
 
     x_ticks = list(co2_df.columns)
-    if planning_horizon in ["2040", "2050"] and "Limited \nRenovation &\nOptimal Heating" in x_ticks:
+    if planning_horizon in ["2040", "2050"] and "LIMIT" in x_ticks:
         # replace name for Limited Renovation scenario for 2030 to be LROH
-        x_ticks[x_ticks.index("Limited \nRenovation &\nCost-Optimal Heating")] = "Limited \nRenovation &\nElectric Heating"
+        x_ticks[x_ticks.index("LIMIT")] = "LIMIT\n+ELEC"
 
     ax.set_xticklabels(x_ticks)
 
@@ -241,9 +241,41 @@ def plot_co2_balance(co2_df, clusters, planning_horizon, plot_width=7):
     )
 
     if planning_horizon == BAU_HORIZON:
-        ax.set_title("BAU", fontsize=12)
+        ax.set_title("2023", fontsize=15)
     else:
-        ax.set_title(planning_horizon, fontsize=12)
+        ax.set_title(planning_horizon, fontsize=15)
+
+    # Percentage drop for renovation scenarios
+    if scenarios["rigid"] in co2_df.columns:
+        total_co2_rigid = co2_df[co2_df>0].sum(axis=0)[scenarios["rigid"]]
+        percentage_lower = 100 * (co2_df[co2_df>0].sum(axis=0) - total_co2_rigid) / total_co2_rigid
+        
+        # Calculate x-coordinates for the groups
+        unique_x_coords = sorted(list(set([bar.get_x() + bar.get_width() / 2 for bar in ax.patches])))
+        
+        # Add arrows and percentage texts with corrected positions
+        arrowprops = dict(facecolor='red', shrink=0.05, width=1, headwidth=8)
+        
+        # Annotate each group
+        for i, x in enumerate(unique_x_coords[:-1]):
+            if percentage_lower[i] > 0:
+                color_percent = 'red'
+            else:
+                color_percent = 'green'
+            plt.annotate(
+                f'{percentage_lower[i]:.2f}%', 
+                xy=(x, co2_df[co2_df>0].iloc[:,i].sum()), 
+                xytext=(x, co2_df[co2_df>0].iloc[:,i].sum()+0.15), 
+                fontsize=15, 
+                color=color_percent, 
+                ha='center'
+            )
+
+        # add horizontal line
+        bar_width = unique_x_coords[1] - unique_x_coords[0]
+        line_start = unique_x_coords[0] - bar_width * 0.25
+        line_end = unique_x_coords[-1] + bar_width * 0.25
+        ax.plot([line_start, line_end], [total_co2_rigid, total_co2_rigid], color='red', linestyle='--', linewidth=2)
 
     ax.set_facecolor('white')
     ax.spines['top'].set_visible(False)
@@ -291,10 +323,10 @@ if __name__ == "__main__":
     planning_horizons = [str(x) for x in planning_horizons if not str(x) == BAU_HORIZON]
 
     # define scenario namings
-    scenarios = {"flexible": "Optimal \nRenovation &\nCost-Optimal Heating", 
-                "retro_tes": "Optimal \nRenovation &\nElectric Heating", 
-                "flexible-moderate": "Limited \nRenovation &\nCost-Optimal Heating", 
-                "rigid": "No \nRenovation &\nElectric Heating"}
+    scenarios = {"flexible": "WIDE",
+                "retro_tes": "WIDE\n+ELEC",
+                "flexible-moderate": "LIMIT",
+                "rigid": "BAU\n+ELEC"}
 
 
     # initialize df for storing co2 balance information
@@ -354,11 +386,11 @@ if __name__ == "__main__":
         print(f"Network is not found for scenario '{scenario}', planning year '{BAU_horizon}'. Skipping...")
     else:
         # get co2 balance for BAU and group technologies
-        co2_BAU = get_co2_balance(n, "BAU")
+        co2_BAU = get_co2_balance(n, "Baseline\n2030")
         co2_BAU = co2_BAU.groupby(co2_BAU.index.map(rename_techs)).sum()
         if not table_co2_df.empty and not co2_BAU.empty:
             plot_co2_balance(co2_BAU, clusters, BAU_horizon, plot_width=1.5)
-            table_co2_df = fill_table_df(table_co2_df, BAU_horizon, {"BAU":"BAU"}, co2_BAU)
+            table_co2_df = fill_table_df(table_co2_df, BAU_horizon, {"BAU":"Baseline\n2030"}, co2_BAU)
             table_co2_df = table_co2_df.fillna(0)
             co2_emission_BAU = -co2_BAU.loc["co2"].values[0]
 
@@ -377,18 +409,18 @@ if __name__ == "__main__":
         # save to csv
         table_co2_df.index.name = "CO2 emissions [tCO2_eq]"
         table_co2_df.columns = replace_multiindex_values(table_co2_df.columns, 
-                                                         ("2040", "Limited \nRenovation &\nCost-Optimal Heating"),
-                                                         ("2040","Limited \nRenovation &\nElectric Heating"))
+                                                         ("2040", "LIMIT"),
+                                                         ("2040","LIMIT\n+ELEC"))
         table_co2_df.columns = replace_multiindex_values(table_co2_df.columns, 
-                                                         ("2050", "Limited \nRenovation &\nCost-Optimal Heating"),
-                                                         ("2050","Limited \nRenovation &\nElectric Heating"))
+                                                         ("2050", "LIMIT"),
+                                                         ("2050","LIMIT\n+ELEC"))
         table_co2_df.to_csv(snakemake.output.table)
 
     if not co2_savings_df.empty:
         co2_savings_df.columns = replace_multiindex_values(co2_savings_df.columns, 
-                                                           ("2040", "Limited \nRenovation &\nCost-Optimal Heating"),
-                                                           ("2040","Limited \nRenovation &\nElectric Heating"))
+                                                           ("2040", "LIMIT"),
+                                                           ("2040","LIMIT\n+ELEC"))
         co2_savings_df.columns = replace_multiindex_values(co2_savings_df.columns, 
-                                                           ("2050", "Limited \nRenovation &\nCost-Optimal Heating"),
-                                                           ("2050","Limited \nRenovation &\nElectric Heating"))
+                                                           ("2050", "LIMIT"),
+                                                           ("2050","LIMIT\n+ELEC"))
         co2_savings_df.to_csv(snakemake.output.table_savings)
