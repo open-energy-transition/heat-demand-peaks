@@ -53,13 +53,13 @@ def plot_pies(ax, elec_mix_array):
 
     _, texts, autotexts = ax.pie(vals.sum(axis=1), radius=1, colors=outer_colors,
         wedgeprops=dict(width=size, edgecolor='w', linewidth=0.2), 
-        autopct=autopct_format_outer, textprops={'fontsize': 5}, pctdistance=1.5,
+        autopct=autopct_format_outer, textprops={'fontsize': 5}, pctdistance=1.4,
         labels=valid_outer_labels)
     
     # Adjust the position of autopct labels
     for autotext, label in zip(autotexts, texts):
         x, y = label.get_position()  # Get position of corresponding wedge label
-        autotext.set_position((x , y - 0.11))  # Set position of autopct label below the wedge label
+        autotext.set_position((x , y - 0.13))  # Set position of autopct label below the wedge label
         autotext.set_fontsize(4)
         align = "right" if x < 0 else "left"
         autotext.set_horizontalalignment(align)
@@ -69,7 +69,7 @@ def plot_pies(ax, elec_mix_array):
         all_vals[all_vals!=0], radius=1.15-size,
         colors=[inner_colors[i] for i in range(len(inner_colors)) if all_vals[i] != 0],
         wedgeprops=dict(width=size, edgecolor='w', linewidth=0.2),
-        autopct=autopct_format_inner, textprops={'fontsize': 4}, pctdistance=0.7
+        autopct=autopct_format_inner, textprops={'fontsize': 3}, pctdistance=0.7
     )
     
     # Calculate total generated electricity
