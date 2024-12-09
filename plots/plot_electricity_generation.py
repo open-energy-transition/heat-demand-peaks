@@ -53,14 +53,14 @@ def plot_pies(ax, elec_mix_array):
 
     _, texts, autotexts = ax.pie(vals.sum(axis=1), radius=1, colors=outer_colors,
         wedgeprops=dict(width=size, edgecolor='w', linewidth=0.2), 
-        autopct=autopct_format_outer, textprops={'fontsize': 4}, pctdistance=1.5,
+        autopct=autopct_format_outer, textprops={'fontsize': 5}, pctdistance=1.4,
         labels=valid_outer_labels)
     
     # Adjust the position of autopct labels
     for autotext, label in zip(autotexts, texts):
         x, y = label.get_position()  # Get position of corresponding wedge label
-        autotext.set_position((x , y - 0.11))  # Set position of autopct label below the wedge label
-        autotext.set_fontsize(3)
+        autotext.set_position((x , y - 0.13))  # Set position of autopct label below the wedge label
+        autotext.set_fontsize(4)
         align = "right" if x < 0 else "left"
         autotext.set_horizontalalignment(align)
 
@@ -75,7 +75,7 @@ def plot_pies(ax, elec_mix_array):
     # Calculate total generated electricity
     total_electricity = np.sum(vals)
     # Add total generated electricity to the center of the pie chart
-    ax.text(0, 0, f"{total_electricity/1e6:.2f}"+"\nTWh", ha='center', va='center', fontsize=4)
+    ax.text(0, 0, f"{total_electricity/1e6:.2f}"+"\nTWh", ha='center', va='center', fontsize=4.5)
     ax.set(aspect="equal")
 
 
@@ -103,12 +103,12 @@ if __name__ == "__main__":
 
     # define scenario namings
     if planning_horizon == BAU_HORIZON:
-        scenarios = {"BAU": "BAU"}
+        scenarios = {"BAU": "BASE 2023"}
     else:
-        scenarios = {"flexible": "OROH", 
-                     "retro_tes": "OREH", 
-                     "flexible-moderate": "LROH", 
-                     "rigid": "NREH"}
+        scenarios = {"flexible": "WIDE",
+                     "retro_tes": "WIDE+ELEC",
+                     "flexible-moderate": "LIMIT",
+                     "rigid": "BAU+ELEC"}
 
     # define figure
     count_scenarios = len(scenarios.keys())
@@ -168,7 +168,7 @@ if __name__ == "__main__":
 
         ax.set(aspect="equal")
         # set nice_name to LRGH for LR in 2040 and 2050
-        nice_name = "LREH" if nice_name == "LROH" and planning_horizon in ["2040", "2050"] else nice_name
+        nice_name = "LIMIT+ELEC" if nice_name == "LIMIT" and planning_horizon in ["2040", "2050"] else nice_name
         ax.set_title(nice_name, fontsize=6)
     
     nuclear_patch = mpatches.Patch(color='#ff8c00', label='Nuclear')
@@ -185,12 +185,12 @@ if __name__ == "__main__":
     if isinstance(axes, np.ndarray):
         axes[1].legend(
         handles=[nuclear_patch, vres_patch, gas_patch, coal_patch, fossil_patch, onwind_patch, offwind_patch, ror_patch, solar_patch, solar_rooftop_patch],
-        loc="lower center", ncol=5, fontsize=4, bbox_to_anchor=(1.1, -0.15)
+        loc="lower center", ncol=5, fontsize=5, bbox_to_anchor=(1.1, -0.19)
         )
     else:
         axes.legend(
         handles=[nuclear_patch, vres_patch, gas_patch, coal_patch, fossil_patch, onwind_patch, offwind_patch, ror_patch, solar_patch, solar_rooftop_patch],
-        loc="lower center", ncol=5, fontsize=4, bbox_to_anchor=(0.5, -0.15)
+        loc="lower center", ncol=5, fontsize=5, bbox_to_anchor=(0.5, -0.19)
         )
     
     # move to base directory
