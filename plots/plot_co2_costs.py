@@ -178,7 +178,7 @@ if __name__ == "__main__":
         co2_BAU = get_co2_costs(n, "Baseline\n2023")
         if not table_co2_df.empty and not co2_BAU.empty:
             plot_co2_costs(co2_BAU, clusters, BAU_horizon, plot_width=1.5)
-            table_co2_df = fill_table_df(table_co2_df, BAU_horizon, {"BAU":"Baseline\n2023"}, co2_BAU)
+            table_co2_df = fill_table_df(table_co2_df, "2023", {"BAU":"Baseline\n2023"}, co2_BAU)
             table_co2_df = table_co2_df.fillna(0)
 
     # move to base directory
