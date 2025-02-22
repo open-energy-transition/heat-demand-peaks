@@ -302,6 +302,26 @@ rule plot_co2_levels:
         ),
 
 
+rule plot_co2_cost:
+    params:
+        clusters=config["plotting"]["clusters"],
+    output:
+        table=RESULTS+"table_co2_costs_{clusters}.csv",
+    resources:
+        mem_mb=20000,
+    script:
+        "plots/plot_co2_costs.py"
+
+
+rule plot_co2_costs:
+    input:
+        expand(
+            RESULTS
+            + "table_co2_costs_{clusters}.csv",
+            **config["plotting"],
+        ),
+
+
 rule plot_historic_generation:
     shell:
         "python plots/plot_historic_generation.py"
