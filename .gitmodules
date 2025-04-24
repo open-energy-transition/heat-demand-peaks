@@ -1,6 +1,7 @@
 [submodule "submodules/pypsa-eur"]
 	path = submodules/pypsa-eur
-	url = https://github.com/PyPSA/pypsa-eur
+	url = https://github.com/open-energy-transition/pypsa-eur.git
+    branch = EEE
 [submodule "submodules/technology-data"]
 	path = submodules/technology-data
 	url = https://github.com/PyPSA/technology-data
