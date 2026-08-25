@@ -44,9 +44,14 @@ sector:
   district_heating:
     progress:
       2050: 1.0
-  residential_heat_dsm: true
-  residential_heat_restriction_value: 0.6
-  residential_heat_restriction_time: [10, 22] # 9am and 9pm
+  residential_heat:
+    dsm:
+      enable: true
+      restriction_value:
+        2030: 0.27
+        2040: 0.435
+        2050: 0.6
+      restriction_time: [10, 22]  # local checkpoint hours
   cluster_heat_buses: false
   reduce_space_heat_exogenously: false
   retrofitting:
@@ -55,7 +60,8 @@ sector:
   tes: true
   boilers: false #true
   biomass_boiler: false
-  micro_chp: true
+  chp:
+    micro_chp: true
   regional_coal_demand: true
   use_fischer_tropsch_waste_heat: false
   use_haber_bosch_waste_heat: false
@@ -79,7 +85,7 @@ sector:
     lignite: lignite
     nuclear: uranium
   keep_existing_capacities: True
-  heat_pump_sink_T: 55.0
+  heat_pump_sink_T_individual_heating: 55.0
 
 costs:
   year: 2045
