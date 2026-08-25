@@ -6,8 +6,6 @@ run:
   name: "BAU"
 
 scenario:
-  ll:
-  - v1.0
   clusters:
   - 48
   sector_opts:
@@ -27,6 +25,7 @@ electricity:
     Generator: [CCGT]
   powerplants_filter: DateOut >= 2024 and not Fueltype.isin(['Nuclear', 'Hard Coal', 'Lignite'])
   custom_powerplants: DateIn <= 2024 and DateOut >= 2024
+  transmission_limit: v1.0
 
 energy:
   energy_totals_year: 2013

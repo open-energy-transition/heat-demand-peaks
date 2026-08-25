@@ -6,8 +6,6 @@ run:
   name: "retro_tes"
 
 scenario:
-  ll:
-  - v1.5
   clusters:
   - 48
   sector_opts:
@@ -27,6 +25,7 @@ electricity:
     Generator: [solar, onwind, offwind-ac, offwind-dc]
   powerplants_filter: DateOut >= 2050 and not Fueltype.isin(['Nuclear', 'Hard Coal', 'Lignite'])
   custom_powerplants: DateIn <= 2050 and DateOut >= 2050
+  transmission_limit: v1.5
 
 energy:
   energy_totals_year: 2013
