@@ -15,6 +15,9 @@ from _helpers import change_path_to_pypsa_eur, change_path_to_base, load_network
 # Set up logging configuration
 logging.basicConfig(level=logging.INFO)
 
+# Config key for individual-heating heat-pump sink temperature (pypsa-eur)
+HEAT_PUMP_SINK_T_KEY = "heat_pump_sink_T_individual_heating"
+
 def get_scenario():
     parser = argparse.ArgumentParser(description="Running the scenario")
     parser.add_argument("-s", "--scenario", help="Specify the scenario.", required=False, 
@@ -127,67 +130,6 @@ def copy_custom_data():
         "Copied custom busmap to submodules/pypsa-eur/data/busmaps/ "
         "and custom_powerplants.csv to submodules/pypsa-eur/data/"
     )
-
-
-def increase_biomass_potential(factor=1.2):
-    # change path to pypsa-eur
-    change_path_to_pypsa_eur()
-
-    # Define the file path
-    file_path = 'scripts/prepare_sector_network.py'
-
-    # Define the line to be added
-    new_line = f'    biomass_potentials = {factor} * biomass_potentials\n'
-
-    # Read the contents of the file
-    with open(file_path, 'r') as file:
-        lines = file.readlines()
-
-    # Find the index of the line containing the specified text
-    index = next((i for i, line in enumerate(lines) if 'biomass_potentials = pd.read_csv(snakemake.input.biomass_potentials, index_col=0)' in line), None)
-
-    # Insert the new line after the specified line
-    if index is not None:
-        lines.insert(index + 1, new_line)
-
-    # Write the modified contents back to the file
-    with open(file_path, 'w') as file:
-        file.writelines(lines)
-
-    # log changes
-    logging.info(f"Increase biomass potentials by {factor} factor")
-
-    # move to base directory
-    change_path_to_base()
-
-
-def revert_biomass_potential():
-    # Change path to pypsa-eur
-    change_path_to_pypsa_eur()
-
-    # Define the file path
-    file_path = 'scripts/prepare_sector_network.py'
-
-    # Read the contents of the file
-    with open(file_path, 'r') as file:
-        lines = file.readlines()
-
-    # Find the index of the line containing the specified text
-    index = next((i for i, line in enumerate(lines) if 'biomass_potentials = 1.2 * biomass_potentials' in line), None)
-
-    # Remove the line if found
-    if index is not None:
-        del lines[index]
-
-    # Write the modified contents back to the file
-    with open(file_path, 'w') as file:
-        file.writelines(lines)
-
-    # log changes
-    logging.info(f"Revert biomass potentials back")
-
-    # Move to base directory
-    change_path_to_base()
 
 
 def prepare_prenetwork(scenario, horizon):
@@ -334,14 +276,17 @@ def update_sink_T(scenario, horizon, sink_T):
     config_path = "../../" + config_path
 
     # Define the line to be set
-    new_line = f'  heat_pump_sink_T: {sink_T:.1f}\n'
+    new_line = f"  {HEAT_PUMP_SINK_T_KEY}: {sink_T:.1f}\n"
 
     # Read the contents of the file
     with open(config_path, 'r') as file:
         lines = file.readlines()
 
     # Find the index of the line containing the specified text
-    index = next((i for i, line in enumerate(lines) if '  heat_pump_sink_T:' in line), None)
+    index = next(
+        (i for i, line in enumerate(lines) if f"  {HEAT_PUMP_SINK_T_KEY}:" in line),
+        None,
+    )
 
     # Insert the new line after the specified line
     if index is not None:
@@ -352,7 +297,7 @@ def update_sink_T(scenario, horizon, sink_T):
         file.writelines(lines)
 
     # log changes
-    logging.info(f"Changed heat_pump_sink_T to {sink_T}")
+    logging.info(f"Changed {HEAT_PUMP_SINK_T_KEY} to {sink_T}")
 
     # move to base directory
     change_path_to_base()
@@ -371,7 +316,10 @@ def read_sink_T(scenario, horizon):
         lines = file.readlines()
 
     # Find the index of the line containing the specified text
-    index = next((i for i, line in enumerate(lines) if '  heat_pump_sink_T:' in line), None)
+    index = next(
+        (i for i, line in enumerate(lines) if f"  {HEAT_PUMP_SINK_T_KEY}:" in line),
+        None,
+    )
 
     # Insert the new line after the specified line
     if index is not None:
@@ -379,14 +327,14 @@ def read_sink_T(scenario, horizon):
         line = lines[index]
         
         # Split the line by the specified text and take the part after it
-        value_str = line.split('  heat_pump_sink_T:')[-1].strip()
+        value_str = line.split(f"  {HEAT_PUMP_SINK_T_KEY}:")[-1].strip()
 
         # Convert the extracted part to float
         value = float(value_str)
         
-        logging.info(f"The extracted heat_pump_sink_T value is: {value:.1f}")
+        logging.info(f"The extracted {HEAT_PUMP_SINK_T_KEY} value is: {value:.1f}")
     else:
-        logging.info("The specified heat_pump_sink_T was not found in any line.")
+        logging.info(f"The specified {HEAT_PUMP_SINK_T_KEY} was not found in any line.")
 
     # move to base directory
     change_path_to_base()
@@ -395,11 +343,6 @@ def read_sink_T(scenario, horizon):
 
 
 def run_workflow(scenario, horizon, improved_cop=False):
-    # remove biomass potential increase if present
-    revert_biomass_potential()
-    # increase biomass potential for 2050 by 1.2
-    if horizon == 2050:
-        increase_biomass_potential()
     # run prenetwork
     prepare_prenetwork(scenario=scenario, horizon=horizon)
 
@@ -420,16 +363,10 @@ def run_workflow(scenario, horizon, improved_cop=False):
 
     # break if error happens
     if error_capacities or error_moderate or error_improve_cop:
-        if horizon == 2050:
-            revert_biomass_potential()
         return None # return None is error happens
 
     # solve the network
     solve_network(scenario, horizon)
-
-    # revert biomass potential
-    if horizon == 2050:
-        revert_biomass_potential()
 
     return True # return True if success
 
@@ -449,7 +386,8 @@ if __name__ == "__main__":
     # run model for given horizon
     for horizon in horizons:
         for scenario in scenarios:
-            # calculate heat_pump_sink_T for flexible-moderate, set to 55.0 at the beginning of first run for other scenarios
+            # calculate heat_pump_sink_T_individual_heating for flexible-moderate;
+            # set to 55.0 at the beginning of first run for other scenarios
             if scenario == "flexible-moderate" and improved_cop:
                 # read heat saved from flexible scenario
                 heat_saved_ratio = get_heat_saved("flexible", horizon)
@@ -473,13 +411,13 @@ if __name__ == "__main__":
                 # read heat saved
                 heat_saved_ratio = get_heat_saved(scenario, horizon)
 
-                # calculate heat_pump_sink_T
+                # calculate heat_pump_sink_T_individual_heating
                 sink_T = calculate_sink_T(heat_saved_ratio)
 
                 # delete config.yaml
                 delete_config_yaml()
 
-                # update heat_pump_sink_T
+                # update heat_pump_sink_T_individual_heating
                 update_sink_T(scenario, horizon, sink_T)
 
                 # run full network preparation and solving workflow
@@ -488,8 +426,5 @@ if __name__ == "__main__":
 
     # run BAU scenario
     if scenario_BAU:
-        # remove biomass potential increase if present
-        revert_biomass_potential()
-
         # solve the network
         solve_network("BAU", 2020)
