@@ -18,7 +18,7 @@ import warnings
 warnings.filterwarnings("ignore")
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                      change_path_to_pypsa_eur, change_path_to_base, \
-                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON, replace_multiindex_values
+                     CO2L_LIMITS, BAU_HORIZON, replace_multiindex_values
 
 logger = logging.getLogger(__name__)
 
@@ -105,7 +105,6 @@ if __name__ == "__main__":
 
     # network parameters
     co2l_limits = CO2L_LIMITS
-    line_limits = LINE_LIMITS
     clusters = config["plotting"]["clusters"]
     opts = config["plotting"]["sector_opts"]
     planning_horizons = config["plotting"]["planning_horizon"]
@@ -129,12 +128,11 @@ if __name__ == "__main__":
     hydrogen_df = define_table_df(scenarios, idx=param_dict.keys())
 
     for planning_horizon in planning_horizons:
-        lineex = line_limits[planning_horizon]
         sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{opts}"
     
         # load networks
         for scenario, nice_name in scenarios.items():
-            n = load_network(lineex, clusters, sector_opts, planning_horizon, scenario)
+            n = load_network(clusters, sector_opts, planning_horizon, scenario)
 
             if n is None:
                 # Skip further computation for this scenario if network is not loaded
@@ -148,10 +146,9 @@ if __name__ == "__main__":
     BAU_horizon = BAU_HORIZON
     scenario = "BAU"
     scenario_name = "BASE 2023"
-    lineex = line_limits[BAU_horizon]
     sector_opts = f"Co2L{co2l_limits[BAU_horizon]}-{opts}"
 
-    n = load_network(lineex, clusters, sector_opts, BAU_horizon, scenario)
+    n = load_network(clusters, sector_opts, BAU_horizon, scenario)
 
     if n is None:
         # Skip further computation for this scenario if network is not loaded

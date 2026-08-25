@@ -15,7 +15,7 @@ import warnings
 warnings.filterwarnings("ignore")
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                      change_path_to_pypsa_eur, change_path_to_base, \
-                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON, replace_multiindex_values, \
+                     CO2L_LIMITS, BAU_HORIZON, replace_multiindex_values, \
                      PATH_PLOTS, PREFERRED_ORDER, rename_techs
 
 logger = logging.getLogger(__name__)
@@ -150,7 +150,6 @@ if __name__ == "__main__":
 
     # network parameters
     co2l_limits = CO2L_LIMITS
-    line_limits = LINE_LIMITS
     clusters = config["plotting"]["clusters"]
     planning_horizons = config["plotting"]["planning_horizon"]
     planning_horizons = [str(x) for x in planning_horizons if not str(x) == BAU_HORIZON]
@@ -166,7 +165,6 @@ if __name__ == "__main__":
     table_cap_df = define_table_df(scenarios)
 
     for planning_horizon in planning_horizons:
-        lineex = line_limits[planning_horizon]
         sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{opts}"
 
         # move to submodules/pypsa-eur
@@ -177,7 +175,7 @@ if __name__ == "__main__":
         capacities_df = pd.DataFrame()
         p_nom_exp_df = pd.DataFrame()
         for scenario, nice_name in scenarios.items():
-            n = load_network(lineex, clusters, sector_opts, planning_horizon, scenario)
+            n = load_network(clusters, sector_opts, planning_horizon, scenario)
 
             if n is None:
                 # Skip further computation for this scenario if network is not loaded

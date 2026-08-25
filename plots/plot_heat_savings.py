@@ -16,7 +16,7 @@ import warnings
 warnings.filterwarnings("ignore")
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                      change_path_to_pypsa_eur, change_path_to_base, \
-                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON
+                     CO2L_LIMITS, BAU_HORIZON
 
 
 def get_heat_data(n, with_flexibility=False):
@@ -264,11 +264,9 @@ if __name__ == "__main__":
 
     # network parameters
     co2l_limits = CO2L_LIMITS
-    line_limits = LINE_LIMITS
     clusters = config["plotting"]["clusters"]
     planning_horizon = config["plotting"]["planning_horizon"]
     opts = config["plotting"]["sector_opts"]
-    lineex = line_limits[planning_horizon]
     sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{opts}"
 
     # move to submodules/pypsa-eur
@@ -286,7 +284,7 @@ if __name__ == "__main__":
     # load networks
     networks = {}
     for scenario, nice_name in scenarios.items():
-        n = load_network(lineex, clusters, sector_opts, planning_horizon, scenario)
+        n = load_network(clusters, sector_opts, planning_horizon, scenario)
         if n is None:
             # Skip further computation for this scenario if network is not loaded
             print(f"Network is not found for scenario '{scenario}', planning year '{planning_horizon}'. Skipping...")

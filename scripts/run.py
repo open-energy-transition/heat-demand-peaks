@@ -99,25 +99,34 @@ def get_network_name(scenario, horizon):
     # read config.default.yaml file
     with open("config/config.default.yaml", 'r') as file:
         config_default = yaml.safe_load(file)
-    # scenario params
+    # scenario params (pypsa-eur >=2025: no simpl/ll in filenames)
     params = config["scenario"]
     params_default = config_default["scenario"]
-    ll, clusters, sector_opts, planning_horizons = params['ll'][0], params['clusters'][0], params['sector_opts'][0], params['planning_horizons'][0]
-    simpl, opts = params_default['simpl'][0], params_default['opts'][0]
-    filename = f"elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc"
+    clusters = params["clusters"][0]
+    sector_opts = params["sector_opts"][0]
+    planning_horizons = params["planning_horizons"][0]
+    opts = params.get("opts", params_default["opts"])[0]
+    filename = f"base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc"
     return filename
 
 
 def copy_custom_data():
-    # define source and destination directories
-    source_dir = "data/"
-    destination_dir = "submodules/pypsa-eur/data/"
-    # files to copy
-    files_to_copy = ["custom_busmap_elec_s_48.csv", "custom_powerplants.csv"]
-    for file in files_to_copy:
-        subprocess.run(f"cp data/{file} submodules/pypsa-eur/data", check=True, shell=True)
-    # log the success
-    logging.info(f"Copied custom data {files_to_copy} from data/ folder to submodules/pypsa-eur/data/ folder")
+    # busmap path expected by pypsa-eur clustering.mode: custom_busmap
+    busmap_src = "data/busmaps/base_s_48_entsoegridkit.csv"
+    busmap_dst_dir = "submodules/pypsa-eur/data/busmaps"
+    subprocess.run(f"mkdir -p {busmap_dst_dir}", check=True, shell=True)
+    subprocess.run(f"cp {busmap_src} {busmap_dst_dir}/", check=True, shell=True)
+
+    # custom powerplants goes into data/
+    subprocess.run(
+        "cp data/custom_powerplants.csv submodules/pypsa-eur/data/",
+        check=True,
+        shell=True,
+    )
+    logging.info(
+        "Copied custom busmap to submodules/pypsa-eur/data/busmaps/ "
+        "and custom_powerplants.csv to submodules/pypsa-eur/data/"
+    )
 
 
 def increase_biomass_potential(factor=1.2):
@@ -192,8 +201,11 @@ def prepare_prenetwork(scenario, horizon):
 
     # get .nc filename
     filename = get_network_name(scenario, horizon)
-    # run prenetwork
-    command = f"snakemake -call results/{scenario}/prenetworks/{filename} --configfile {config_path} --force --rerun-incomplete"
+    # prepare sector network (replaces old prenetworks/elec_s_...)
+    command = (
+        f"snakemake -call resources/{scenario}/networks/{filename} "
+        f"--configfile {config_path} --force --rerun-incomplete"
+    )
     subprocess.run(command, shell=True)
     logging.info(f"Prenetwork was prepared for {scenario} scenario in {horizon} horizon!")
 
@@ -271,7 +283,7 @@ def get_heat_saved(scenario, horizon):
     # load solved network
     n = None
     try:
-        n = pypsa.Network(os.path.join(f"results/{scenario}/postnetworks", filename))
+        n = pypsa.Network(os.path.join(f"results/{scenario}/networks", filename))
         logging.info(f"Loading {filename} for {scenario}")
     except FileNotFoundError as e:
         print(f"Error: {e}")

@@ -208,29 +208,28 @@ def rename_techs2(label):
 # 1. Loading the networks
 """
 
-lineex = "v1.15"
 space_resolution = 48
 sector_opts = "Co2L0.45-100H-T-H-B-I"
 planning = 2030
 
 # %%
-FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}.nc"
-DIR = "results/rigid/postnetworks"
+FILE = f"base_s_{space_resolution}__{sector_opts}_{planning}.nc"
+DIR = "results/rigid/networks"
 n_rigid = pypsa.Network(os.path.join(DIR, FILE))
 
 # %%
-FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}.nc"
-DIR = "results/flexible/postnetworks"
+FILE = f"base_s_{space_resolution}__{sector_opts}_{planning}.nc"
+DIR = "results/flexible/networks"
 n_flex = pypsa.Network(os.path.join(DIR, FILE))
 
 # %%
-FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}.nc"
-DIR = "results/retro_tes/postnetworks"
+FILE = f"base_s_{space_resolution}__{sector_opts}_{planning}.nc"
+DIR = "results/retro_tes/networks"
 n_igas_tes = pypsa.Network(os.path.join(DIR, FILE))
 
 # %%
-FILE = f"elec_s_{space_resolution}_l{lineex}__{sector_opts}_{planning}.nc"
-DIR = "results/flexible-moderate/postnetworks"
+FILE = f"base_s_{space_resolution}__{sector_opts}_{planning}.nc"
+DIR = "results/flexible-moderate/networks"
 n_mod = pypsa.Network(os.path.join(DIR, FILE))
 
 # %%
@@ -698,7 +697,7 @@ plt.savefig(PATH_PLOTS+'gen_profiles.png', dpi=600, bbox_inches = 'tight')
 
 # %%
 # set a custom path to `resources` folder
-resources_path = f"pypsa-eur/resources/flexible/regions_onshore_elec_s_{space_resolution}.geojson"
+resources_path = f"pypsa-eur/resources/flexible/regions_onshore_base_s_{space_resolution}.geojson"
 # onshore and offshore shapes
 onshore_cl_fl = os.path.join(base_path, resources_path)
 # read onshore shapes

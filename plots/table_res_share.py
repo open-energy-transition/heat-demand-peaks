@@ -14,7 +14,7 @@ import warnings
 warnings.filterwarnings("ignore")
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                      change_path_to_pypsa_eur, change_path_to_base, \
-                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON, replace_multiindex_values
+                     CO2L_LIMITS, BAU_HORIZON, replace_multiindex_values
 
 
 def define_res_share_dataframe():
@@ -122,7 +122,6 @@ if __name__ == "__main__":
     change_path_to_pypsa_eur()
     # network parameters
     co2l_limits = CO2L_LIMITS
-    line_limits = LINE_LIMITS
     clusters = config["plotting"]["clusters"]
     planning_horizons = config["plotting"]["planning_horizon"]
     planning_horizons = [str(x) for x in planning_horizons if not str(x) == BAU_HORIZON]
@@ -139,12 +138,11 @@ if __name__ == "__main__":
 
     # heat pumps estimation
     for planning_horizon in planning_horizons:
-        lineex = line_limits[planning_horizon]
         sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{opts}"
 
         for scenario, nice_name in scenarios.items():
             # load networks
-            n = load_network(lineex, clusters, sector_opts, planning_horizon, scenario)
+            n = load_network(clusters, sector_opts, planning_horizon, scenario)
 
             if n is None:
                 # Skip further computation for this scenario if network is not loaded
@@ -167,11 +165,10 @@ if __name__ == "__main__":
     # add BAU scenario
     BAU_horizon = BAU_HORIZON
     scenario = "BAU"
-    lineex = line_limits[BAU_horizon]
     sector_opts = f"Co2L{co2l_limits[BAU_horizon]}-{opts}"
 
     # load BAU network
-    n = load_network(lineex, clusters, sector_opts, BAU_horizon, scenario)
+    n = load_network(clusters, sector_opts, BAU_horizon, scenario)
 
     # move to base directory
     change_path_to_base()

@@ -40,19 +40,21 @@ if __name__ == "__main__":
     clusters = config["improve_cops_after_renovation"]["clusters"]
     planning_horizon = config["improve_cops_after_renovation"]["planning_horizon"]
     scenario = config["improve_cops_after_renovation"]["scenario"]
-    # get sector_opts and ll from scenario config file from EEE_study folder
+    # get sector_opts from scenario config (ll no longer in filename)
     scenario_config = get_config(scenario, planning_horizon)
     sector_opts = scenario_config["scenario"]["sector_opts"][0]
-    lineex = scenario_config["scenario"]["ll"][0]
+    opts = scenario_config["scenario"].get("opts", [""])[0]
 
     # move to pypsa-eur directory
     change_path_to_pypsa_eur()
 
     # load solved network of scenario
-    n_solved = load_network(lineex, clusters, sector_opts, planning_horizon, scenario)
+    n_solved = load_network(clusters, sector_opts, planning_horizon, scenario, opts=opts)
 
     # load unsolved network of scenario
-    n_unsolved = load_unsolved_network(lineex, clusters, sector_opts, planning_horizon, scenario)
+    n_unsolved = load_unsolved_network(
+        clusters, sector_opts, planning_horizon, scenario, opts=opts
+    )
 
     if not n_solved is None and not n_unsolved is None:
         # update the network by setting p_nom_opt of previous run (when cop is defined) as p_nom for the next run
@@ -60,7 +62,9 @@ if __name__ == "__main__":
 
         # save updated network
         try:
-            save_unsolved_network(n_updated, lineex, clusters, sector_opts, planning_horizon, scenario)
+            save_unsolved_network(
+                n_updated, clusters, sector_opts, planning_horizon, scenario, opts=opts
+            )
             success = True
         except Exception as e:
             print(f"Error: {e}")

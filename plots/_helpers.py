@@ -20,11 +20,6 @@ CO2L_LIMITS = {"2020": "0.725",
                "2030": "0.45", 
                "2040": "0.1", 
                "2050": "0.0"}
-# Line limits
-LINE_LIMITS = {"2020": "v1.0",
-               "2030": "v1.15",
-               "2040": "v1.3",
-               "2050": "v1.5"}
 # BAU year
 BAU_HORIZON = "2020"
 
@@ -350,9 +345,14 @@ def update_config_from_wildcards(config, w):
     return config
 
 
-def load_network(lineex, clusters, sector_opts, planning_horizon, scenario):
-    FILE = f"elec_s_{clusters}_l{lineex}__{sector_opts}_{planning_horizon}.nc"
-    DIR = f"results/{scenario}/postnetworks"
+def _network_filename(clusters, sector_opts, planning_horizon, opts=""):
+    """Current pypsa-eur naming: base_s_{clusters}_{opts}_{sector_opts}_{year}.nc"""
+    return f"base_s_{clusters}_{opts}_{sector_opts}_{planning_horizon}.nc"
+
+
+def load_network(clusters, sector_opts, planning_horizon, scenario, opts=""):
+    FILE = _network_filename(clusters, sector_opts, planning_horizon, opts=opts)
+    DIR = f"results/{scenario}/networks"
     try:
         n = pypsa.Network(os.path.join(DIR, FILE))
         logging.info(f"Loading {FILE} in {DIR}")
@@ -362,9 +362,9 @@ def load_network(lineex, clusters, sector_opts, planning_horizon, scenario):
     return n
 
 
-def load_unsolved_network(lineex, clusters, sector_opts, planning_horizon, scenario):
-    FILE = f"elec_s_{clusters}_l{lineex}__{sector_opts}_{planning_horizon}.nc"
-    DIR = f"results/{scenario}/prenetworks"
+def load_unsolved_network(clusters, sector_opts, planning_horizon, scenario, opts=""):
+    FILE = _network_filename(clusters, sector_opts, planning_horizon, opts=opts)
+    DIR = f"resources/{scenario}/networks"
     try:
         n = pypsa.Network(os.path.join(DIR, FILE))
         logging.info(f"Loading {FILE} in {DIR}")
@@ -374,10 +374,11 @@ def load_unsolved_network(lineex, clusters, sector_opts, planning_horizon, scena
     return n
 
 
-def save_unsolved_network(network, lineex, clusters, sector_opts, planning_horizon, scenario):
-    FILE = f"elec_s_{clusters}_l{lineex}__{sector_opts}_{planning_horizon}.nc"
-    DIR = f"results/{scenario}/prenetworks/"
-    network.export_to_netcdf(DIR+FILE)
+def save_unsolved_network(network, clusters, sector_opts, planning_horizon, scenario, opts=""):
+    FILE = _network_filename(clusters, sector_opts, planning_horizon, opts=opts)
+    DIR = f"resources/{scenario}/networks/"
+    os.makedirs(DIR, exist_ok=True)
+    network.export_to_netcdf(DIR + FILE)
     logging.info(f"Saving {FILE} to {DIR}")
 
 

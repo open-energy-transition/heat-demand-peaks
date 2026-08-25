@@ -15,7 +15,7 @@ import warnings
 warnings.filterwarnings("ignore")
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                      change_path_to_pypsa_eur, change_path_to_base, \
-                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON, replace_multiindex_values, \
+                     CO2L_LIMITS, BAU_HORIZON, replace_multiindex_values, \
                      PATH_PLOTS, GAS_BOILERS, PREFERRED_ORDER, rename_techs
 
 logger = logging.getLogger(__name__)
@@ -114,17 +114,21 @@ def plot_costs(cost_df, clusters, planning_horizon, plot_width=7, plot_name="tot
     else:
         ax.set_title(planning_horizon, fontsize=15)
     
-    # Percentage drop for renovation scenarios
-    if scenarios["rigid"] in df.columns:
+    # Percentage drop vs rigid: only meaningful with at least two scenarios
+    if (
+        "rigid" in scenarios
+        and scenarios["rigid"] in df.columns
+        and len(df.columns) > 1
+    ):
         total_cost_rigid = df.sum(axis=0)[scenarios["rigid"]]
         percentage_lower = 100 * (df.sum(axis=0) - total_cost_rigid) / total_cost_rigid
-     
+
         # Calculate x-coordinates for the groups
         unique_x_coords = sorted(list(set([bar.get_x() + bar.get_width() / 2 for bar in ax.patches])))
-        
+
         # Add arrows and percentage texts with corrected positions
         arrowprops = dict(facecolor='red', shrink=0.05, width=1, headwidth=8)
-        
+
         # Annotate each group
         if plot_name == "operational_costs":
             text_shift = 50
@@ -134,12 +138,12 @@ def plot_costs(cost_df, clusters, planning_horizon, plot_width=7, plot_name="tot
 
         for i, x in enumerate(unique_x_coords[:-1]):
             plt.annotate(
-                f'{percentage_lower[i]:.2f}%', 
-                xy=(x, df.iloc[:,i].sum()), 
-                xytext=(x, total_cost_rigid+text_shift), 
-                arrowprops=arrowprops, 
-                fontsize=15, 
-                color='red', 
+                f'{percentage_lower[i]:.2f}%',
+                xy=(x, df.iloc[:,i].sum()),
+                xytext=(x, total_cost_rigid+text_shift),
+                arrowprops=arrowprops,
+                fontsize=15,
+                color='red',
                 ha='center'
             )
 
@@ -307,7 +311,8 @@ def update_capital_cost(cap_costs_dict, p_nom_opt_dict, planning_horizon):
 
 def define_table_df(scenarios):
     # Define column levels
-    col_level_0 = ["2030"]*4 + ["2040"]*4 + ["2050"]*4
+    n_scen = len(scenarios)
+    col_level_0 = ["2030"] * n_scen + ["2040"] * n_scen + ["2050"] * n_scen
     col_level_1 = list(scenarios.values()) * 3
     # Create a MultiColumns
     multi_cols = pd.MultiIndex.from_arrays([col_level_0, col_level_1], names=['Year', 'Scenario'])
@@ -326,9 +331,8 @@ def fill_table_df(df, planning_horizon, scenarios, values):
 if __name__ == "__main__":
     if "snakemake" not in globals():
         snakemake = mock_snakemake(
-            "plot_total_costs", 
+            "plot_total_cost",
             clusters="48",
-            planning_horizon=["2030"],
         )
     # update config based on wildcards
     config = update_config_from_wildcards(snakemake.config, snakemake.wildcards)
@@ -336,17 +340,18 @@ if __name__ == "__main__":
 
     # network parameters
     co2l_limits = CO2L_LIMITS
-    line_limits = LINE_LIMITS
     clusters = config["plotting"]["clusters"]
     planning_horizons = config["plotting"]["planning_horizon"]
     planning_horizons = [str(x) for x in planning_horizons if not str(x) == BAU_HORIZON]
     opts = config["plotting"]["sector_opts"]
 
-    # define scenario namings
-    scenarios = {"flexible": "WIDE", 
-                "retro_tes": "WIDE\n+ELEC", 
-                "flexible-moderate": "LIMIT", 
-                "rigid": "BAU\n+ELEC"}
+    # define scenario namings (only include scenarios with solved networks)
+    # when more scenarios are available, restore the full dict below
+    scenarios = {"rigit": "BAU\n+ELEC"}
+    # scenarios = {"flexible": "WIDE",
+    #             "retro_tes": "WIDE\n+ELEC",
+    #             "flexible-moderate": "LIMIT",
+    #             "rigid": "BAU\n+ELEC"}
 
     # initialize capital cost and p_nom_opt storing dictionary for different horizons
     cap_costs_dict = {}
@@ -358,7 +363,6 @@ if __name__ == "__main__":
     table_oper_df = define_table_df(scenarios)
 
     for planning_horizon in planning_horizons:
-        lineex = line_limits[planning_horizon]
         sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{opts}"
 
         # move to submodules/pypsa-eur
@@ -372,7 +376,7 @@ if __name__ == "__main__":
         p_nom_opt_df = pd.DataFrame()
         cost_df = pd.DataFrame()
         for scenario, nice_name in scenarios.items():
-            n = load_network(lineex, clusters, sector_opts, planning_horizon, scenario)
+            n = load_network(clusters, sector_opts, planning_horizon, scenario)
 
             if n is None:
                 # Skip further computation for this scenario if network is not loaded
@@ -437,13 +441,12 @@ if __name__ == "__main__":
     # add BAU
     BAU_horizon = BAU_HORIZON
     scenario = "BAU"
-    lineex = line_limits[BAU_horizon]
     sector_opts = f"Co2L{co2l_limits[BAU_horizon]}-{opts}"
     
     # move to submodules/pypsa-eur
     change_path_to_pypsa_eur()
 
-    n = load_network(lineex, clusters, sector_opts, BAU_horizon, scenario)
+    n = load_network(clusters, sector_opts, BAU_horizon, scenario)
 
     # move to base directory
     change_path_to_base()

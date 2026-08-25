@@ -111,33 +111,39 @@ if __name__ == "__main__":
     clusters = config["set_capacities"]["clusters"]
     planning_horizon = config["set_capacities"]["planning_horizon"]
     scenario = config["set_capacities"]["scenario"]
-    # get current sector_opts and ll from scenario config file from EEE_study folder
+    # get current sector_opts from scenario config (ll no longer in filename)
     current_scenario_config = get_config(scenario, planning_horizon)
     sector_opts = current_scenario_config["scenario"]["sector_opts"][0]
-    lineex = current_scenario_config["scenario"]["ll"][0]
+    opts = current_scenario_config["scenario"].get("opts", [""])[0]
 
     # network parameters of solved network
     previous_horizon = previous_horizons[planning_horizon]
     previous_scenario_config = get_config(scenario, previous_horizon)
     previous_sector_opts = previous_scenario_config["scenario"]["sector_opts"][0]
-    previous_lineex = previous_scenario_config["scenario"]["ll"][0]
+    previous_opts = previous_scenario_config["scenario"].get("opts", [""])[0]
 
     # move to pypsa-eur directory
     change_path_to_pypsa_eur()
 
     # load solved network
-    solved_network = load_network(previous_lineex, clusters, previous_sector_opts, previous_horizon, scenario)
-    
+    solved_network = load_network(
+        clusters, previous_sector_opts, previous_horizon, scenario, opts=previous_opts
+    )
+
     # load unsolved network for future
-    unsolved_network = load_unsolved_network(lineex, clusters, sector_opts, planning_horizon, scenario)
+    unsolved_network = load_unsolved_network(
+        clusters, sector_opts, planning_horizon, scenario, opts=opts
+    )
 
     # if both network is present, then set optimal capacities
     if not solved_network is None and not unsolved_network is None:
         updated_network = set_optimal_capacities(solved_network, unsolved_network)
-        print(f"Updated: {lineex}, {clusters}, {sector_opts}, {planning_horizon}, {scenario}")
+        print(f"Updated: {clusters}, {sector_opts}, {planning_horizon}, {scenario}")
         # save updated network
         try:
-            save_unsolved_network(updated_network, lineex, clusters, sector_opts, planning_horizon, scenario)
+            save_unsolved_network(
+                updated_network, clusters, sector_opts, planning_horizon, scenario, opts=opts
+            )
             success = True
         except Exception as e:
             print(f"Error: {e}")
