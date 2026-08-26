@@ -5,9 +5,11 @@
 import subprocess
 import argparse
 import logging
+import shutil
 import yaml
 import sys
 import os
+from pathlib import Path
 import pypsa
 sys.path.append("plots")
 from _helpers import change_path_to_pypsa_eur, change_path_to_base, load_network
@@ -115,17 +117,17 @@ def get_network_name(scenario, horizon):
 
 def copy_custom_data():
     # busmap path expected by pypsa-eur clustering.mode: custom_busmap
-    busmap_src = "data/busmaps/base_s_48_entsoegridkit.csv"
-    busmap_dst_dir = "submodules/pypsa-eur/data/busmaps"
-    subprocess.run(f"mkdir -p {busmap_dst_dir}", check=True, shell=True)
-    subprocess.run(f"cp {busmap_src} {busmap_dst_dir}/", check=True, shell=True)
+    # Use pathlib/shutil (not mkdir -p / cp) so this works on Windows cmd.
+    busmap_src = Path("data/busmaps/base_s_48_entsoegridkit.csv")
+    busmap_dst_dir = Path("submodules/pypsa-eur/data/busmaps")
+    busmap_dst_dir.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(busmap_src, busmap_dst_dir / busmap_src.name)
 
-    # custom powerplants goes into data/
-    subprocess.run(
-        "cp data/custom_powerplants.csv submodules/pypsa-eur/data/",
-        check=True,
-        shell=True,
-    )
+    plants_src = Path("data/custom_powerplants.csv")
+    plants_dst = Path("submodules/pypsa-eur/data")
+    plants_dst.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(plants_src, plants_dst / plants_src.name)
+
     logging.info(
         "Copied custom busmap to submodules/pypsa-eur/data/busmaps/ "
         "and custom_powerplants.csv to submodules/pypsa-eur/data/"
