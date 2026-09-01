@@ -19,6 +19,7 @@ logging.basicConfig(level=logging.INFO)
 
 # Config key for individual-heating heat-pump sink temperature (pypsa-eur)
 HEAT_PUMP_SINK_T_KEY = "heat_pump_sink_T_individual_heating"
+LEGACY_CONFIG_PATH = "configs/EEE_study/config.legacy_default.yaml"
 
 def get_scenario():
     parser = argparse.ArgumentParser(description="Running the scenario")
@@ -95,6 +96,13 @@ def get_config_path(scenario, horizon):
     return configpath + configname
 
 
+def get_snakemake_configfile_args(scenario, horizon):
+    """Return --configfile args: legacy overlay first, scenario config second."""
+    legacy_path = "../../" + LEGACY_CONFIG_PATH
+    scenario_path = "../../" + get_config_path(scenario, horizon)
+    return f"--configfile {legacy_path} --configfile {scenario_path}"
+
+
 def get_network_name(scenario, horizon):
     config_path = get_config_path(scenario, horizon)
     config_path = "../../" + config_path
@@ -135,10 +143,7 @@ def copy_custom_data():
 
 
 def prepare_prenetwork(scenario, horizon):
-    # get config path
-    config_path = get_config_path(scenario, horizon)
-    # config path relative to pypsa-eur folder
-    config_path = "../../" + config_path
+    configfile_args = get_snakemake_configfile_args(scenario, horizon)
 
     # change path to pypsa-eur
     change_path_to_pypsa_eur()
@@ -148,13 +153,17 @@ def prepare_prenetwork(scenario, horizon):
     # prepare sector network (replaces old prenetworks/elec_s_...)
     command = (
         f"snakemake -call resources/{scenario}/networks/{filename} "
-        f"--configfile {config_path} --force --rerun-incomplete"
+        f"{configfile_args} --force --rerun-incomplete"
     )
-    subprocess.run(command, shell=True)
-    logging.info(f"Prenetwork was prepared for {scenario} scenario in {horizon} horizon!")
-
-    # move to base directory
+    result = subprocess.run(command, shell=True)
     change_path_to_base()
+    if result.returncode != 0:
+        logging.error(
+            f"Prepare failed for {scenario} {horizon} (snakemake exit {result.returncode})"
+        )
+        return False
+    logging.info(f"Prenetwork was prepared for {scenario} scenario in {horizon} horizon!")
+    return True
 
 
 def set_capacities(scenario, horizon):
@@ -200,21 +209,22 @@ def improve_cops_after_renovation(scenario, horizon):
 
 
 def solve_network(scenario, horizon):
-    # get config path
-    config_path = get_config_path(scenario, horizon)
-    # config path relative to pypsa-eur folder
-    config_path = "../../" + config_path
+    configfile_args = get_snakemake_configfile_args(scenario, horizon)
 
     # change path to pypsa-eur
     change_path_to_pypsa_eur()
 
     # solve the network
-    command = f"snakemake -call solve_sector_networks --configfile {config_path}"
-    subprocess.run(command, shell=True)
-    logging.info(f"Network was solved for {scenario} scenario in {horizon} horizon!")
-
-    # move to base directory
+    command = f"snakemake -call solve_sector_networks {configfile_args}"
+    result = subprocess.run(command, shell=True)
     change_path_to_base()
+    if result.returncode != 0:
+        logging.error(
+            f"Solve failed for {scenario} {horizon} (snakemake exit {result.returncode})"
+        )
+        return False
+    logging.info(f"Network was solved for {scenario} scenario in {horizon} horizon!")
+    return True
 
 
 def get_heat_saved(scenario, horizon):
@@ -234,6 +244,11 @@ def get_heat_saved(scenario, horizon):
 
     # move to base directory
     change_path_to_base()
+
+    if n is None:
+        raise FileNotFoundError(
+            f"Solved network not found for {scenario} {horizon}; prepare/solve likely failed"
+        )
 
     # calculate saved heat ratio
     retrofitting = n.generators_t.p.filter(like="retrofitting").multiply(n.snapshot_weightings.objective, axis=0).sum().sum()
