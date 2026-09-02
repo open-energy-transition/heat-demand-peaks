@@ -106,7 +106,7 @@ sector:
   - nearshore
 
 industry:
-  reference_year: 2015
+  reference_year: 2023 # original 2015 cannot be used because of missing ammoniadata
   HVC_primary_fraction:
     2020: 1.0
     2025: 0.9

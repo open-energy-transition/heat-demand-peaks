@@ -100,7 +100,7 @@ def get_snakemake_configfile_args(scenario, horizon):
     """Return --configfile args: legacy overlay first, scenario config second."""
     legacy_path = "../../" + LEGACY_CONFIG_PATH
     scenario_path = "../../" + get_config_path(scenario, horizon)
-    return f"--configfile {legacy_path} --configfile {scenario_path}"
+    return f"--configfile {legacy_path} {scenario_path}"
 
 
 def get_network_name(scenario, horizon):
