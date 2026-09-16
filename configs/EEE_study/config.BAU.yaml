@@ -6,17 +6,11 @@ run:
   name: "BAU"
 
 scenario:
-  ll:
-  - v1.0
-  clusters:
-  - 48
   sector_opts:
   - Co2L0.725-dist2.0-T-H-B-I
-  planning_horizons:
-  - 2020
 
-enable:
-  custom_busmap: true
+planning_horizons:
+- 2020
 
 # reduce available transfer capacity to 50% to better account for grid internal bottlenecks due to low spatial resolution of 48 nodes
 lines:
@@ -27,6 +21,7 @@ electricity:
     Generator: [CCGT]
   powerplants_filter: DateOut >= 2024 and not Fueltype.isin(['Nuclear', 'Hard Coal', 'Lignite'])
   custom_powerplants: DateIn <= 2024 and DateOut >= 2024
+  transmission_limit: v1.0
 
 energy:
   energy_totals_year: 2013
@@ -104,9 +99,11 @@ costs:
     "decentral solar thermal": 30
 
 clustering:
+  mode: custom_busmap
+  cluster_network:
+    n_clusters: 48
   temporal:
-    resolution_elec: false
-    resolution_sector: 1H
+    averaging: 1h
 
 adjustments:
   sector: {"p_nom_max": {"solar rooftop": 1.095}}

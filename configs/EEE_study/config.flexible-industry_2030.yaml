@@ -6,18 +6,11 @@ run:
   name: "flexible"
 
 scenario:
-  ll:
-  - v1.15
-  clusters:
-  - 48
   sector_opts:
   - Co2L0.45-dist2.0-T-H-B-I
 
-  planning_horizons:
-  - 2030
-
-enable:
-  custom_busmap: true
+planning_horizons:
+- 2030
 
 # reduce available transfer capacity to 50% to better account for grid internal bottlenecks due to low spatial resolution of 48 nodes
 lines:
@@ -28,6 +21,7 @@ electricity:
     Generator: [solar, onwind, offwind-ac, offwind-dc]
   powerplants_filter: DateOut >= 2030 and not Fueltype.isin(['Nuclear', 'Hard Coal', 'Lignite'])
   custom_powerplants: DateIn <= 2030 and DateOut >= 2030
+  transmission_limit: v1.15
 
 energy:
   energy_totals_year: 2013
@@ -107,9 +101,11 @@ costs:
     "decentral solar thermal": 30
 
 clustering:
+  mode: custom_busmap
+  cluster_network:
+    n_clusters: 48
   temporal:
-    resolution_elec: false
-    resolution_sector: 1H
+    averaging: 1h
 
 adjustments:
   sector: {"p_nom_max": {"solar rooftop": 1.095}} # https://joint-research-centre.ec.europa.eu/jrc-news-and-updates/pv-rooftops-and-beyond-can-surpass-targets-while-preserving-environment-2024-02-14_en
