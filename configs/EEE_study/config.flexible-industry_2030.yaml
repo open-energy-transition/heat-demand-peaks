@@ -125,7 +125,12 @@ clustering:
     averaging: 1h
 
 adjustments:
-  sector: {"p_nom_max": {"solar rooftop": 1.095}} # https://joint-research-centre.ec.europa.eu/jrc-news-and-updates/pv-rooftops-and-beyond-can-surpass-targets-while-preserving-environment-2024-02-14_en
+  sector:
+    factor:
+      Generator:
+        solar rooftop:
+          p_nom_max: 1.095 # https://joint-research-centre.ec.europa.eu/jrc-news-and-updates/pv-rooftops-and-beyond-can-surpass-targets-while-preserving-environment-2024-02-14_en
+    absolute: false
 
 solving:
   options:

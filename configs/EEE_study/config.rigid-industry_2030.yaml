@@ -118,7 +118,12 @@ clustering:
     averaging: 1h
 
 adjustments:
-  sector: {"p_nom_max": {"solar rooftop": 1.095}}
+  sector:
+    factor:
+      Generator:
+        solar rooftop:
+          p_nom_max: 1.095
+    absolute: false
 
 solving:
   options:
