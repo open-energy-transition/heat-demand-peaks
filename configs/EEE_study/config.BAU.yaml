@@ -42,7 +42,9 @@ sector:
   district_heating:
     progress:
       2020: 0.0
-  residential_heat_dsm: false
+  residential_heat:
+    dsm:
+      enable: false
   cluster_heat_buses: false
   reduce_space_heat_exogenously: false
   retrofitting:
@@ -51,7 +53,8 @@ sector:
   tes: false #true
   boilers: true #true
   biomass_boiler: false
-  micro_chp: true
+  chp:
+    micro_chp: true
   regional_coal_demand: true
   use_fischer_tropsch_waste_heat: false
   use_haber_bosch_waste_heat: false
