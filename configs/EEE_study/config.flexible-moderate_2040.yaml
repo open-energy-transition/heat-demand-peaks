@@ -9,6 +9,8 @@ scenario:
   sector_opts:
   - Co2L0.1-dist2.0-T-H-B-I
 
+foresight: overnight
+
 planning_horizons:
 - 2040
 
@@ -16,7 +18,16 @@ planning_horizons:
 lines:
   s_max_pu: 0.5
 
+co2_budget:
+  relative: true
+  upper:
+    2020: 0.725
+    2030: 0.45
+    2040: 0.1
+    2050: 0.0
+
 electricity:
+  base_network: entsoegridkit
   extendable_carriers:
     Generator: [solar, onwind, offwind-ac, offwind-dc]
   powerplants_filter: DateOut >= 2040 and not Fueltype.isin(['Nuclear', 'Hard Coal', 'Lignite'])
