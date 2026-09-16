@@ -5,10 +5,6 @@
 run:
   name: "flexible-moderate"
 
-scenario:
-  sector_opts:
-  - Co2L0.0-dist2.0-T-H-B-I
-
 foresight: overnight
 
 planning_horizons:
@@ -96,6 +92,8 @@ sector:
     lignite: lignite
     nuclear: uranium
   keep_existing_capacities: True
+  electricity_distribution_grid: true
+  electricity_distribution_grid_cost_factor: 2.0
   heat_pump_sink_T_individual_heating: 55.0
 
 costs:

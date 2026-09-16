@@ -5,10 +5,6 @@
 run:
   name: "rigid"
 
-scenario:
-  sector_opts:
-  - Co2L0.1-dist2.0-T-H-B-I
-
 foresight: overnight
 
 planning_horizons:
@@ -90,6 +86,8 @@ sector:
     lignite: lignite
     nuclear: uranium
   keep_existing_capacities: True
+  electricity_distribution_grid: true
+  electricity_distribution_grid_cost_factor: 2.0
 
 costs:
   year: 2035
