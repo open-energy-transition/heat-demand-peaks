@@ -1,0 +1,13 @@
+planning_horizon,technology,parameter,value,unit,source,further description
+all,decentral water tank storage,standing losses,1.3793,%/hour,EEE tes_tau decentral=3,missing in v0.9.0
+all,central water tank storage,standing losses,0.0231,%/hour,EEE tes_tau central=180,missing in v0.9.0
+all,decentral water tank storage,energy to power ratio,0.15,h,technology-data v0.15.0,missing in v0.9.0
+all,central water tank storage,energy to power ratio,60.3448,h,technology-data v0.15.0,missing in v0.9.0
+all,decentral water tank charger,efficiency,0.8367,per unit,v0.9.0 water tank charger,v0.9.0 has only generic name
+all,decentral water tank discharger,efficiency,0.8367,per unit,v0.9.0 water tank discharger,v0.9.0 has only generic name
+all,central water tank charger,efficiency,0.8367,per unit,v0.9.0 water tank charger,v0.9.0 has only generic name
+all,central water tank discharger,efficiency,0.8367,per unit,v0.9.0 water tank discharger,v0.9.0 has only generic name
+all,central water pit storage,standing losses,0.0231,%/hour,EEE tes_tau central=180,tech missing in v0.9.0
+all,central water pit storage,energy to power ratio,150.0,h,technology-data v0.15.0,tech missing in v0.9.0
+all,central water pit charger,efficiency,1.0,per unit,technology-data v0.15.0,tech missing in v0.9.0
+all,central water pit discharger,efficiency,1.0,per unit,technology-data v0.15.0,tech missing in v0.9.0

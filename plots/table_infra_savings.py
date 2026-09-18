@@ -13,7 +13,7 @@ import warnings
 warnings.filterwarnings("ignore")
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                      change_path_to_pypsa_eur, change_path_to_base, \
-                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON, LAND_FOR_WIND, LAND_FOR_SOLAR
+                     BAU_HORIZON, LAND_FOR_WIND, LAND_FOR_SOLAR
                      
 from plot_total_costs import compute_costs
 
@@ -31,12 +31,9 @@ if __name__ == "__main__":
     # move to submodules/pypsa-eur
     change_path_to_pypsa_eur()
     # network parameters
-    co2l_limits = CO2L_LIMITS
-    line_limits = LINE_LIMITS
     clusters = config["plotting"]["clusters"]
     planning_horizons = config["plotting"]["planning_horizon"]
     planning_horizons = [str(x) for x in planning_horizons if not str(x) == BAU_HORIZON]
-    opts = config["plotting"]["sector_opts"]
 
     # define scenario namings
     scenarios = {"flexible": "Widespread Renovation",
@@ -68,15 +65,12 @@ if __name__ == "__main__":
     land_usage.columns = pd.MultiIndex.from_tuples(land_usage.columns, names=['horizon','Land usage [km2]'])
 
     for planning_horizon in planning_horizons:
-        lineex = line_limits[planning_horizon]
-        sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{opts}"
-
         # benchmark network
-        b = load_network(lineex, clusters, sector_opts, planning_horizon, "rigid")
+        b = load_network("rigid", planning_horizon)
         b_costs = compute_costs(b, "rigid", "Capital")
         for scenario, nice_name in scenarios.items():
             # load networks
-            n = load_network(lineex, clusters, sector_opts, planning_horizon, scenario)
+            n = load_network(scenario, planning_horizon)
 
             if n is None:
                 # Skip further computation for this scenario if network is not loaded

@@ -5,28 +5,30 @@
 run:
   name: "rigid"
 
-scenario:
-  ll:
-  - v1.3
-  clusters:
-  - 48
-  sector_opts:
-  - Co2L0.1-dist2.0-T-H-B-I
-  planning_horizons:
-  - 2040
+foresight: overnight
 
-enable:
-  custom_busmap: true
+planning_horizons:
+- 2040
 
 # reduce available transfer capacity to 50% to better account for grid internal bottlenecks due to low spatial resolution of 48 nodes
 lines:
   s_max_pu: 0.5
 
+co2_budget:
+  relative: true
+  upper:
+    2020: 0.725
+    2030: 0.45
+    2040: 0.1
+    2050: 0.0
+
 electricity:
+  base_network: entsoegridkit
   extendable_carriers:
     Generator: [solar, onwind, offwind-ac, offwind-dc]
   powerplants_filter: DateOut >= 2040 and not Fueltype.isin(['Nuclear', 'Hard Coal', 'Lignite'])
   custom_powerplants: DateIn <= 2040 and DateOut >= 2040
+  transmission_limit: v1.3
 
 energy:
   energy_totals_year: 2013
@@ -39,15 +41,14 @@ pypsa_eur:
   - solar
   - ror
 
-biomass:
-  year: 2040
-
 sector:
   agriculture: false
   district_heating:
     progress:
       2040: 0.6
-  residential_heat_dsm: false
+  residential_heat:
+    dsm:
+      enable: false
   cluster_heat_buses: false
   reduce_space_heat_exogenously: false
   retrofitting:
@@ -56,7 +57,8 @@ sector:
   tes: false #true
   boilers: false #true
   biomass_boiler: false
-  micro_chp: true
+  chp:
+    micro_chp: true
   regional_coal_demand: true
   use_fischer_tropsch_waste_heat: false
   use_haber_bosch_waste_heat: false
@@ -81,6 +83,21 @@ sector:
     lignite: lignite
     nuclear: uranium
   keep_existing_capacities: True
+  electricity_distribution_grid: true
+  electricity_distribution_grid_cost_factor: 2.0
+
+biomass:
+  year: 2040
+  share_unsustainable_use_retained:
+    2020: 0
+    2030: 0
+    2040: 0
+    2050: 0
+  share_sustainable_potential_available:
+    2020: 1
+    2030: 1
+    2040: 1
+    2050: 1.2
 
 costs:
   year: 2035
@@ -104,12 +121,19 @@ costs:
     "decentral solar thermal": 30
 
 clustering:
+  mode: custom_busmap
+  cluster_network:
+    n_clusters: 48
   temporal:
-    resolution_elec: false
-    resolution_sector: 1H
+    averaging: 1h
 
 adjustments:
-  sector: {"p_nom_max": {"solar rooftop": 1.134}} # https://www.epj-pv.org/articles/epjpv/full_html/2024/01/pv230071/pv230071.html
+  sector:
+    factor:
+      Generator:
+        solar rooftop:
+          p_nom_max: 1.134 # https://www.epj-pv.org/articles/epjpv/full_html/2024/01/pv230071/pv230071.html
+    absolute: false
 
 solving:
   options:

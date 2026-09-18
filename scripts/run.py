@@ -5,12 +5,19 @@
 import subprocess
 import argparse
 import logging
-import yaml
 import sys
 import os
-import pypsa
 sys.path.append("plots")
-from _helpers import change_path_to_pypsa_eur, change_path_to_base, load_network
+from _helpers import (
+    change_path_to_pypsa_eur,
+    change_path_to_base,
+    load_network,
+    get_config_path,
+    get_n_clusters,
+    compose_target,
+    solve_target,
+    BASE_PATH,
+)
 
 # Set up logging configuration
 logging.basicConfig(level=logging.INFO)
@@ -69,143 +76,65 @@ def get_horizon_list(start_horizon):
         return []
 
 
-def get_clusters(scenario, horizon):
-    config_path = get_config_path(scenario, horizon)
-    # read config file
-    with open(config_path, 'r') as file:
-        config = yaml.safe_load(file)
-    return config["scenario"]["clusters"][0]
-
-
-def get_config_path(scenario, horizon):
-    configname_dict = {"flexible": "flexible-industry",
-                       "flexible-moderate": "flexible-moderate",
-                       "retro_tes": "retro_tes-industry",
-                       "rigid": "rigid-industry"}
-    if scenario in configname_dict.keys():
-        configname = f"config.{configname_dict[scenario]}_{horizon}.yaml"
-    elif scenario == "BAU":
-        configname = f"config.BAU.yaml"
-    configpath = "configs/EEE_study/"
-    return configpath + configname
-
-
-def get_network_name(scenario, horizon):
-    config_path = get_config_path(scenario, horizon)
-    config_path = "../../" + config_path
-    # read config file
-    with open(config_path, 'r') as file:
-        config = yaml.safe_load(file)
-    # read config.default.yaml file
-    with open("config/config.default.yaml", 'r') as file:
-        config_default = yaml.safe_load(file)
-    # scenario params
-    params = config["scenario"]
-    params_default = config_default["scenario"]
-    ll, clusters, sector_opts, planning_horizons = params['ll'][0], params['clusters'][0], params['sector_opts'][0], params['planning_horizons'][0]
-    simpl, opts = params_default['simpl'][0], params_default['opts'][0]
-    filename = f"elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}_{planning_horizons}.nc"
-    return filename
-
-
-def copy_custom_data():
-    # define source and destination directories
-    source_dir = "data/"
-    destination_dir = "submodules/pypsa-eur/data/"
-    # files to copy
-    files_to_copy = ["custom_busmap_elec_s_48.csv", "custom_powerplants.csv"]
-    for file in files_to_copy:
-        subprocess.run(f"cp data/{file} submodules/pypsa-eur/data", check=True, shell=True)
+def copy_custom_data(base_network: str = "entsoegridkit"):
+    # busmap: new location + name matching clustering.mode: custom_busmap
+    # electricity.base_network: entsoegridkit in your EEE configs
+    os.makedirs("submodules/pypsa-eur/data/busmaps", exist_ok=True)
+    subprocess.run(
+        f"cp data/busmaps/simplified_48_{base_network}.csv "
+        "submodules/pypsa-eur/data/busmaps/",
+        shell=True, check=True,
+    )
+    subprocess.run(
+        "cp data/custom_powerplants.csv submodules/pypsa-eur/data/",
+        shell=True, check=True,
+    )
+    subprocess.run(
+        "cp data/custom_costs.csv submodules/pypsa-eur/data/",
+        shell=True, check=True,
+    )
     # log the success
-    logging.info(f"Copied custom data {files_to_copy} from data/ folder to submodules/pypsa-eur/data/ folder")
+    logging.info(f"Copied custom data from data/ folder to submodules/pypsa-eur/data/ folder")
 
 
-def increase_biomass_potential(factor=1.2):
+def get_configfiles(scenario, horizon):
+    """Legacy defaults first; scenario config overrides (incl. Co2L as co2_budget.upper)."""
+    legacy = os.path.relpath(
+        os.path.join(BASE_PATH, "configs", "EEE_study", "config.legacy_default.yaml"),
+        os.getcwd(),
+    )
+    scenario_cfg = os.path.relpath(get_config_path(scenario, horizon), os.getcwd())
+    return f"{legacy} {scenario_cfg}"
+
+
+def compose_network(scenario, horizon):
     # change path to pypsa-eur
     change_path_to_pypsa_eur()
 
-    # Define the file path
-    file_path = 'scripts/prepare_sector_network.py'
+    # compose target
+    target = compose_target(scenario, horizon)
 
-    # Define the line to be added
-    new_line = f'    biomass_potentials = {factor} * biomass_potentials\n'
-
-    # Read the contents of the file
-    with open(file_path, 'r') as file:
-        lines = file.readlines()
-
-    # Find the index of the line containing the specified text
-    index = next((i for i, line in enumerate(lines) if 'biomass_potentials = pd.read_csv(snakemake.input.biomass_potentials, index_col=0)' in line), None)
-
-    # Insert the new line after the specified line
-    if index is not None:
-        lines.insert(index + 1, new_line)
-
-    # Write the modified contents back to the file
-    with open(file_path, 'w') as file:
-        file.writelines(lines)
-
-    # log changes
-    logging.info(f"Increase biomass potentials by {factor} factor")
+    # compose network (legacy defaults, then scenario overrides)
+    command = (
+        f"snakemake -call {target} "
+        f"--configfile {get_configfiles(scenario, horizon)} "
+        f"--force --rerun-incomplete"
+    )
+    result = subprocess.run(command, shell=True)
 
     # move to base directory
     change_path_to_base()
 
-
-def revert_biomass_potential():
-    # Change path to pypsa-eur
-    change_path_to_pypsa_eur()
-
-    # Define the file path
-    file_path = 'scripts/prepare_sector_network.py'
-
-    # Read the contents of the file
-    with open(file_path, 'r') as file:
-        lines = file.readlines()
-
-    # Find the index of the line containing the specified text
-    index = next((i for i, line in enumerate(lines) if 'biomass_potentials = 1.2 * biomass_potentials' in line), None)
-
-    # Remove the line if found
-    if index is not None:
-        del lines[index]
-
-    # Write the modified contents back to the file
-    with open(file_path, 'w') as file:
-        file.writelines(lines)
-
-    # log changes
-    logging.info(f"Revert biomass potentials back")
-
-    # Move to base directory
-    change_path_to_base()
-
-
-def prepare_prenetwork(scenario, horizon):
-    # get config path
-    config_path = get_config_path(scenario, horizon)
-    # config path relative to pypsa-eur folder
-    config_path = "../../" + config_path
-
-    # change path to pypsa-eur
-    change_path_to_pypsa_eur()
-
-    # get .nc filename
-    filename = get_network_name(scenario, horizon)
-    # run prenetwork
-    command = f"snakemake -call results/{scenario}/prenetworks/{filename} --configfile {config_path} --force --rerun-incomplete"
-    subprocess.run(command, shell=True)
-    logging.info(f"Prenetwork was prepared for {scenario} scenario in {horizon} horizon!")
-
-    # move to base directory
-    change_path_to_base()
+    if result.returncode != 0:
+        raise RuntimeError(f"Compose failed for {scenario} {horizon}")
+    logging.info(f"Composed network for {scenario} {horizon}")
 
 
 def set_capacities(scenario, horizon):
     error = []
     try:
         # get number of clusters
-        clusters = get_clusters(scenario, horizon)
+        clusters = get_n_clusters(scenario, horizon)
         command = f"snakemake -call scripts/logs/set_capacities_{clusters}_{horizon}_{scenario}.txt --forceall"
         subprocess.run(command, shell=True, check=True)
         logging.info(f"Capacities are set to {scenario} scenario in {horizon} horizon!")
@@ -219,7 +148,7 @@ def moderate_retrofitting(scenario, horizon):
     error = []
     try:
         # get number of clusters
-        clusters = get_clusters(scenario, horizon)
+        clusters = get_n_clusters(scenario, horizon)
         command = f"snakemake -call scripts/logs/set_moderate_retrofitting_{clusters}_{horizon}.txt --forceall"
         subprocess.run(command, shell=True, check=True)
         logging.info(f"Moderate retrofitting capacities are set to {scenario} scenario in {horizon} horizon!")
@@ -233,7 +162,7 @@ def improve_cops_after_renovation(scenario, horizon):
     error = []
     try:
         # get number of clusters
-        clusters = get_clusters(scenario, horizon)
+        clusters = get_n_clusters(scenario, horizon)
         command = f"snakemake -call scripts/logs/improve_cops_after_renovation_{clusters}_{horizon}_{scenario}.txt --forceall"
         subprocess.run(command, shell=True, check=True)
         logging.info(f"Retrofitting capacities are fixed to {scenario} scenario in {horizon} horizon!")
@@ -244,44 +173,50 @@ def improve_cops_after_renovation(scenario, horizon):
 
 
 def solve_network(scenario, horizon):
-    # get config path
-    config_path = get_config_path(scenario, horizon)
-    # config path relative to pypsa-eur folder
-    config_path = "../../" + config_path
-
     # change path to pypsa-eur
     change_path_to_pypsa_eur()
 
-    # solve the network
-    command = f"snakemake -call solve_sector_networks --configfile {config_path}"
-    subprocess.run(command, shell=True)
-    logging.info(f"Network was solved for {scenario} scenario in {horizon} horizon!")
+    # solve target
+    target = solve_target(scenario, horizon)
+
+    # solve the network (legacy defaults, then scenario overrides)
+    command = (
+        f"snakemake -call {target} "
+        f"--configfile {get_configfiles(scenario, horizon)} "
+        f"--force --rerun-incomplete"
+    )
+    result = subprocess.run(command, shell=True)
 
     # move to base directory
     change_path_to_base()
+
+    if result.returncode != 0:
+        raise RuntimeError(f"Solve failed for {scenario} {horizon}")
+    logging.info(f"Solved network for {scenario} {horizon}")
 
 
 def get_heat_saved(scenario, horizon):
     # change path to pypsa-eur
     change_path_to_pypsa_eur()
 
-    # get .nc filename
-    filename = get_network_name(scenario, horizon)
-
-    # load solved network
-    n = None
-    try:
-        n = pypsa.Network(os.path.join(f"results/{scenario}/postnetworks", filename))
-        logging.info(f"Loading {filename} for {scenario}")
-    except FileNotFoundError as e:
-        print(f"Error: {e}")
+    # load the network
+    n = load_network(scenario, horizon)
 
     # move to base directory
     change_path_to_base()
 
+    if n is None:
+        raise FileNotFoundError(f"No solved network for {scenario} {horizon}")
+
     # calculate saved heat ratio
-    retrofitting = n.generators_t.p.filter(like="retrofitting").multiply(n.snapshot_weightings.objective, axis=0).sum().sum()
-    heat_demand = n.loads_t.p_set.filter(like="heat").multiply(n.snapshot_weightings.objective, axis=0).sum().sum()
+    retrofitting = (
+        n.generators_t.p.filter(like="retrofitting")
+        .multiply(n.snapshot_weightings.objective, axis=0).sum().sum()
+    )
+    heat_demand = (
+        n.loads_t.p_set.filter(like="heat")
+        .multiply(n.snapshot_weightings.objective, axis=0).sum().sum()
+    )
     heat_saved_ratio = retrofitting / heat_demand
     return heat_saved_ratio
 
@@ -314,22 +249,19 @@ def delete_config_yaml():
     
 
 def update_sink_T(scenario, horizon, sink_T):
-    # change path to pypsa-eur
-    change_path_to_pypsa_eur()
-
-    # Define the file path
-    config_path = get_config_path(scenario, horizon)
-    config_path = "../../" + config_path
+    # Define file path
+    key = "heat_pump_sink_T_individual_heating"
+    config_path = get_config_path(scenario, horizon)  # absolute path
 
     # Define the line to be set
-    new_line = f'  heat_pump_sink_T: {sink_T:.1f}\n'
+    new_line = f'  {key}: {sink_T:.1f}\n'
 
     # Read the contents of the file
     with open(config_path, 'r') as file:
         lines = file.readlines()
 
     # Find the index of the line containing the specified text
-    index = next((i for i, line in enumerate(lines) if '  heat_pump_sink_T:' in line), None)
+    index = next((i for i, line in enumerate(lines) if f'  {key}:' in line), None)
 
     # Insert the new line after the specified line
     if index is not None:
@@ -340,26 +272,20 @@ def update_sink_T(scenario, horizon, sink_T):
         file.writelines(lines)
 
     # log changes
-    logging.info(f"Changed heat_pump_sink_T to {sink_T}")
-
-    # move to base directory
-    change_path_to_base()
+    logging.info(f"Changed {key} to {sink_T}")
 
 
 def read_sink_T(scenario, horizon):
-    # change path to pypsa-eur
-    change_path_to_pypsa_eur()
-
-    # Define the file path
-    config_path = get_config_path(scenario, horizon)
-    config_path = "../../" + config_path
+    # Define file path
+    key = "heat_pump_sink_T_individual_heating"
+    config_path = get_config_path(scenario, horizon)  # absolute path
 
     # Read the contents of the file
     with open(config_path, 'r') as file:
         lines = file.readlines()
 
     # Find the index of the line containing the specified text
-    index = next((i for i, line in enumerate(lines) if '  heat_pump_sink_T:' in line), None)
+    index = next((i for i, line in enumerate(lines) if f'  {key}:' in line), None)
 
     # Insert the new line after the specified line
     if index is not None:
@@ -367,29 +293,20 @@ def read_sink_T(scenario, horizon):
         line = lines[index]
         
         # Split the line by the specified text and take the part after it
-        value_str = line.split('  heat_pump_sink_T:')[-1].strip()
+        value_str = line.split(f'  {key}:')[-1].strip()
 
         # Convert the extracted part to float
         value = float(value_str)
         
-        logging.info(f"The extracted heat_pump_sink_T value is: {value:.1f}")
+        logging.info(f"The extracted {key} value is: {value:.1f}")
     else:
-        logging.info("The specified heat_pump_sink_T was not found in any line.")
-
-    # move to base directory
-    change_path_to_base()
+        logging.info(f"The specified {key} was not found in any line.")
 
     return value
 
 
 def run_workflow(scenario, horizon, improved_cop=False):
-    # remove biomass potential increase if present
-    revert_biomass_potential()
-    # increase biomass potential for 2050 by 1.2
-    if horizon == 2050:
-        increase_biomass_potential()
-    # run prenetwork
-    prepare_prenetwork(scenario=scenario, horizon=horizon)
+    compose_network(scenario=scenario, horizon=horizon)
 
     # initialize error_capacities and error_moderate
     error_capacities, error_moderate, error_improve_cop = [], [], []
@@ -408,18 +325,12 @@ def run_workflow(scenario, horizon, improved_cop=False):
 
     # break if error happens
     if error_capacities or error_moderate or error_improve_cop:
-        if horizon == 2050:
-            revert_biomass_potential()
-        return None # return None is error happens
+        return None
 
     # solve the network
     solve_network(scenario, horizon)
 
-    # revert biomass potential
-    if horizon == 2050:
-        revert_biomass_potential()
-
-    return True # return True if success
+    return True
 
 
 if __name__ == "__main__":
@@ -476,8 +387,5 @@ if __name__ == "__main__":
 
     # run BAU scenario
     if scenario_BAU:
-        # remove biomass potential increase if present
-        revert_biomass_potential()
-
-        # solve the network
+        compose_network("BAU", 2020)
         solve_network("BAU", 2020)
