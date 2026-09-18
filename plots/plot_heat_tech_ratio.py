@@ -13,7 +13,7 @@ warnings.filterwarnings("ignore")
 import colors as c
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                      change_path_to_pypsa_eur, change_path_to_base, \
-                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON, PATH_PLOTS, replace_multiindex_values
+                     BAU_HORIZON, PATH_PLOTS, replace_multiindex_values
 
 
 def get_heat_capacities(n, nice_name):

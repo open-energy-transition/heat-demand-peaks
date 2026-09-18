@@ -13,7 +13,7 @@ import warnings
 warnings.filterwarnings("ignore")
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                      change_path_to_pypsa_eur, change_path_to_base, \
-                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON, LAND_FOR_WIND, LAND_FOR_SOLAR
+                     BAU_HORIZON, LAND_FOR_WIND, LAND_FOR_SOLAR
                      
 from plot_total_costs import compute_costs
 

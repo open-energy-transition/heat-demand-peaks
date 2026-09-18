@@ -24,16 +24,6 @@ CONFIG_NAME = {
     "BAU": "BAU",
 }
 
-# Co2L limits
-CO2L_LIMITS = {"2020": "0.725",
-               "2030": "0.45", 
-               "2040": "0.1", 
-               "2050": "0.0"}
-# Line limits
-LINE_LIMITS = {"2020": "v1.0",
-               "2030": "v1.15",
-               "2040": "v1.3",
-               "2050": "v1.5"}
 # BAU year
 BAU_HORIZON = "2020"
 

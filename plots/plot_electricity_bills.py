@@ -11,7 +11,7 @@ import warnings
 warnings.filterwarnings("ignore")
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                      change_path_to_pypsa_eur, change_path_to_base, \
-                     CO2L_LIMITS, LINE_LIMITS, BAU_HORIZON, HISTORIC_PRICES
+                     BAU_HORIZON, HISTORIC_PRICES
 
 
 def get_households():
