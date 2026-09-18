@@ -16,6 +16,7 @@ from _helpers import (
     get_n_clusters,
     compose_target,
     solve_target,
+    BASE_PATH,
 )
 
 # Set up logging configuration
@@ -92,20 +93,27 @@ def copy_custom_data(base_network: str = "entsoegridkit"):
     logging.info(f"Copied custom data from data/ folder to submodules/pypsa-eur/data/ folder")
 
 
+def get_configfiles(scenario, horizon):
+    """Legacy defaults first; scenario config overrides (incl. Co2L as co2_budget.upper)."""
+    legacy = os.path.relpath(
+        os.path.join(BASE_PATH, "configs", "EEE_study", "config.legacy_default.yaml"),
+        os.getcwd(),
+    )
+    scenario_cfg = os.path.relpath(get_config_path(scenario, horizon), os.getcwd())
+    return f"{legacy} {scenario_cfg}"
+
+
 def compose_network(scenario, horizon):
     # change path to pypsa-eur
     change_path_to_pypsa_eur()
 
-    # get config path
-    config_path = os.path.relpath(get_config_path(scenario, horizon), os.getcwd())
-
     # compose target
     target = compose_target(scenario, horizon)
 
-    # compose network
+    # compose network (legacy defaults, then scenario overrides)
     command = (
         f"snakemake -call {target} "
-        f"--configfile {config_path} "
+        f"--configfile {get_configfiles(scenario, horizon)} "
         f"--force --rerun-incomplete"
     )
     result = subprocess.run(command, shell=True)
@@ -164,16 +172,13 @@ def solve_network(scenario, horizon):
     # change path to pypsa-eur
     change_path_to_pypsa_eur()
 
-    # get config path
-    config_path = os.path.relpath(get_config_path(scenario, horizon), os.getcwd())
-
     # solve target
     target = solve_target(scenario, horizon)
 
-    # solve the network
+    # solve the network (legacy defaults, then scenario overrides)
     command = (
         f"snakemake -call {target} "
-        f"--configfile {config_path} "
+        f"--configfile {get_configfiles(scenario, horizon)} "
         f"--force --rerun-incomplete"
     )
     result = subprocess.run(command, shell=True)
