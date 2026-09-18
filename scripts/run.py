@@ -89,6 +89,10 @@ def copy_custom_data(base_network: str = "entsoegridkit"):
         "cp data/custom_powerplants.csv submodules/pypsa-eur/data/",
         shell=True, check=True,
     )
+    subprocess.run(
+        "cp data/custom_costs.csv submodules/pypsa-eur/data/",
+        shell=True, check=True,
+    )
     # log the success
     logging.info(f"Copied custom data from data/ folder to submodules/pypsa-eur/data/ folder")
 

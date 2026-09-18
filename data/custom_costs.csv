@@ -1,0 +1,4 @@
+planning_horizon,technology,parameter,value,unit,source,further description
+all,decentral water tank storage,standing losses,1.3793,%/hour,EEE tes_tau decentral=3,100*(1-exp(-1/24/3))
+all,central water tank storage,standing losses,0.0231,%/hour,EEE tes_tau central=180,100*(1-exp(-1/24/180))
+all,central water pit storage,standing losses,0.0231,%/hour,EEE tes_tau central=180,100*(1-exp(-1/24/180))
