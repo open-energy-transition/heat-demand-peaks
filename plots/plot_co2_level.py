@@ -315,10 +315,7 @@ if __name__ == "__main__":
 
 
     # network parameters
-    co2l_limits = CO2L_LIMITS
-    line_limits = LINE_LIMITS
     clusters = config["plotting"]["clusters"]
-    opts = config["plotting"]["sector_opts"]
     planning_horizons = config["plotting"]["planning_horizon"]
     planning_horizons = [str(x) for x in planning_horizons if not str(x) == BAU_HORIZON]
 
@@ -336,16 +333,13 @@ if __name__ == "__main__":
     table_emissions_df = define_table_df(scenarios)
 
     for planning_horizon in planning_horizons:
-        lineex = line_limits[planning_horizon]
-        sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{opts}"
-
         # move to submodules/pypsa-eur
         change_path_to_pypsa_eur()
     
         # load networks
         co2_df = pd.DataFrame()
         for scenario, nice_name in scenarios.items():
-            n = load_network(lineex, clusters, sector_opts, planning_horizon, scenario)
+            n = load_network(scenario, planning_horizon)
 
             if n is None:
                 # Skip further computation for this scenario if network is not loaded
@@ -370,13 +364,11 @@ if __name__ == "__main__":
     # Add BAU scenario
     BAU_horizon = BAU_HORIZON
     scenario = "BAU"
-    lineex = line_limits[BAU_horizon]
-    sector_opts = f"Co2L{co2l_limits[BAU_horizon]}-{opts}"
 
     # move to submodules/pypsa-eur
     change_path_to_pypsa_eur()
 
-    n = load_network(lineex, clusters, sector_opts, BAU_horizon, scenario)
+    n = load_network(scenario, BAU_horizon)
 
     # move to base directory
     change_path_to_base()

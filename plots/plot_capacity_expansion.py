@@ -149,12 +149,9 @@ if __name__ == "__main__":
 
 
     # network parameters
-    co2l_limits = CO2L_LIMITS
-    line_limits = LINE_LIMITS
     clusters = config["plotting"]["clusters"]
     planning_horizons = config["plotting"]["planning_horizon"]
     planning_horizons = [str(x) for x in planning_horizons if not str(x) == BAU_HORIZON]
-    opts = config["plotting"]["sector_opts"]
 
     # define scenario namings
     scenarios = {"flexible": "WIDE",
@@ -166,9 +163,6 @@ if __name__ == "__main__":
     table_cap_df = define_table_df(scenarios)
 
     for planning_horizon in planning_horizons:
-        lineex = line_limits[planning_horizon]
-        sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{opts}"
-
         # move to submodules/pypsa-eur
         change_path_to_pypsa_eur()
     
@@ -177,7 +171,7 @@ if __name__ == "__main__":
         capacities_df = pd.DataFrame()
         p_nom_exp_df = pd.DataFrame()
         for scenario, nice_name in scenarios.items():
-            n = load_network(lineex, clusters, sector_opts, planning_horizon, scenario)
+            n = load_network(scenario, planning_horizon)
 
             if n is None:
                 # Skip further computation for this scenario if network is not loaded
