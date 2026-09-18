@@ -116,6 +116,7 @@ industry:
     2050: 1.0
 
 costs:
+  custom_cost_fn: data/custom_costs.csv
   marginal_cost:
     solar: 0.01
     onwind: 0.015
