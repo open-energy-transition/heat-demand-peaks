@@ -10,7 +10,7 @@ import warnings
 warnings.filterwarnings("ignore")
 from plots._helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                     change_path_to_pypsa_eur, change_path_to_base, load_unsolved_network, \
-                    save_unsolved_network, get_config
+                    save_unsolved_network
 
 
 def improve_cops_after_renovation(n_solved, n_unsolved):
@@ -40,33 +40,26 @@ if __name__ == "__main__":
     clusters = config["improve_cops_after_renovation"]["clusters"]
     planning_horizon = config["improve_cops_after_renovation"]["planning_horizon"]
     scenario = config["improve_cops_after_renovation"]["scenario"]
-    # get sector_opts and ll from scenario config file from EEE_study folder
-    scenario_config = get_config(scenario, planning_horizon)
-    sector_opts = scenario_config["scenario"]["sector_opts"][0]
-    lineex = scenario_config["scenario"]["ll"][0]
 
     # move to pypsa-eur directory
     change_path_to_pypsa_eur()
 
     # load solved network of scenario
-    n_solved = load_network(lineex, clusters, sector_opts, planning_horizon, scenario)
+    n_solved = load_network(scenario, planning_horizon)
 
     # load unsolved network of scenario
-    n_unsolved = load_unsolved_network(lineex, clusters, sector_opts, planning_horizon, scenario)
+    n_unsolved = load_unsolved_network(scenario, planning_horizon)
 
-    if not n_solved is None and not n_unsolved is None:
-        # update the network by setting p_nom_opt of previous run (when cop is defined) as p_nom for the next run
-        n_updated = improve_cops_after_renovation(n_solved, n_unsolved)
+    if n_solved is None or n_unsolved is None:
+        change_path_to_base()
+        raise FileNotFoundError(
+            f"Missing networks for improve_cops: {scenario} {planning_horizon}"
+        )
 
-        # save updated network
-        try:
-            save_unsolved_network(n_updated, lineex, clusters, sector_opts, planning_horizon, scenario)
-            success = True
-        except Exception as e:
-            print(f"Error: {e}")
-            raise FileNotFoundError("File was not saved")
-    else:
-        raise FileNotFoundError("Missing input network")
+    # improve cops after renovation
+    n_updated = improve_cops_after_renovation(n_solved, n_unsolved)
+    save_unsolved_network(n_updated, scenario, planning_horizon)
+    success = True
 
     # move to base directory
     change_path_to_base()
@@ -75,4 +68,5 @@ if __name__ == "__main__":
     with open(snakemake.output.logs, 'w') as f:
         f.write(f"""Planning horizon: {planning_horizon} 
                 \nClusters: {clusters} 
+                \nScenario: {scenario}
                 \nSuccess: {success}""")

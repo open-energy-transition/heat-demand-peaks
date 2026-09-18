@@ -15,6 +15,15 @@ BASE_PATH = os.path.abspath(os.path.join(__file__ ,"../.."))
 # relative path to folder where to store plots
 PATH_PLOTS = "plots/results/"
 
+# Config names
+CONFIG_NAME = {
+    "flexible": "flexible-industry",
+    "flexible-moderate": "flexible-moderate",
+    "retro_tes": "retro_tes-industry",
+    "rigid": "rigid-industry",
+    "BAU": "BAU",
+}
+
 # Co2L limits
 CO2L_LIMITS = {"2020": "0.725",
                "2030": "0.45", 
@@ -350,35 +359,46 @@ def update_config_from_wildcards(config, w):
     return config
 
 
-def load_network(lineex, clusters, sector_opts, planning_horizon, scenario):
-    FILE = f"elec_s_{clusters}_l{lineex}__{sector_opts}_{planning_horizon}.nc"
-    DIR = f"results/{scenario}/postnetworks"
+def composed_network_path(scenario, horizon):
+    # cwd = pypsa-eur
+    run = get_run_name(scenario, horizon)
+    return f"resources/{run}/networks/composed_{horizon}.nc"
+
+
+def solved_network_path(scenario, horizon):
+    run = get_run_name(scenario, horizon)
+    return f"results/{run}/networks/solved_{horizon}.nc"
+
+
+def load_network(scenario, horizon):
+    """Load solved network."""
+    path = solved_network_path(scenario, horizon)
     try:
-        n = pypsa.Network(os.path.join(DIR, FILE))
-        logging.info(f"Loading {FILE} in {DIR}")
+        n = pypsa.Network(path)
+        logging.info(f"Loading {path}")
+        return n
     except FileNotFoundError as e:
-        print(f"Error: {e}")
+        logging.error(f"Error: {e}")
         return None
-    return n
 
 
-def load_unsolved_network(lineex, clusters, sector_opts, planning_horizon, scenario):
-    FILE = f"elec_s_{clusters}_l{lineex}__{sector_opts}_{planning_horizon}.nc"
-    DIR = f"results/{scenario}/prenetworks"
+def load_unsolved_network(scenario, horizon):
+    """Load composed (pre-solve) network."""
+    path = composed_network_path(scenario, horizon)
     try:
-        n = pypsa.Network(os.path.join(DIR, FILE))
-        logging.info(f"Loading {FILE} in {DIR}")
+        n = pypsa.Network(path)
+        logging.info(f"Loading {path}")
+        return n
     except FileNotFoundError as e:
-        print(f"Error: {e}")
+        logging.error(f"Error: {e}")
         return None
-    return n
 
 
-def save_unsolved_network(network, lineex, clusters, sector_opts, planning_horizon, scenario):
-    FILE = f"elec_s_{clusters}_l{lineex}__{sector_opts}_{planning_horizon}.nc"
-    DIR = f"results/{scenario}/prenetworks/"
-    network.export_to_netcdf(DIR+FILE)
-    logging.info(f"Saving {FILE} to {DIR}")
+def save_unsolved_network(network, scenario, horizon):
+    path = composed_network_path(scenario, horizon)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    network.export_to_netcdf(path)
+    logging.info(f"Saving {path}")
 
 
 def change_path_to_pypsa_eur():
@@ -397,13 +417,11 @@ def change_path_to_base():
 
 
 def get_config_path(scenario, horizon):
-    configname_dict = {"flexible": "flexible-industry",
-                       "flexible-moderate": "flexible-moderate",
-                       "retro_tes": "retro_tes-industry",
-                       "rigid": "rigid-industry"}
-    configname = f"config.{configname_dict[scenario]}_{horizon}.yaml"
-    configpath = "configs/EEE_study/"
-    return configpath + configname
+    if scenario == "BAU":
+        name = "config.BAU.yaml"
+    else:
+        name = f"config.{CONFIG_NAME[scenario]}_{horizon}.yaml"
+    return os.path.join(BASE_PATH, "configs", "EEE_study", name)
 
 
 def get_config(scenario, horizon):
@@ -414,7 +432,26 @@ def get_config(scenario, horizon):
     return config
 
 
+def get_run_name(scenario, horizon=None):
+    """Prefer run.name from EEE config (flexible, rigid, …)."""
+    cfg = get_config(scenario, horizon or (2020 if scenario == "BAU" else 2030))
+    return cfg["run"]["name"]
+
+
+def get_n_clusters(scenario, horizon):
+    cfg = get_config(scenario, horizon)
+    return cfg["clustering"]["cluster_network"]["n_clusters"]
+
+
 def replace_multiindex_values(multiindex, old_value, new_value):
     # Create a new MultiIndex with replaced values
     new_tuples = [new_value if item == old_value else item for item in multiindex]
     return pd.MultiIndex.from_tuples(new_tuples, names=multiindex.names)
+
+
+def compose_target(scenario, horizon):
+    return composed_network_path(scenario, horizon)
+
+
+def solve_target(scenario, horizon):
+    return solved_network_path(scenario, horizon)
