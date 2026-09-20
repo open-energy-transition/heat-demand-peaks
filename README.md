@@ -64,21 +64,29 @@ Before running the scenarios, it is important to know their short working names 
 
 ### A. Running scenarios using *automated workflow* (the easy way)
 
+`scripts/run.py` runs the full pipeline for each scenario/horizon:
+
+1. **Compose** the network (`resources/{run}/networks/composed_{horizon}.nc`)
+2. Optionally transfer capacities / set moderate retrofitting / fix retrofitting for improved COP
+3. **Solve** the network (`results/{run}/networks/solved_{horizon}.nc`)
+
 To run all scenarios for all horizons, run:
 
-    python scripts/run.py 
+    python scripts/run.py --legacy
 
 To run the simulations for specific scenario for several horizons at once (e.g. *Optimal Renovation & Optimal Heating (OROH)* scenario), run:
 
-    python scripts/run.py -s flexible -c 2040
+    python scripts/run.py -s flexible -c 2040 --legacy
 
 where `-s` is a mandatory flag used for the scenario selection. Use the coding name of corresponding scenario from the table to trigger the execution. `-c` flag (optional) speficies from which planning horizon the simulations should start. So if `-c 2040` is given, then 2040 and 2050 horizons will be simulated consequitively; if not specified, then 2030 is used as a starting year by default. `-c` flag is useful when simulation is interupted and it needs to be re-run from certain horizon. For *BAU* scenario, using only `-s BAU` without horizon definition is sufficient.
 
 To simulate a single horizon for the scenario (e.g. *Limited Retrofitting & Optimal Heating* scenario for 2050), use `-y` flag as follows:
 
-    python scripts/run.py -s flexible-moderate -y 2050
+    python scripts/run.py -s flexible-moderate -y 2050 --legacy
 
 * **Note!** To run *Limited Renovation & Optimal Heating* (`flexible-moderate`) scenario, the simulation results for *Optimal Renovation & Optimal Heating* (`flexible`) scenario must be present.
+
+* **Note!** For EEE-study reproduction, pass `--legacy` so `configs/EEE_study/config.legacy_default.yaml` is applied before the scenario config (pinning old pypsa-eur defaults). Omit `--legacy` for future studies that should use current upstream defaults, optionally overridden only by your scenario YAML.
 
 The available flags and their details are presented in table below:
 
@@ -88,24 +96,25 @@ The available flags and their details are presented in table below:
 |`-c`, `--continue`    |2030      |Selects horizon from which simulation starts (used in simulating multiple horizons). If 2030 is selected, then 2030, 2040, and 2050 is simulated consecutively. If 2040 is selected, then 2040 and 2050 is simulated.|optional  |
 |`-y`, `--year`        |n/a       |Selects a single horizon to be simulated. If both `-c` and `-y` are prodived occasionally, then priority is given to `-y`.|optional  |
 |`-i`, `--improved_cop`|true      |Enables/disables improved COP workflow. By default, improved COP for heat pumps is used.|optional  |
+|`--legacy`            |off       |Includes `configs/EEE_study/config.legacy_default.yaml` before the scenario config (EEE reproduction). Without it, only the scenario config overlays upstream defaults.|optional  |
 
 ### 2.2. Running scenarios *manually* using `snakemake` (the hard way)
 
-#### A. Run the scenario
+#### A. Compose and solve the network
 
-To run the scenario of a particular configuration file (e.g. `configs/EEE_study/config.flexible-industry.yaml`), navigate to `pypsa-eur` directory using:
+To run a particular configuration (e.g. rigid 2030), navigate to the `pypsa-eur` directory:
 
     cd submodules/pypsa-eur
 
-Then, run the following comamnd to prepare the pre-network:
+Compose the sector-coupled network (include the legacy overlay for EEE reproduction):
 
-    snakemake -call prepare_sector_networks --configfile ../../configs/EEE_study/config.flexible-industry_2030.yaml
+    snakemake -call resources/rigid/networks/composed_2030.nc --configfile ../../configs/EEE_study/config.legacy_default.yaml ../../configs/EEE_study/config.rigid-industry_2030.yaml
 
-To solve the network, run:
+Solve the composed network:
 
-    snakemake -call solve_sector_networks --configfile ../../configs/EEE_study/config.flexible-industry_2030.yaml 
+    snakemake -call results/rigid/networks/solved_2030.nc --configfile ../../configs/EEE_study/config.legacy_default.yaml ../../configs/EEE_study/config.rigid-industry_2030.yaml
 
-Please follow the documentation of PyPSA-Eur for more details.
+Omit `config.legacy_default.yaml` for future studies that should follow current upstream defaults. Please follow the documentation of PyPSA-Eur for more details.
 
 #### B. Setting nominal capacities of retrofitting for *Limited Renovation & Optimal Heating (LROH)* scenario
 
@@ -113,7 +122,7 @@ The nominal capacities of retrofitting for *Limited Renovation & Optimal Heating
 
     snakemake -call set_moderate_retrofitting
 
-* **Note!** This and the following `snakemake` commands must be run in `heat-demands-peak` base directory (not `pypsa-eur` submodule). The command needs to be run after preparation of pre-network.
+* **Note!** This and the following `snakemake` commands must be run in `heat-demand-peaks` base directory (not `pypsa-eur` submodule). The command needs to be run after composing the network, before solving it.
 
 This command will set `p_nom` for moderate retrofitting network as a half of `p_nom_opt` of solved *Optimal Renovation and Heating* (flexible) scenario. The network parameters, such as `clusters` and `planning_horizon`, are defined in `moderate_retrofitting` section of `configs/config.plot.yaml`. 
 
@@ -125,11 +134,11 @@ The resultant file in `scripts/logs/set_moderate_retrofitting_48_2030.txt` conta
 
 #### C. Transfering optimal capacities to future horizons
 
-After optimizing scenarios for one horizon, it is important to transfer optimal generation and store capacities into future horizons. To do so, configure `planning_horizon` in `set_capacities` section of `configs/config.plot.yaml` to horizon of interest. By default, `2040` is set as `planning_horizon` in `set_capacities`, which helps to transfer `p_nom_opt` values from solved networks of 2030 into `p_nom_min` of corresponding generators and stores of unsolved network of 2040. The optimal capacities are transfered to corresponding scenarios. To set `p_nom_min` for all scenarios of 2040, run:
+After optimizing scenarios for one horizon, it is important to transfer optimal generation and store capacities into future horizons. To do so, configure `planning_horizon` in `set_capacities` section of `configs/config.plot.yaml` to horizon of interest. By default, `2040` is set as `planning_horizon` in `set_capacities`, which helps to transfer `p_nom_opt` values from solved networks of 2030 into `p_nom_min` of corresponding generators and stores of the composed (unsolved) network of 2040. The optimal capacities are transfered to corresponding scenarios. To set `p_nom_min` for all scenarios of 2040, run:
 
     snakemake -call set_capacities
 
-* **Note!** The command needs to be run after preparation of pre-network, but before solving it.
+* **Note!** The command needs to be run after composing the network, but before solving it.
 
 To set minimum capacities for specific scenario (e.g. flexible scenario of 2050 with 48 clusters), you can run run:
 
@@ -141,13 +150,13 @@ The resultant file in `scripts/logs/set_capacities_48_2050_flexible.txt` contain
 
 To use the workflow of improved COP, solve the network regularly and determine the heat saved ratio by building retrofitting from the solved network. Use the ratio to compute sink temperature:
 
-    heat_pump_sink_T = (55 - 21) * (1 - heat_saved_ratio) + 21
+    heat_pump_sink_T_individual_heating = (55 - 21) * (1 - heat_saved_ratio) + 21
 
-Update the `heat_pump_sink_T` parameter in corresponding configuration file. Then, prepare the pre-network and set capacities from previous horizon. To set retrofitting capacities from the first run to current run, execute:
+Update the `heat_pump_sink_T_individual_heating` parameter in the corresponding configuration file. Then compose the network again and set capacities from the previous horizon. To set retrofitting capacities from the first run to the current run, execute:
 
     snakemake -call improve_cops_after_renovation
 
-Finally, the updated pre-network can be solved.
+Finally, solve the updated composed network.
 
 ### 3. Plotting
 

@@ -32,6 +32,11 @@ def get_scenario():
                         choices=["2030", "2040", "2050"])
     parser.add_argument("-i", "--improved_cop", help="Specify if improved COP calculation is needed",
                         choices=["true", "false"])
+    parser.add_argument(
+        "--legacy",
+        action="store_true",
+        help="Include configs/EEE_study/config.legacy_default.yaml (EEE reproduction).",
+    )
     args = parser.parse_args()
 
     # Access the value of the scenario argument
@@ -51,6 +56,8 @@ def get_scenario():
     # Access bool for improved COP
     i = args.improved_cop
     improved_cop = False if i == "false" else True
+    use_legacy = args.legacy
+    logging.info(f"Legacy config overlay: {'enabled' if use_legacy else 'disabled'}")
 
     # log scenario name
     if y:
@@ -64,7 +71,7 @@ def get_scenario():
         horizons = get_horizon_list(int(c))
         logging.info("No horizon specified. Starting from default horizon (2030)")
 
-    return scenarios, horizons, improved_cop
+    return scenarios, horizons, improved_cop, use_legacy
 
 
 def get_horizon_list(start_horizon):
@@ -97,27 +104,29 @@ def copy_custom_data(base_network: str = "entsoegridkit"):
     logging.info(f"Copied custom data from data/ folder to submodules/pypsa-eur/data/ folder")
 
 
-def get_configfiles(scenario, horizon):
-    """Legacy defaults first; scenario config overrides (incl. Co2L as co2_budget.upper)."""
+def get_configfiles(scenario, horizon, use_legacy=False):
+    """Scenario config on top of upstream defaults; optional legacy overlay for EEE reproduction."""
+    scenario_cfg = os.path.relpath(get_config_path(scenario, horizon), os.getcwd())
+    if not use_legacy:
+        return scenario_cfg
     legacy = os.path.relpath(
         os.path.join(BASE_PATH, "configs", "EEE_study", "config.legacy_default.yaml"),
         os.getcwd(),
     )
-    scenario_cfg = os.path.relpath(get_config_path(scenario, horizon), os.getcwd())
     return f"{legacy} {scenario_cfg}"
 
 
-def compose_network(scenario, horizon):
+def compose_network(scenario, horizon, use_legacy=False):
     # change path to pypsa-eur
     change_path_to_pypsa_eur()
 
     # compose target
     target = compose_target(scenario, horizon)
 
-    # compose network (legacy defaults, then scenario overrides)
+    # compose network (optional legacy defaults, then scenario overrides)
     command = (
         f"snakemake -call {target} "
-        f"--configfile {get_configfiles(scenario, horizon)} "
+        f"--configfile {get_configfiles(scenario, horizon, use_legacy=use_legacy)} "
         f"--force --rerun-incomplete"
     )
     result = subprocess.run(command, shell=True)
@@ -172,17 +181,17 @@ def improve_cops_after_renovation(scenario, horizon):
     return error
 
 
-def solve_network(scenario, horizon):
+def solve_network(scenario, horizon, use_legacy=False):
     # change path to pypsa-eur
     change_path_to_pypsa_eur()
 
     # solve target
     target = solve_target(scenario, horizon)
 
-    # solve the network (legacy defaults, then scenario overrides)
+    # solve the network (optional legacy defaults, then scenario overrides)
     command = (
         f"snakemake -call {target} "
-        f"--configfile {get_configfiles(scenario, horizon)} "
+        f"--configfile {get_configfiles(scenario, horizon, use_legacy=use_legacy)} "
         f"--force --rerun-incomplete"
     )
     result = subprocess.run(command, shell=True)
@@ -305,8 +314,8 @@ def read_sink_T(scenario, horizon):
     return value
 
 
-def run_workflow(scenario, horizon, improved_cop=False):
-    compose_network(scenario=scenario, horizon=horizon)
+def run_workflow(scenario, horizon, improved_cop=False, use_legacy=False):
+    compose_network(scenario=scenario, horizon=horizon, use_legacy=use_legacy)
 
     # initialize error_capacities and error_moderate
     error_capacities, error_moderate, error_improve_cop = [], [], []
@@ -328,14 +337,14 @@ def run_workflow(scenario, horizon, improved_cop=False):
         return None
 
     # solve the network
-    solve_network(scenario, horizon)
+    solve_network(scenario, horizon, use_legacy=use_legacy)
 
     return True
 
 
 if __name__ == "__main__":
     # get scenario from argument
-    scenarios, horizons, improved_cop = get_scenario()
+    scenarios, horizons, improved_cop, use_legacy = get_scenario()
 
     # copy custom data into pypsa-eur/data folder
     copy_custom_data()
@@ -360,7 +369,7 @@ if __name__ == "__main__":
                 update_sink_T(scenario, horizon, 55.0)
 
             # run full network preparation and solving workflow 
-            run_status = run_workflow(scenario, horizon)
+            run_status = run_workflow(scenario, horizon, use_legacy=use_legacy)
 
             # stop further execution if workflow did not succeed
             if run_status is None:
@@ -382,10 +391,12 @@ if __name__ == "__main__":
                 update_sink_T(scenario, horizon, sink_T)
 
                 # run full network preparation and solving workflow
-                run_status = run_workflow(scenario, horizon, improved_cop=improved_cop)
+                run_status = run_workflow(
+                    scenario, horizon, improved_cop=improved_cop, use_legacy=use_legacy
+                )
 
 
     # run BAU scenario
     if scenario_BAU:
-        compose_network("BAU", 2020)
-        solve_network("BAU", 2020)
+        compose_network("BAU", 2020, use_legacy=use_legacy)
+        solve_network("BAU", 2020, use_legacy=use_legacy)
