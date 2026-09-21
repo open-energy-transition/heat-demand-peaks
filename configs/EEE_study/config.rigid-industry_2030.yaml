@@ -103,22 +103,6 @@ costs:
   year: 2025
   fill_values:
     "discount rate": 0.04
-  fuel:
-    OCGT: 38.84 # https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:52022SC0230 (Annex)
-    CCGT: 38.84
-    gas: 38.84
-    coal: 24.57 # https://businessanalytiq.com/procurementanalytics/index/subbituminous-coal-price-index/
-    lignite: 22.11 # https://businessanalytiq.com/procurementanalytics/index/lignite-coal-price-index/
-    nuclear: 1.75 # https://markets.businessinsider.com/commodities/uranium-price
-    uranium: 1.75
-  investment:
-    "central solar thermal": 280650
-    "decentral solar thermal": 428920
-    "decentral air-sourced heat pump": 1604000 # https://ariadneprojekt.de/media/2024/01/Ariadne-Analyse_HeizkostenEmissionenGebaeude_Januar2024.pdf https://www.enpal.de/waermepumpe/kosten/ https://www.bdew.de/media/documents/BDEW-HKV_Altbau.pdf and cost reduction from DEA
-    "decentral ground-sourced heat pump": 2682000 #https://ariadneprojekt.de/media/2024/01/Ariadne-Analyse_HeizkostenEmissionenGebaeude_Januar2024.pdf https://www.enpal.de/waermepumpe/kosten/ https://www.bdew.de/media/documents/BDEW-HKV_Altbau.pdf and cost reduction from DEA
-  lifetime:
-    "central solar thermal": 30
-    "decentral solar thermal": 30
 
 clustering:
   mode: custom_busmap
