@@ -90,7 +90,6 @@ sector:
     nuclear: uranium
   keep_existing_capacities: True
   electricity_distribution_grid: true
-  electricity_distribution_grid_cost_factor: 2.0
   heat_pump_sink_T_individual_heating: 55.0
 
 biomass:
@@ -121,6 +120,9 @@ clustering:
 adjustments:
   sector:
     factor:
+      Link:
+        electricity distribution grid:
+          capital_cost: 2.0
       Generator:
         solar rooftop:
           p_nom_max: 1.095 # https://joint-research-centre.ec.europa.eu/jrc-news-and-updates/pv-rooftops-and-beyond-can-surpass-targets-while-preserving-environment-2024-02-14_en
