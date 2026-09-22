@@ -13,7 +13,7 @@ warnings.filterwarnings("ignore")
 import colors as c
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                      change_path_to_pypsa_eur, change_path_to_base, \
-                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON, PATH_PLOTS, replace_multiindex_values
+                     BAU_HORIZON, PATH_PLOTS, replace_multiindex_values
 
 
 def get_heat_capacities(n, nice_name):
@@ -113,12 +113,9 @@ if __name__ == "__main__":
 
 
     # network parameters
-    co2l_limits = CO2L_LIMITS
-    line_limits = LINE_LIMITS
     clusters = config["plotting"]["clusters"]
     planning_horizons = config["plotting"]["planning_horizon"]
     planning_horizons = [str(x) for x in planning_horizons]
-    opts = config["plotting"]["sector_opts"]
 
     # define scenario namings
     scenarios = {"flexible": "Widespread\nRenovation",
@@ -130,9 +127,6 @@ if __name__ == "__main__":
     table_cap_df = define_table_df(scenarios)
     
     for planning_horizon in planning_horizons:
-        lineex = line_limits[planning_horizon]
-        sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{opts}"
-
         # if planning_horizon is 2020
         if planning_horizon == BAU_HORIZON:
             scenarios = {"BAU": "BASE 2023"}
@@ -151,7 +145,7 @@ if __name__ == "__main__":
         # compute heat tech capacities
         for scenario, nice_name in scenarios.items():
             # load the network
-            n = load_network(lineex, clusters, sector_opts, planning_horizon, scenario)
+            n = load_network(scenario, planning_horizon)
 
             if n is None:
                 # Skip further computation for this scenario if network is not loaded
