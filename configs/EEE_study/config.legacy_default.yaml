@@ -95,6 +95,8 @@ sector:
     2050: 0
   hydrogen_underground_storage_locations:
   - nearshore
+  cc_capital_cost_factor:
+    gas: 1.0
 
 industry:
   reference_year: 2015 # original 2015 can be used only with scripts adaptations
