@@ -25,3 +25,8 @@ improve_cops_after_renovation:
   clusters: 48
   planning_horizon: "2030"
   scenario: ["flexible", "retro_tes", "flexible-moderate"]
+
+# carried-over capacities below threshold (MW/MWh) are set to 0, the rest rounded to `digits`
+capacity_clipping:
+  threshold: 0.1
+  digits: 1

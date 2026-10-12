@@ -8,6 +8,7 @@ from pathlib import Path
 import pypsa
 import logging
 import yaml
+import numpy as np
 import pandas as pd
 
 # get the base working directory
@@ -389,6 +390,19 @@ def save_unsolved_network(network, scenario, horizon):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     network.export_to_netcdf(path)
     logging.info(f"Saving {path}")
+
+
+def clip_capacities(capacities, threshold=0.1, digits=1, round_up=False):
+    """Zero out capacities below `threshold` (MW/MWh) and round to `digits`.
+
+    Rounds down by default so that carried-over lower bounds never tighten;
+    use `round_up=True` for upper bounds so they never tighten either.
+    """
+    clipped = capacities.where(capacities >= threshold, 0.0)
+    factor = 10**digits
+    rounding = np.ceil if round_up else np.floor
+    # pre-round to absorb float error, e.g. 2.3 * 10 = 22.999999999999996
+    return rounding(np.round(clipped * factor, 6)) / factor
 
 
 def change_path_to_pypsa_eur():

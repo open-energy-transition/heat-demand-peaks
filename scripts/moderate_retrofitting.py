@@ -11,15 +11,15 @@ import warnings
 warnings.filterwarnings("ignore")
 from plots._helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                     change_path_to_pypsa_eur, change_path_to_base, load_unsolved_network, \
-                    save_unsolved_network
+                    save_unsolved_network, clip_capacities
 
 
-def set_moderate_retrofitting(n_solved, n_unsolved):
+def set_moderate_retrofitting(n_solved, n_unsolved, clip_opts):
     # get optimal retrofitting from the solved network
     retro_opt = n_solved.generators.query("carrier in 'retrofitting'")[["p_nom_opt"]]
     retro_data = retro_opt / 2
     # set p_nom_max as half of p_nom_opt of flexible scenario
-    n_unsolved.generators.loc[retro_data.index, "p_nom"] = retro_data["p_nom_opt"]
+    n_unsolved.generators.loc[retro_data.index, "p_nom"] = clip_capacities(retro_data["p_nom_opt"], **clip_opts)
     # set retrofitting not extendable
     n_unsolved.generators.loc[retro_data.index, "p_nom_extendable"] = False
 
@@ -57,7 +57,8 @@ if __name__ == "__main__":
         )
 
     # set moderate retrofitting
-    n_updated = set_moderate_retrofitting(n_solved, n_unsolved)
+    clip_opts = config.get("capacity_clipping", {})
+    n_updated = set_moderate_retrofitting(n_solved, n_unsolved, clip_opts)
     save_unsolved_network(n_updated, "flexible-moderate", planning_horizon)
     success = True
 

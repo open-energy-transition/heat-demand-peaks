@@ -13,7 +13,7 @@ import warnings
 warnings.filterwarnings("ignore")
 from plots._helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                     change_path_to_pypsa_eur, change_path_to_base, load_unsolved_network, \
-                    save_unsolved_network
+                    save_unsolved_network, clip_capacities
 
 
 class CustomError(Exception):
@@ -42,9 +42,13 @@ def get_common_index(list1, list2):
     return common_index
 
 
-def set_optimal_capacities(solved_network, unsolved_network):
+def set_optimal_capacities(solved_network, unsolved_network, clip_opts):
     # get optimal capacities from previous horizon
     opt_gen_cap, opt_store_cap, opt_link_cap = get_capacities(solved_network, "opt")
+    opt_link_cap_raw = opt_link_cap.copy()
+    opt_gen_cap = clip_capacities(opt_gen_cap, **clip_opts)
+    opt_store_cap = clip_capacities(opt_store_cap, **clip_opts)
+    opt_link_cap = clip_capacities(opt_link_cap, **clip_opts)
 
     # get minimum capacities from planned horizon
     min_gen_cap, min_store_cap, min_link_cap = get_capacities(unsolved_network, "min")
@@ -78,7 +82,9 @@ def set_optimal_capacities(solved_network, unsolved_network):
     unsolved_network.links.loc[target_links, "p_nom_min"] = opt_link_cap[target_links]
 
     # set p_nom_max for gas boilers
-    unsolved_network.links.loc[boiler_links, "p_nom_max"] = opt_link_cap[boiler_links]
+    unsolved_network.links.loc[boiler_links, "p_nom_max"] = clip_capacities(
+        opt_link_cap_raw[boiler_links], **clip_opts, round_up=True
+    )
 
     # set p_nom_max as max of p_nom_min and p_nom_max
     unsolved_network.generators.loc[target_gens, "p_nom_max"] = unsolved_network.generators.loc[target_gens, ["p_nom_min", "p_nom_max"]].max(axis=1)
@@ -87,7 +93,9 @@ def set_optimal_capacities(solved_network, unsolved_network):
 
     # set p_nom_max as max(p_nom_max, p_nom_min) for retrofitting
     retro_idx = unsolved_network.generators.query("carrier == 'retrofitting'").index
-    unsolved_network.generators.loc[retro_idx, ["p_nom_min", "p_nom"]] = solved_network.generators.loc[retro_idx, "p_nom_opt"]
+    retro_opt = clip_capacities(solved_network.generators.loc[retro_idx, "p_nom_opt"], **clip_opts)
+    unsolved_network.generators.loc[retro_idx, "p_nom_min"] = retro_opt
+    unsolved_network.generators.loc[retro_idx, "p_nom"] = retro_opt
     unsolved_network.generators.loc[retro_idx, "p_nom_max"] = unsolved_network.generators.loc[retro_idx, ["p_nom_max", "p_nom_min"]].max(axis=1)
 
     return unsolved_network
@@ -131,7 +139,8 @@ if __name__ == "__main__":
         )
 
     # set optimal capacities
-    updated_network = set_optimal_capacities(solved_network, unsolved_network)
+    clip_opts = config.get("capacity_clipping", {})
+    updated_network = set_optimal_capacities(solved_network, unsolved_network, clip_opts)
     save_unsolved_network(updated_network, scenario, planning_horizon)
     success = True
     print(f"Updated capacities: {scenario} {previous_horizon} to {planning_horizon}")
