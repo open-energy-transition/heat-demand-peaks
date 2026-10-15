@@ -37,7 +37,7 @@ def get_heat_pump_sink_T():
     with open(DEFAULT_CONFIG_DIR, 'r') as file:
         config_default = yaml.safe_load(file)
 
-    heat_pump_sink_T = config_default["sector"]["heat_pump_sink_T"]
+    heat_pump_sink_T = config_default["sector"]["heat_pump_sink_T_individual_heating"]
     return heat_pump_sink_T
 
 

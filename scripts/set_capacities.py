@@ -13,7 +13,7 @@ import warnings
 warnings.filterwarnings("ignore")
 from plots._helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                     change_path_to_pypsa_eur, change_path_to_base, load_unsolved_network, \
-                    save_unsolved_network, get_config
+                    save_unsolved_network, clip_capacities
 
 
 class CustomError(Exception):
@@ -42,9 +42,13 @@ def get_common_index(list1, list2):
     return common_index
 
 
-def set_optimal_capacities(solved_network, unsolved_network):
+def set_optimal_capacities(solved_network, unsolved_network, clip_opts):
     # get optimal capacities from previous horizon
     opt_gen_cap, opt_store_cap, opt_link_cap = get_capacities(solved_network, "opt")
+    opt_link_cap_raw = opt_link_cap.copy()
+    opt_gen_cap = clip_capacities(opt_gen_cap, **clip_opts)
+    opt_store_cap = clip_capacities(opt_store_cap, **clip_opts)
+    opt_link_cap = clip_capacities(opt_link_cap, **clip_opts)
 
     # get minimum capacities from planned horizon
     min_gen_cap, min_store_cap, min_link_cap = get_capacities(unsolved_network, "min")
@@ -59,7 +63,8 @@ def set_optimal_capacities(solved_network, unsolved_network):
                        "land transport oil", "solid biomass for industry",
                        "gas for industry", "shipping methanol", "shipping oil",
                        "naphtha for industry", "kerosene for aviation",
-                       "process emissions", "coal for industry", "nuclear"]
+                       "process emissions", "coal for industry", "nuclear",
+                       "lignite", "methanol", "HVC to air"]
     # gas boiler carriers
     boiler_carriers = ["residential rural gas boiler", "services rural gas boiler",
                        "residential urban decentral gas boiler", "services urban decentral gas boiler",
@@ -78,7 +83,9 @@ def set_optimal_capacities(solved_network, unsolved_network):
     unsolved_network.links.loc[target_links, "p_nom_min"] = opt_link_cap[target_links]
 
     # set p_nom_max for gas boilers
-    unsolved_network.links.loc[boiler_links, "p_nom_max"] = opt_link_cap[boiler_links]
+    unsolved_network.links.loc[boiler_links, "p_nom_max"] = clip_capacities(
+        opt_link_cap_raw[boiler_links], **clip_opts, round_up=True
+    )
 
     # set p_nom_max as max of p_nom_min and p_nom_max
     unsolved_network.generators.loc[target_gens, "p_nom_max"] = unsolved_network.generators.loc[target_gens, ["p_nom_min", "p_nom_max"]].max(axis=1)
@@ -87,7 +94,9 @@ def set_optimal_capacities(solved_network, unsolved_network):
 
     # set p_nom_max as max(p_nom_max, p_nom_min) for retrofitting
     retro_idx = unsolved_network.generators.query("carrier == 'retrofitting'").index
-    unsolved_network.generators.loc[retro_idx, ["p_nom_min", "p_nom"]] = solved_network.generators.loc[retro_idx, "p_nom_opt"]
+    retro_opt = clip_capacities(solved_network.generators.loc[retro_idx, "p_nom_opt"], **clip_opts)
+    unsolved_network.generators.loc[retro_idx, "p_nom_min"] = retro_opt
+    unsolved_network.generators.loc[retro_idx, "p_nom"] = retro_opt
     unsolved_network.generators.loc[retro_idx, "p_nom_max"] = unsolved_network.generators.loc[retro_idx, ["p_nom_max", "p_nom_min"]].max(axis=1)
 
     return unsolved_network
@@ -107,43 +116,35 @@ if __name__ == "__main__":
     # network parameters by year
     previous_horizons = {"2040":"2030", "2050":"2040"} 
 
-    # network parameters of unsolved network
+    # network parameters
     clusters = config["set_capacities"]["clusters"]
     planning_horizon = config["set_capacities"]["planning_horizon"]
     scenario = config["set_capacities"]["scenario"]
-    # get current sector_opts and ll from scenario config file from EEE_study folder
-    current_scenario_config = get_config(scenario, planning_horizon)
-    sector_opts = current_scenario_config["scenario"]["sector_opts"][0]
-    lineex = current_scenario_config["scenario"]["ll"][0]
-
-    # network parameters of solved network
     previous_horizon = previous_horizons[planning_horizon]
-    previous_scenario_config = get_config(scenario, previous_horizon)
-    previous_sector_opts = previous_scenario_config["scenario"]["sector_opts"][0]
-    previous_lineex = previous_scenario_config["scenario"]["ll"][0]
 
     # move to pypsa-eur directory
     change_path_to_pypsa_eur()
 
     # load solved network
-    solved_network = load_network(previous_lineex, clusters, previous_sector_opts, previous_horizon, scenario)
+    solved_network = load_network(scenario, previous_horizon)
     
     # load unsolved network for future
-    unsolved_network = load_unsolved_network(lineex, clusters, sector_opts, planning_horizon, scenario)
+    unsolved_network = load_unsolved_network(scenario, planning_horizon)
 
-    # if both network is present, then set optimal capacities
-    if not solved_network is None and not unsolved_network is None:
-        updated_network = set_optimal_capacities(solved_network, unsolved_network)
-        print(f"Updated: {lineex}, {clusters}, {sector_opts}, {planning_horizon}, {scenario}")
-        # save updated network
-        try:
-            save_unsolved_network(updated_network, lineex, clusters, sector_opts, planning_horizon, scenario)
-            success = True
-        except Exception as e:
-            print(f"Error: {e}")
-            raise FileNotFoundError("File was not saved")
-    else:
-        raise FileNotFoundError("Missing input network")
+    # if one of the networks is missing, then raise error
+    if solved_network is None or unsolved_network is None:
+        change_path_to_base()
+        raise FileNotFoundError(
+            f"Missing networks for {scenario}: "
+            f"solved_{previous_horizon} and/or composed_{planning_horizon}"
+        )
+
+    # set optimal capacities
+    clip_opts = config.get("capacity_clipping", {})
+    updated_network = set_optimal_capacities(solved_network, unsolved_network, clip_opts)
+    save_unsolved_network(updated_network, scenario, planning_horizon)
+    success = True
+    print(f"Updated capacities: {scenario} {previous_horizon} to {planning_horizon}")
 
     # move to base directory
     change_path_to_base()
@@ -152,5 +153,6 @@ if __name__ == "__main__":
     with open(snakemake.output.logs, 'w') as f:
         f.write(f"""Scenarios: {scenario} 
                 \nPlanning horizon: {planning_horizon} 
+                \nPrevious horizon: {previous_horizon} 
                 \nClusters: {clusters} 
                 \nSuccess: {success}""")

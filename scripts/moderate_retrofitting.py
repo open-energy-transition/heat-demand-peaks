@@ -11,15 +11,15 @@ import warnings
 warnings.filterwarnings("ignore")
 from plots._helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                     change_path_to_pypsa_eur, change_path_to_base, load_unsolved_network, \
-                    save_unsolved_network, get_config
+                    save_unsolved_network, clip_capacities
 
 
-def set_moderate_retrofitting(n_solved, n_unsolved):
+def set_moderate_retrofitting(n_solved, n_unsolved, clip_opts):
     # get optimal retrofitting from the solved network
     retro_opt = n_solved.generators.query("carrier in 'retrofitting'")[["p_nom_opt"]]
     retro_data = retro_opt / 2
     # set p_nom_max as half of p_nom_opt of flexible scenario
-    n_unsolved.generators.loc[retro_data.index, "p_nom"] = retro_data["p_nom_opt"]
+    n_unsolved.generators.loc[retro_data.index, "p_nom"] = clip_capacities(retro_data["p_nom_opt"], **clip_opts)
     # set retrofitting not extendable
     n_unsolved.generators.loc[retro_data.index, "p_nom_extendable"] = False
 
@@ -40,34 +40,27 @@ if __name__ == "__main__":
     # network parameters of unsolved network
     clusters = config["moderate_retrofitting"]["clusters"]
     planning_horizon = config["moderate_retrofitting"]["planning_horizon"]
-    # get sector_opts and ll from scenario config file from EEE_study folder
-    scenario_config = get_config("flexible-moderate", planning_horizon)
-    sector_opts = scenario_config["scenario"]["sector_opts"][0]
-    lineex = scenario_config["scenario"]["ll"][0]
-
 
     # move to pypsa-eur directory
     change_path_to_pypsa_eur()
 
     # load solved network of flexible scenario
-    n_solved = load_network(lineex, clusters, sector_opts, planning_horizon, "flexible")
+    n_solved = load_network("flexible", planning_horizon)
 
     # load unsolved network of flexible-moderate scenario
-    n_unsolved = load_unsolved_network(lineex, clusters, sector_opts, planning_horizon, "flexible-moderate")
+    n_unsolved = load_unsolved_network("flexible-moderate", planning_horizon)
 
-    if not n_solved is None and not n_unsolved is None:
-        # update the network by setting p_nom_opt/2 of flexible scenario as p_nom for flexible-moderate scenario
-        n_updated = set_moderate_retrofitting(n_solved, n_unsolved)
+    if n_solved is None or n_unsolved is None:
+        change_path_to_base()
+        raise FileNotFoundError(
+            f"Missing networks for moderate retrofitting at {planning_horizon}"
+        )
 
-        # save updated network
-        try:
-            save_unsolved_network(n_updated, lineex, clusters, sector_opts, planning_horizon, "flexible-moderate")
-            success = True
-        except Exception as e:
-            print(f"Error: {e}")
-            raise FileNotFoundError("File was not saved")
-    else:
-        raise FileNotFoundError("Missing input network")
+    # set moderate retrofitting
+    clip_opts = config.get("capacity_clipping", {})
+    n_updated = set_moderate_retrofitting(n_solved, n_unsolved, clip_opts)
+    save_unsolved_network(n_updated, "flexible-moderate", planning_horizon)
+    success = True
 
     # move to base directory
     change_path_to_base()
