@@ -64,7 +64,7 @@ def set_optimal_capacities(solved_network, unsolved_network, clip_opts):
                        "gas for industry", "shipping methanol", "shipping oil",
                        "naphtha for industry", "kerosene for aviation",
                        "process emissions", "coal for industry", "nuclear",
-                       "lignite", "methanol"]
+                       "lignite", "methanol", "HVC to air"]
     # gas boiler carriers
     boiler_carriers = ["residential rural gas boiler", "services rural gas boiler",
                        "residential urban decentral gas boiler", "services urban decentral gas boiler",
