@@ -392,6 +392,13 @@ def save_unsolved_network(network, scenario, horizon):
     logging.info(f"Saving {path}")
 
 
+def save_network(network, scenario, horizon):
+    """Save solved network."""
+    path = solved_network_path(scenario, horizon)
+    network.export_to_netcdf(path)
+    logging.info(f"Saving {path}")
+
+
 def clip_capacities(capacities, threshold=0.1, digits=1, round_up=False):
     """Zero out capacities below `threshold` (MW/MWh) and round to `digits`.
 

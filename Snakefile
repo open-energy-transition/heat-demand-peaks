@@ -576,6 +576,17 @@ rule set_capacities:
         ),
 
 
+rule fix_zero_capex:
+    wildcard_constraints:
+        step="fix|restore",
+    output:
+        logs="scripts/logs/fix_zero_capex_{clusters}_{planning_horizon}_{scenario}_{step}.txt",
+    resources:
+        mem_mb=20000,
+    script:
+        "scripts/fix_zero_capex.py"
+
+
 rule moderate_retrofitting:
     params:
         clusters=config["moderate_retrofitting"]["clusters"],

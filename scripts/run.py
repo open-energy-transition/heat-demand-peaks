@@ -181,6 +181,16 @@ def improve_cops_after_renovation(scenario, horizon):
     return error
 
 
+def fix_zero_capex(scenario, horizon, step):
+    # step: "fix" (composed network before solving) or "restore" (solved network)
+    clusters = get_n_clusters(scenario, horizon)
+    command = f"snakemake -call scripts/logs/fix_zero_capex_{clusters}_{horizon}_{scenario}_{step}.txt --forceall"
+    result = subprocess.run(command, shell=True)
+    if result.returncode != 0:
+        raise RuntimeError(f"Zero capex {step} failed for {scenario} {horizon}")
+    logging.info(f"Zero capex {step} done for {scenario} {horizon}")
+
+
 def solve_network(scenario, horizon, use_legacy=False):
     # change path to pypsa-eur
     change_path_to_pypsa_eur()
@@ -336,8 +346,14 @@ def run_workflow(scenario, horizon, improved_cop=False, use_legacy=False):
     if error_capacities or error_moderate or error_improve_cop:
         return None
 
+    # fix zero capital cost extendables to infinite capacity
+    fix_zero_capex(scenario, horizon, "fix")
+
     # solve the network
     solve_network(scenario, horizon, use_legacy=use_legacy)
+
+    # restore zero capital cost extendables in solved network
+    fix_zero_capex(scenario, horizon, "restore")
 
     return True
 
@@ -399,4 +415,6 @@ if __name__ == "__main__":
     # run BAU scenario
     if scenario_BAU:
         compose_network("BAU", 2020, use_legacy=use_legacy)
+        fix_zero_capex("BAU", 2020, "fix")
         solve_network("BAU", 2020, use_legacy=use_legacy)
+        fix_zero_capex("BAU", 2020, "restore")

@@ -30,3 +30,18 @@ improve_cops_after_renovation:
 capacity_clipping:
   threshold: 0.1
   digits: 1
+
+# extendables with |capital_cost| <= tolerance are fixed to infinite capacity before solving
+# and made extendable again after solving with optimal capacity set to peak dispatch;
+# names matching `exclude` (regex) are skipped as their capacity variables are used in extra constraints
+fix_zero_capex_extendables:
+  enable: true
+  tolerance: 1.e-3
+  exclude:
+  - battery charger
+  - battery discharger
+  - water tanks
+  - water pits
+  - aquifer thermal energy storage
+  - H2 pipeline retrofitted
+  - gas pipeline
