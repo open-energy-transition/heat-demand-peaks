@@ -11,7 +11,7 @@ import warnings
 warnings.filterwarnings("ignore")
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                      change_path_to_pypsa_eur, change_path_to_base, \
-                     CO2L_LIMITS, LINE_LIMITS, BAU_HORIZON, HISTORIC_PRICES
+                     BAU_HORIZON, HISTORIC_PRICES
 
 
 def get_households():
@@ -360,13 +360,8 @@ if __name__ == "__main__":
     config = update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     # network parameters
-    co2l_limits = CO2L_LIMITS
-    line_limits = LINE_LIMITS
     clusters = config["plotting"]["clusters"]
     planning_horizon = config["plotting"]["planning_horizon"]
-    opts = config["plotting"]["sector_opts"]
-    lineex = line_limits[planning_horizon]
-    sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{opts}"
 
     # move to submodules/pypsa-eur
     change_path_to_pypsa_eur()
@@ -388,7 +383,7 @@ if __name__ == "__main__":
     # load networks
     networks = {}
     for scenario, nice_name in scenarios.items():
-        n = load_network(lineex, clusters, sector_opts, planning_horizon, scenario)
+        n = load_network(scenario, planning_horizon)
         networks[nice_name] = n
 
     # move to base directory
