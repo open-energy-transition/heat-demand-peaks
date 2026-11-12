@@ -117,8 +117,13 @@ industry:
     2045: 0.9
     2050: 1.0
 
+electricity:
+  custom_powerplants_fn: ../../data/custom_powerplants.csv # read from the parent repo, paths are relative to submodules/pypsa-eur
+
 costs:
-  custom_cost_fn: data/custom_costs.csv
+  custom_cost_fn:
+  - data/custom_costs.csv # upstream defaults
+  - ../../data/custom_costs.csv # EEE costs (incl. v0.9.0 fixes), applied on top
   marginal_cost:
     solar: 0.01
     onwind: 0.015

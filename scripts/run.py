@@ -92,16 +92,11 @@ def copy_custom_data(base_network: str = "entsoegridkit"):
         "submodules/pypsa-eur/data/busmaps/",
         shell=True, check=True,
     )
-    subprocess.run(
-        "cp data/custom_powerplants.csv submodules/pypsa-eur/data/",
-        shell=True, check=True,
-    )
-    subprocess.run(
-        "cp data/custom_costs.csv submodules/pypsa-eur/data/",
-        shell=True, check=True,
-    )
+    # custom_powerplants.csv and custom_costs.csv are no longer copied: they are
+    # read from data/ via electricity.custom_powerplants_fn and costs.custom_cost_fn
+    # in configs/EEE_study/config.legacy_default.yaml
     # log the success
-    logging.info(f"Copied custom data from data/ folder to submodules/pypsa-eur/data/ folder")
+    logging.info(f"Copied custom busmap from data/busmaps/ to submodules/pypsa-eur/data/busmaps/")
 
 
 def get_configfiles(scenario, horizon, use_legacy=False):
