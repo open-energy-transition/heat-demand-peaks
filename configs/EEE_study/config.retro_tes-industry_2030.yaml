@@ -61,7 +61,7 @@ sector:
   retrofitting:
     retro_endogen: true
     WWHR_endogen: true
-  tes: true
+  ttes: true
   boilers: false #true
   biomass_boiler: false
   chp:

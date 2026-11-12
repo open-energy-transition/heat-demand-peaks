@@ -46,6 +46,8 @@ sector:
   district_heating:
     progress:
       2020: 0.0
+    ptes:
+      enable: false
   residential_heat:
     dsm:
       enable: false
@@ -54,7 +56,7 @@ sector:
   retrofitting:
     retro_endogen: false #true
     WWHR_endogen: false # Waste Water Heat Recovery
-  tes: false #true
+  ttes: false #true
   boilers: true #true
   biomass_boiler: false
   chp:
