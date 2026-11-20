@@ -15,7 +15,7 @@ import math
 warnings.filterwarnings("ignore")
 from _helpers import mock_snakemake, update_config_from_wildcards, load_network, \
                      change_path_to_pypsa_eur, change_path_to_base, \
-                     LINE_LIMITS, CO2L_LIMITS, BAU_HORIZON
+                     BAU_HORIZON
 
 logger = logging.getLogger(__name__)
 
@@ -94,11 +94,8 @@ if __name__ == "__main__":
     config = update_config_from_wildcards(snakemake.config, snakemake.wildcards)
 
     # network parameters
-    co2l_limits = CO2L_LIMITS
-    line_limits = LINE_LIMITS
     clusters = config["plotting"]["clusters"]
     planning_horizon = config["plotting"]["planning_horizon"]
-    opts = config["plotting"]["sector_opts"]
 
     # define scenario namings
     scenarios = {"flexible": "WIDE",
@@ -108,9 +105,6 @@ if __name__ == "__main__":
 
     table = pd.Series(index=scenarios.values(), data=0)
     if planning_horizon != BAU_HORIZON:
-        lineex = line_limits[planning_horizon]
-        sector_opts = f"Co2L{co2l_limits[planning_horizon]}-{opts}"
-
         # move to submodules/pypsa-eur
         change_path_to_pypsa_eur()
     
@@ -119,7 +113,7 @@ if __name__ == "__main__":
         _, axes = plt.subplots(2, 2, subplot_kw={"projection":ccrs.EqualEarth()})
 
         for scenario, short_name in scenarios.items():
-            n = load_network(lineex, clusters, sector_opts, planning_horizon, scenario)
+            n = load_network(scenario, planning_horizon)
             if scenario == "flexible": ax = axes[0,0]
             if scenario == "retro_tes": ax = axes[0,1]
             if scenario == "flexible-moderate": ax = axes[1,0]
@@ -180,13 +174,11 @@ if __name__ == "__main__":
     BAU_horizon = BAU_HORIZON
     if BAU_horizon in config["plotting"]["planning_horizon"]:
         scenario, short_name = "BAU", "BASE 2023"
-        lineex = line_limits[BAU_horizon]
-        sector_opts = f"Co2L{co2l_limits[BAU_horizon]}-{opts}"
         
         # move to submodules/pypsa-eur
         change_path_to_pypsa_eur()
 
-        n = load_network(lineex, clusters, sector_opts, BAU_horizon, scenario)
+        n = load_network(scenario, BAU_horizon)
 
         # move to base directory
         change_path_to_base()
